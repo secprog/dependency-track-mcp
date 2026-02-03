@@ -30,9 +30,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install safety bandit[toml]
     
-    - name: Run Safety check
+    - name: Run Safety scan
       run: |
-        safety check --json || true
+        safety scan --json || true
     
     - name: Run Bandit
       run: |
