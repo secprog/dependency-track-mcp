@@ -148,7 +148,7 @@ def validate_security_configuration(settings) -> None:
         settings.validate_configuration_for_web_deployment()
         
         logger.info("✓ Security configuration validated successfully")
-        logger.info(f"✓ OAuth 2.1 issuer: {settings.oauth_issuer}")
+        logger.info("✓ OAuth 2.1 issuer configured")
         logger.info("✓ Required scopes configured")
         logger.info(f"✓ HTTPS enabled: {settings.url.startswith('https://')}")
         logger.info(f"✓ SSL verification: {settings.verify_ssl}")
