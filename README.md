@@ -21,7 +21,7 @@ pip install dependency-track-mcp
 Or install from source:
 
 ```bash
-git clone https://github.com/your-org/dependency-track-mcp.git
+git clone https://github.com/secprog/dependency-track-mcp.git
 cd dependency-track-mcp
 pip install -e .
 ```
@@ -253,7 +253,7 @@ The server validates the following OAuth 2.1 scopes:
 ### Setup
 
 ```bash
-git clone https://github.com/your-org/dependency-track-mcp.git
+git clone https://github.com/secprog/dependency-track-mcp.git
 cd dependency-track-mcp
 pip install -e ".[dev]"
 ```
