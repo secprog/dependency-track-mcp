@@ -23,7 +23,12 @@ from fastmcp import FastMCP
 from fastmcp.exceptions import McpError
 
 from dependency_track_mcp.client import DependencyTrackClient
-from dependency_track_mcp.config import ConfigurationError, get_settings
+from dependency_track_mcp.config import (
+    ConfigurationError,
+    cleanup_tls_temp_files,
+    get_settings,
+    materialize_tls_files,
+)
 from dependency_track_mcp.oauth import (
     InvalidTokenError,
     InsufficientScopesError,
@@ -53,9 +58,9 @@ mcp = FastMCP(
     - Searching across the vulnerability database
 
     OAuth 2.1 Authorization:
-    - DEPENDENCY_TRACK_OAUTH_ISSUER: OAuth 2.1 token issuer URL (required)
-    - DEPENDENCY_TRACK_OAUTH_AUDIENCE: Expected token audience (optional)
-    - DEPENDENCY_TRACK_OAUTH_REQUIRED_SCOPES: Required scopes (default: read:projects read:vulnerabilities)
+    - MCP_OAUTH_ISSUER: OAuth 2.1 token issuer URL (required)
+    - MCP_OAUTH_AUDIENCE: Expected token audience (optional)
+    - MCP_OAUTH_REQUIRED_SCOPES: Required scopes (default: read:projects read:vulnerabilities)
 
     Dependency Track Backend:
     - DEPENDENCY_TRACK_URL: Base URL of your Dependency Track instance (HTTPS required)
@@ -119,6 +124,7 @@ register_all_tools(mcp)
 async def cleanup():
     """Cleanup resources on shutdown."""
     await DependencyTrackClient.close_instance()
+    cleanup_tls_temp_files()
 
 
 def validate_security_configuration(settings) -> None:
@@ -154,10 +160,10 @@ def validate_security_configuration(settings) -> None:
         logger.error(str(e))
         logger.error("=" * 80)
         logger.error("\nTo fix this issue:")
-        logger.error("1. Set DEPENDENCY_TRACK_OAUTH_ISSUER to your OAuth 2.1 provider URL")
+        logger.error("1. Set MCP_OAUTH_ISSUER to your OAuth 2.1 provider URL")
         logger.error("2. Ensure all URLs use HTTPS (not HTTP)")
         logger.error("3. Set DEPENDENCY_TRACK_VERIFY_SSL=true for production")
-        logger.error("4. Set DEPENDENCY_TRACK_OAUTH_ENABLED=true")
+        logger.error("4. Set MCP_OAUTH_ENABLED=true")
         logger.error("\nSee .env.example and SECURITY.md for detailed configuration instructions.")
         logger.error("=" * 80)
         sys.exit(1)
@@ -174,18 +180,20 @@ def main():
         logger.error("=" * 80)
         logger.error(f"Failed to load configuration: {e}")
         logger.error("\nRequired environment variables:")
-        logger.error("  - DEPENDENCY_TRACK_OAUTH_ISSUER (OAuth 2.1 provider, must use HTTPS)")
+        logger.error("  - MCP_OAUTH_ISSUER (OAuth 2.1 provider, must use HTTPS)")
         logger.error("  - DEPENDENCY_TRACK_URL (Dependency Track instance, must use HTTPS)")
         logger.error("  - DEPENDENCY_TRACK_API_KEY (API key for backend)")
         logger.error("\nOptional environment variables:")
-        logger.error("  - DEPENDENCY_TRACK_OAUTH_AUDIENCE")
-        logger.error("  - DEPENDENCY_TRACK_OAUTH_REQUIRED_SCOPES")
+        logger.error("  - MCP_OAUTH_AUDIENCE")
+        logger.error("  - MCP_OAUTH_REQUIRED_SCOPES")
         logger.error("  - DEPENDENCY_TRACK_VERIFY_SSL (default: true)")
         logger.error("  - DEPENDENCY_TRACK_TIMEOUT (default: 30)")
         logger.error("  - DEPENDENCY_TRACK_MAX_RETRIES (default: 3)")
-        logger.error("  - DEPENDENCY_TRACK_SERVER_TRANSPORT (default: stdio, options: stdio|http)")
-        logger.error("  - DEPENDENCY_TRACK_SERVER_HOST (default: 0.0.0.0)")
-        logger.error("  - DEPENDENCY_TRACK_SERVER_PORT (default: 8000)")
+        logger.error("  - MCP_SERVER_TRANSPORT (default: http)")
+        logger.error("  - MCP_SERVER_HOST (default: 0.0.0.0)")
+        logger.error("  - MCP_SERVER_PORT (default: 8000)")
+        logger.error("  - MCP_SERVER_TLS_CERT (required for HTTPS)")
+        logger.error("  - MCP_SERVER_TLS_KEY (required for HTTPS)")
         logger.error("\nSee .env.example for detailed configuration examples.")
         logger.error("=" * 80)
         sys.exit(1)
@@ -198,8 +206,17 @@ def main():
     
     # Start server
     try:
-        logger.info(f"Starting HTTP server on {settings.server_host}:{settings.server_port}")
-        mcp.run(transport="http", host=settings.server_host, port=settings.server_port)
+        logger.info(f"Starting HTTPS server on {settings.server_host}:{settings.server_port}")
+        certfile, keyfile, ca_certs = materialize_tls_files(settings)
+        mcp.run(
+            transport="http",
+            host=settings.server_host,
+            port=settings.server_port,
+            ssl_certfile=certfile,
+            ssl_keyfile=keyfile,
+            ssl_ca_certs=ca_certs,
+            ssl_keyfile_password=settings.server_tls_keyfile_password,
+        )
     finally:
         # Ensure cleanup runs
         asyncio.run(cleanup())

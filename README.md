@@ -39,7 +39,7 @@ Authorization: Bearer <your_oauth2_token>
 
 Follow these security best practices:
 
-- **Configure OAuth 2.1 issuer** - Set `DEPENDENCY_TRACK_OAUTH_ISSUER` to your OAuth provider
+- **Configure OAuth 2.1 issuer** - Set `MCP_OAUTH_ISSUER` to your OAuth provider
 - **Never commit API keys** - Use environment variables or `.env` files (already in `.gitignore`)
 - **Use HTTPS only** - Always connect to Dependency Track over HTTPS with valid certificates
 - **Minimal scopes** - Request only the scopes your use case needs
@@ -54,9 +54,9 @@ Set the following environment variables:
 
 ```bash
 # OAuth 2.1 Authorization (REQUIRED)
-export DEPENDENCY_TRACK_OAUTH_ISSUER=https://auth.example.com
-export DEPENDENCY_TRACK_OAUTH_AUDIENCE=dependency-track-mcp  # Optional
-export DEPENDENCY_TRACK_OAUTH_REQUIRED_SCOPES="read:projects read:vulnerabilities"
+export MCP_OAUTH_ISSUER=https://auth.example.com
+export MCP_OAUTH_AUDIENCE=dependency-track-mcp  # Optional
+export MCP_OAUTH_REQUIRED_SCOPES="read:projects read:vulnerabilities"
 
 # Dependency Track Backend (for server-to-API auth only)
 export DEPENDENCY_TRACK_URL=https://dependency-track.example.com
@@ -91,11 +91,48 @@ The API key is used for **server-to-API authentication only** and is not exposed
 
 ## Usage
 
-### With FastMCP CLI
+### Running the Server
 
 ```bash
-fastmcp run src/dependency_track_mcp/server.py
+# Using the installed entry point
+dependency-track-mcp
+
+# Or run directly
+python -m dependency_track_mcp.main
 ```
+
+This starts an HTTPS server with JWT authentication via Keycloak/OIDC.
+
+### Configuration for Production
+
+Required environment variables (or `.env` file):
+
+```bash
+# OAuth 2.1 (required)
+MCP_OAUTH_ISSUER=https://keycloak.example.com/realms/mcp
+MCP_OAUTH_AUDIENCE=mcp-api
+
+# TLS certificates (required for HTTPS)
+MCP_SERVER_TLS_CERT="-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
+MCP_SERVER_TLS_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+
+# Dependency Track backend
+DEPENDENCY_TRACK_URL=https://dtrack.example.com
+DEPENDENCY_TRACK_API_KEY=your-api-key
+```
+
+### Local Development
+
+For local development with HTTP (never use in production):
+
+```bash
+# Enable HTTP for local testing
+MCP_DEV_ALLOW_HTTP=true
+MCP_OAUTH_ISSUER=http://localhost:8083/realms/mcp
+DEPENDENCY_TRACK_URL=http://localhost:8081
+```
+
+See [KEYCLOAK_SETUP.md](KEYCLOAK_SETUP.md) for setting up local Keycloak.
 
 ### With Claude Desktop
 
@@ -106,11 +143,13 @@ Add to your Claude Desktop configuration (`claude_desktop_config.json`):
   "mcpServers": {
     "dependency-track": {
       "command": "python",
-      "args": ["-m", "dependency_track_mcp.server"],
+      "args": ["-m", "dependency_track_mcp.main"],
       "env": {
-        "DEPENDENCY_TRACK_OAUTH_ISSUER": "https://auth.example.com",
-        "DEPENDENCY_TRACK_OAUTH_AUDIENCE": "dependency-track-mcp",
-        "DEPENDENCY_TRACK_OAUTH_REQUIRED_SCOPES": "read:projects read:vulnerabilities",
+        "MCP_OAUTH_ISSUER": "https://auth.example.com",
+        "MCP_OAUTH_AUDIENCE": "mcp-api",
+        "MCP_OAUTH_REQUIRED_SCOPES": "read:projects read:vulnerabilities",
+        "MCP_SERVER_TLS_CERT": "...",
+        "MCP_SERVER_TLS_KEY": "...",
         "DEPENDENCY_TRACK_URL": "https://your-instance.example.com",
         "DEPENDENCY_TRACK_API_KEY": "your-dtrack-api-key"
       }
@@ -122,16 +161,11 @@ Add to your Claude Desktop configuration (`claude_desktop_config.json`):
 **Security Notes**:
 - The Dependency Track API key is stored in the configuration file
 - OAuth tokens are transmitted at runtime (not stored in config)
+- TLS certificates can be provided as PEM content (use `\n` for newlines)
 - Ensure your `claude_desktop_config.json` file has restricted permissions:
   - macOS/Linux: `chmod 600 ~/Library/Application\ Support/Claude/claude_desktop_config.json`
   - Windows: Use NTFS permissions to restrict access to your user account only
 - MCP client is responsible for obtaining and providing valid OAuth tokens
-
-### With MCP Inspector
-
-```bash
-fastmcp dev src/dependency_track_mcp/server.py
-```
 
 ## MCP Scopes
 

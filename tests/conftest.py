@@ -16,14 +16,14 @@ def setup_env():
     """Set up environment variables for testing."""
     os.environ["DEPENDENCY_TRACK_URL"] = "https://localhost:8080"  # Changed to HTTPS
     os.environ["DEPENDENCY_TRACK_API_KEY"] = "test-api-key"
-    os.environ["DEPENDENCY_TRACK_OAUTH_ISSUER"] = "https://auth.example.com"  # Added OAuth issuer
+    os.environ["MCP_OAUTH_ISSUER"] = "https://auth.example.com"  # Added OAuth issuer
     # Note: Not setting VERIFY_SSL here to preserve default=True behavior for tests
     yield
     # Clean up
     for key in [
         "DEPENDENCY_TRACK_URL",
         "DEPENDENCY_TRACK_API_KEY",
-        "DEPENDENCY_TRACK_OAUTH_ISSUER",
+        "MCP_OAUTH_ISSUER",
         "DEPENDENCY_TRACK_VERIFY_SSL",
     ]:
         if key in os.environ:
@@ -35,7 +35,7 @@ def mock_env_vars(monkeypatch):
     """Set environment variables for settings tests."""
     monkeypatch.setenv("DEPENDENCY_TRACK_URL", "https://test.example.com")
     monkeypatch.setenv("DEPENDENCY_TRACK_API_KEY", "test-api-key")
-    monkeypatch.setenv("DEPENDENCY_TRACK_OAUTH_ISSUER", "https://auth.example.com")  # Added OAuth issuer
+    monkeypatch.setenv("MCP_OAUTH_ISSUER", "https://auth.example.com")  # Added OAuth issuer
     yield
 
 

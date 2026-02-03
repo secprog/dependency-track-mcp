@@ -41,8 +41,7 @@ dev = [
 ]
 
 [project.scripts]
-dependency-track-mcp = "dependency_track_mcp.server:main"
-dependency-track-mcp-auth = "dependency_track_mcp.auth_wrapper:main"
+dependency-track-mcp = "dependency_track_mcp.main:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/dependency_track_mcp"]

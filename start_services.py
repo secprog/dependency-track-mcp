@@ -19,7 +19,7 @@ def main():
         sys.exit(1)
     
     # Run the server
-    subprocess.run([sys.executable, "-m", "dependency_track_mcp.auth_wrapper"])
+    subprocess.run([sys.executable, "-m", "dependency_track_mcp.main"])
 
 
 if __name__ == "__main__":

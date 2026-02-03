@@ -57,7 +57,7 @@ class TestServer:
             {
                 "DEPENDENCY_TRACK_URL": "https://dtrack.example.com",
                 "DEPENDENCY_TRACK_API_KEY": "test-api-key",
-                "DEPENDENCY_TRACK_OAUTH_ISSUER": "https://auth.example.com",
+                "MCP_OAUTH_ISSUER": "https://auth.example.com",
                 "DEPENDENCY_TRACK_VERIFY_SSL": "false",  # Allow self-signed in test
             },
         ):
@@ -90,8 +90,10 @@ class TestServer:
             {
                 "DEPENDENCY_TRACK_URL": "https://dtrack.example.com",
                 "DEPENDENCY_TRACK_API_KEY": "test-api-key",
-                "DEPENDENCY_TRACK_OAUTH_ISSUER": "https://auth.example.com",
+                "MCP_OAUTH_ISSUER": "https://auth.example.com",
                 "DEPENDENCY_TRACK_VERIFY_SSL": "false",
+                "MCP_SERVER_TLS_CERT": "-----BEGIN CERTIFICATE-----\\nTEST\\n-----END CERTIFICATE-----",
+                "MCP_SERVER_TLS_KEY": "-----BEGIN PRIVATE KEY-----\\nTEST\\n-----END PRIVATE KEY-----",
             },
         ):
             with patch("fastmcp.server.server.FastMCP.run") as run_mock, patch(

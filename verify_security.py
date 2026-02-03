@@ -95,7 +95,7 @@ def main():
     base_env = {
         "DEPENDENCY_TRACK_URL": "https://dtrack.example.com",
         "DEPENDENCY_TRACK_API_KEY": "test-key",
-        "DEPENDENCY_TRACK_OAUTH_ISSUER": "https://auth.example.com",
+        "MCP_OAUTH_ISSUER": "https://auth.example.com",
     }
     
     tests = [
@@ -106,7 +106,7 @@ def main():
         ),
         (
             "2. Missing OAuth Issuer (Should Fail)",
-            {**base_env, "DEPENDENCY_TRACK_OAUTH_ISSUER": None},
+            {**base_env, "MCP_OAUTH_ISSUER": None},
             False,
         ),
         (
@@ -116,7 +116,7 @@ def main():
         ),
         (
             "4. HTTP OAuth Issuer (Should Fail - HTTPS Always Required)",
-            {**base_env, "DEPENDENCY_TRACK_OAUTH_ISSUER": "http://auth.example.com"},
+            {**base_env, "MCP_OAUTH_ISSUER": "http://auth.example.com"},
             False,
         ),
         (
@@ -126,17 +126,17 @@ def main():
         ),
         (
             "6. Development Mode: HTTP URL with DEV_ALLOW_HTTP (Should Warn)",
-            {**base_env, "DEPENDENCY_TRACK_URL": "http://localhost:8080", "DEPENDENCY_TRACK_DEV_ALLOW_HTTP": "true"},
+            {**base_env, "DEPENDENCY_TRACK_URL": "http://localhost:8080", "MCP_DEV_ALLOW_HTTP": "true"},
             True,
         ),
         (
             "7. Development Mode: HTTP Issuer with DEV_ALLOW_HTTP (Should Warn)",
-            {**base_env, "DEPENDENCY_TRACK_OAUTH_ISSUER": "http://localhost:9000", "DEPENDENCY_TRACK_DEV_ALLOW_HTTP": "true"},
+            {**base_env, "MCP_OAUTH_ISSUER": "http://localhost:9000", "MCP_DEV_ALLOW_HTTP": "true"},
             True,
         ),
         (
             "8. Dev Mode with Both HTTP URLs (Should Warn Twice)",
-            {**base_env, "DEPENDENCY_TRACK_URL": "http://localhost:8080", "DEPENDENCY_TRACK_OAUTH_ISSUER": "http://localhost:9000", "DEPENDENCY_TRACK_DEV_ALLOW_HTTP": "true"},
+            {**base_env, "DEPENDENCY_TRACK_URL": "http://localhost:8080", "MCP_OAUTH_ISSUER": "http://localhost:9000", "MCP_DEV_ALLOW_HTTP": "true"},
             True,
         ),
     ]

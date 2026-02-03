@@ -3,7 +3,10 @@
     "allow": [
       "WebFetch(domain:github.com)",
       "WebFetch(domain:gofastmcp.com)",
-      "WebFetch(domain:docs.dependencytrack.org)"
+      "WebFetch(domain:docs.dependencytrack.org)",
+      "Bash(python verify_security.py:*)",
+      "Bash(pytest:*)",
+      "Bash(python:*)"
     ]
   }
 }

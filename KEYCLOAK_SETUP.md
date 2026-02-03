@@ -13,15 +13,15 @@ cp .env.example .env
 pip install -e .
 
 # 3. Start server
-python -m dependency_track_mcp.auth_wrapper
+python -m dependency_track_mcp.main
 ```
 
 **Key `.env` settings for local Keycloak (port 8083):**
 
 ```env
-DEPENDENCY_TRACK_OAUTH_ISSUER=http://localhost:8083/realms/mcp
-DEPENDENCY_TRACK_OAUTH_AUDIENCE=mcp-api
-DEPENDENCY_TRACK_DEV_ALLOW_HTTP=true
+MCP_OAUTH_ISSUER=http://localhost:8083/realms/mcp
+MCP_OAUTH_AUDIENCE=mcp-api
+MCP_DEV_ALLOW_HTTP=true
 DEPENDENCY_TRACK_URL=http://localhost:8081
 DEPENDENCY_TRACK_API_KEY=your-api-key
 ```
@@ -32,7 +32,7 @@ DEPENDENCY_TRACK_API_KEY=your-api-key
 Client (with Bearer token)
     |
     v
-Auth Wrapper (port 9000) - validates JWT via JWKS
+MCP Server (port 9000) - validates JWT via JWKS
     |
     v
 FastMCP Backend - MCP protocol
@@ -145,7 +145,7 @@ Configure the audience mapper in Keycloak (see section 3 above).
 ### JWKS Fetch Failure
 
 - Verify Keycloak is running
-- Check `DEPENDENCY_TRACK_DEV_ALLOW_HTTP=true` for local HTTP
+- Check `MCP_DEV_ALLOW_HTTP=true` for local HTTP
 - Test: `curl http://localhost:8083/realms/mcp/protocol/openid-connect/certs`
 
 ### Token Expired
@@ -154,22 +154,22 @@ Get a fresh token. Adjust lifespan in Keycloak: **Realm Settings** → **Tokens*
 
 ### Wrong Issuer
 
-Ensure `DEPENDENCY_TRACK_OAUTH_ISSUER` exactly matches the `iss` claim (check trailing slashes).
+Ensure `MCP_OAUTH_ISSUER` exactly matches the `iss` claim (check trailing slashes).
 
 ## Production Deployment
 
 ```env
 # Use HTTPS everywhere
-DEPENDENCY_TRACK_OAUTH_ISSUER=https://keycloak.example.com/realms/mcp
+MCP_OAUTH_ISSUER=https://keycloak.example.com/realms/mcp
 DEPENDENCY_TRACK_URL=https://dtrack.example.com
-DEPENDENCY_TRACK_DEV_ALLOW_HTTP=false
+MCP_DEV_ALLOW_HTTP=false
 DEPENDENCY_TRACK_VERIFY_SSL=true
 ```
 
 Add a reverse proxy (Caddy/Nginx) for TLS termination:
 
 ```
-Internet → Reverse Proxy (HTTPS:443) → Auth Wrapper (9000) → FastMCP
+Internet → Reverse Proxy (HTTPS:443) → MCP Server (9000) → FastMCP
 ```
 
 ## References
