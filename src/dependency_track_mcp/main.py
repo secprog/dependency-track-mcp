@@ -119,7 +119,7 @@ class JWTAuthMiddleware:
                 settings = get_settings()
                 response = Response(
                     status_code=401,
-                    content=f"Unauthorized: {e}",
+                    content="Unauthorized: JWT validation failed",
                     headers={
                         "WWW-Authenticate": (
                             f'Bearer realm="mcp", '
