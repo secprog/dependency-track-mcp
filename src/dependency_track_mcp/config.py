@@ -71,18 +71,6 @@ class Settings(BaseSettings):
         default="https://mcp.example.com/mcp",
         description="Resource URI for this MCP server (used in /.well-known/oauth-protected-resource)",
     )
-    
-    # FastMCP Backend Settings (for auth wrapper mode)
-    fastmcp_host: str = Field(
-        default="127.0.0.1",
-        description="FastMCP backend host (when using auth wrapper)",
-    )
-    fastmcp_port: int = Field(
-        default=8000,
-        ge=1,
-        le=65535,
-        description="FastMCP backend port (when using auth wrapper)",
-    )
 
     # Development Settings
     dev_allow_http: bool = Field(
@@ -208,11 +196,9 @@ class Settings(BaseSettings):
             if "/realms/" in self.oauth_issuer:
                 # Keycloak format
                 self.oauth_jwks_url = f"{self.oauth_issuer}/protocol/openid-connect/certs"
-                logger.info(f"Auto-derived JWKS URL from Keycloak issuer: {self.oauth_jwks_url}")
             else:
                 # Generic OIDC format - try standard path
                 self.oauth_jwks_url = f"{self.oauth_issuer}/.well-known/jwks.json"
-                logger.info(f"Auto-derived JWKS URL from issuer: {self.oauth_jwks_url}")
         
         # Check Dependency Track URL
         parsed_url = urlparse(self.url)

@@ -4,10 +4,11 @@ This module implements OAuth 2.1 authorization as defined in:
 https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization
 
 Supports:
-- Bearer token validation
-- JWT token parsing and verification
+- Bearer token validation with JWKS-based signature verification
+- JWT token parsing and verification using python-jose
 - Scope-based access control
 - Authorization context management
+- Keycloak integration
 """
 
 import asyncio
@@ -19,6 +20,8 @@ from typing import Any, Optional, Set
 from urllib.parse import urljoin
 
 import httpx
+from jose import jwt
+from jose.exceptions import JWTError
 from pydantic import BaseModel, Field, ValidationError as PydanticValidationError
 
 logger = logging.getLogger(__name__)
@@ -101,28 +104,91 @@ class AuthorizationContext:
 
 
 class JWTValidator:
-    """Validates JWT tokens for OAuth 2.1 compliance.
+    """Validates JWT tokens for OAuth 2.1 compliance with JWKS-based signature verification.
 
-    This implementation validates JWT structure and claims but does NOT
-    perform cryptographic signature verification. Signature verification
-    should be performed by:
-    1. The OpenID Connect provider's JWKS endpoint
-    2. A dedicated JWT verification library (PyJWT, python-jose)
-    3. The MCP client connection layer
-
-    In typical MCP deployments, token validation happens at the connection
-    layer before reaching the server application.
+    This implementation:
+    - Fetches JWKS (JSON Web Key Set) from the authorization server
+    - Performs cryptographic signature verification using python-jose
+    - Validates token claims (exp, iss, aud, etc.)
+    - Caches JWKS for performance (with refresh capability)
+    
+    Supports Keycloak and other OIDC-compliant authorization servers.
     """
 
-    def __init__(self, expected_issuer: Optional[str] = None):
+    def __init__(
+        self,
+        expected_issuer: Optional[str] = None,
+        jwks_url: Optional[str] = None,
+        expected_audience: Optional[str] = None,
+    ):
         """Initialize JWT validator.
 
         Args:
             expected_issuer: Expected token issuer URL
+            jwks_url: JWKS endpoint URL (auto-derived from issuer if not provided)
+            expected_audience: Expected audience claim value
         """
         self.expected_issuer = expected_issuer
+        self.expected_audience = expected_audience
         self._cache_lock = asyncio.Lock()
-        self._jwks_cache: dict[str, Any] = {}
+        self._jwks_cache: Optional[dict[str, Any]] = None
+        
+        # Derive JWKS URL if not provided
+        if jwks_url:
+            self.jwks_url = jwks_url
+        elif expected_issuer:
+            # Auto-derive JWKS URL from issuer
+            if "/realms/" in expected_issuer:
+                # Keycloak format: https://keycloak.example.com/realms/myrealm
+                self.jwks_url = f"{expected_issuer}/protocol/openid-connect/certs"
+            else:
+                # Generic OIDC format
+                self.jwks_url = f"{expected_issuer}/.well-known/jwks.json"
+        else:
+            self.jwks_url = None
+
+    async def fetch_jwks(self, refresh: bool = False) -> dict[str, Any]:
+        """Fetch JWKS from authorization server.
+        
+        Implements caching to avoid excessive network requests.
+        In production, consider TTL-based refresh (e.g., cache for 1 hour).
+        
+        Args:
+            refresh: Force refresh the cache
+            
+        Returns:
+            JWKS dictionary
+            
+        Raises:
+            InvalidTokenError: If JWKS cannot be fetched
+        """
+        async with self._cache_lock:
+            if self._jwks_cache is not None and not refresh:
+                return self._jwks_cache
+            
+            if not self.jwks_url:
+                raise InvalidTokenError("JWKS URL not configured")
+            
+            try:
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    logger.info(f"Fetching JWKS from {self.jwks_url}")
+                    response = await client.get(self.jwks_url)
+                    response.raise_for_status()
+                    self._jwks_cache = response.json()
+                    logger.info("JWKS fetched and cached successfully")
+                    # Type assertion: _jwks_cache is definitely not None after assignment
+                    return self._jwks_cache  # type: ignore
+            except Exception as e:
+                logger.error(f"Failed to fetch JWKS from {self.jwks_url}: {e}")
+                raise InvalidTokenError(f"Failed to fetch JWKS: {e}")
+
+    def clear_jwks_cache(self):
+        """Clear JWKS cache to force refresh on next validation.
+        
+        Call this after key rotation or if validation fails unexpectedly.
+        """
+        self._jwks_cache = None
+        logger.info("JWKS cache cleared")
 
     def _decode_jwt_payload(self, token: str) -> dict[str, Any]:
         """Decode JWT payload without verification.
@@ -246,32 +312,79 @@ class JWTValidator:
         required_scopes: Optional[Set[str]] = None,
         expected_audience: Optional[str] = None,
     ) -> AuthorizationContext:
-        """Validate OAuth 2.1 token and create authorization context.
+        """Validate OAuth 2.1 token with JWKS-based signature verification.
 
         Args:
             token: Bearer token
             required_scopes: Set of required scopes
-            expected_audience: Expected audience claim
+            expected_audience: Expected audience claim (overrides instance default)
 
         Returns:
             AuthorizationContext with token claims and scopes
 
         Raises:
-            InvalidTokenError: If token is invalid
+            InvalidTokenError: If token is invalid or signature verification fails
             InsufficientScopesError: If token lacks required scopes
         """
-        # Validate token structure and required claims
-        payload = self.validate_token_structure(token)
-
-        # Validate expiration
-        self.validate_token_expiration(payload)
-
-        # Validate issuer
-        self.validate_issuer(payload)
-
-        # Validate audience
-        self.validate_audience(payload, expected_audience)
-
+        # Use instance default audience if not provided
+        aud_to_validate = expected_audience or self.expected_audience
+        
+        # Fetch JWKS for signature verification
+        try:
+            jwks = await self.fetch_jwks()
+        except InvalidTokenError:
+            raise
+        
+        # Verify JWT signature and claims using python-jose
+        try:
+            claims = jwt.decode(
+                token,
+                jwks,
+                algorithms=["RS256"],  # Most common; add others if needed
+                issuer=self.expected_issuer,
+                audience=aud_to_validate,
+                options={
+                    "verify_signature": True,
+                    "verify_aud": bool(aud_to_validate),
+                    "verify_iat": True,
+                    "verify_exp": True,
+                    "verify_nbf": True,
+                    "verify_iss": bool(self.expected_issuer),
+                    "verify_sub": True,
+                    "verify_at_hash": False,  # Not used in access tokens
+                },
+            )
+        except JWTError as e:
+            logger.warning(f"JWT validation failed: {e}")
+            # Try refreshing JWKS cache in case of key rotation
+            try:
+                jwks = await self.fetch_jwks(refresh=True)
+                claims = jwt.decode(
+                    token,
+                    jwks,
+                    algorithms=["RS256"],
+                    issuer=self.expected_issuer,
+                    audience=aud_to_validate,
+                    options={
+                        "verify_signature": True,
+                        "verify_aud": bool(aud_to_validate),
+                        "verify_iat": True,
+                        "verify_exp": True,
+                        "verify_nbf": True,
+                        "verify_iss": bool(self.expected_issuer),
+                        "verify_sub": True,
+                        "verify_at_hash": False,
+                    },
+                )
+            except JWTError as retry_error:
+                raise InvalidTokenError(f"JWT validation failed: {retry_error}")
+        
+        # Parse claims into JWTPayload for scope extraction
+        try:
+            payload = JWTPayload(**claims)
+        except PydanticValidationError as e:
+            raise InvalidTokenError(f"Invalid JWT claims: {e}")
+        
         # Extract scopes
         token_scopes = payload.get_scopes()
 
@@ -292,6 +405,8 @@ class JWTValidator:
             issuer=payload.iss,
             audience=payload.aud,
         )
+        
+        logger.info(f"Token validated successfully for subject: {context.subject}")
 
         return context
 

@@ -1,20 +1,20 @@
 """OAuth 2.1 Auth Wrapper for FastMCP with Keycloak Integration.
 
-This module provides a FastAPI-based authentication wrapper that sits in front of
-FastMCP and validates JWT tokens from Keycloak before proxying requests.
+This module provides a FastAPI-based authentication wrapper that integrates
+FastMCP directly and validates JWT tokens from Keycloak before handling MCP requests.
 
 Architecture:
-    Internet → Auth Wrapper (validates JWT) → FastMCP (localhost)
+    Internet → Auth Wrapper (validates JWT + handles MCP via FastMCP)
 
 This follows the MCP OAuth 2.1 specification pattern where authentication is
-handled at the transport layer, not inside the MCP server itself.
+handled at the transport layer.
 
 Key Features:
 - JWT signature verification using Keycloak's JWKS endpoint
 - Audience (aud) and issuer (iss) validation
 - Serves /.well-known/oauth-protected-resource metadata
 - Returns proper WWW-Authenticate challenges with resource metadata
-- Proxies validated requests to FastMCP backend
+- Direct integration with FastMCP (no separate HTTP server needed)
 """
 
 import logging
@@ -22,23 +22,110 @@ from typing import Optional
 
 import httpx
 from fastapi import FastAPI, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from jose import jwt
 from jose.exceptions import JWTError
 
 from dependency_track_mcp.config import get_settings
+from dependency_track_mcp.server import mcp as fastmcp_server
 
 logger = logging.getLogger(__name__)
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="Dependency Track MCP Auth Wrapper",
+    title="Dependency Track MCP Server with OAuth",
     description="OAuth 2.1 authentication wrapper for FastMCP with Keycloak",
     version="0.1.0",
 )
 
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Configure appropriately for production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Global JWKS cache (refreshed on demand)
 _jwks_cache: Optional[dict] = None
+
+
+# Custom middleware to validate JWT tokens
+class JWTAuthMiddleware:
+    """Middleware to validate JWT tokens for /mcp endpoint."""
+    
+    def __init__(self, app):
+        self.app = app
+    
+    async def __call__(self, scope, receive, send):
+        # Only apply auth to /mcp path
+        if scope["type"] == "http" and scope["path"].startswith("/mcp"):
+            # Get authorization header
+            headers = dict(scope.get("headers", []))
+            auth_header = headers.get(b"authorization", b"").decode("utf-8")
+            
+            # Verify token
+            if not auth_header.lower().startswith("bearer "):
+                # No valid Bearer token - return 401
+                settings = get_settings()
+                response = Response(
+                    status_code=401,
+                    content="Unauthorized: Valid Bearer token required",
+                    headers={
+                        "WWW-Authenticate": (
+                            f'Bearer realm="mcp", '
+                            f'resource_metadata="{settings.oauth_resource_metadata_url}"'
+                        )
+                    }
+                )
+                await response(scope, receive, send)
+                return
+            
+            # Extract and verify token
+            token = auth_header.split(" ", 1)[1].strip()
+            
+            try:
+                claims = await verify_jwt_token(token)
+                if claims is None:
+                    # Invalid token - return 401
+                    settings = get_settings()
+                    response = Response(
+                        status_code=401,
+                        content="Unauthorized: Invalid or expired token",
+                        headers={
+                            "WWW-Authenticate": (
+                                f'Bearer realm="mcp", '
+                                f'resource_metadata="{settings.oauth_resource_metadata_url}"'
+                            )
+                        }
+                    )
+                    await response(scope, receive, send)
+                    return
+                
+                # Token valid - store claims in scope for downstream use
+                scope["jwt_claims"] = claims
+                logger.debug(f"Authenticated request for subject: {claims.get('sub')}")
+                
+            except Exception as e:
+                logger.error(f"JWT validation error: {e}")
+                settings = get_settings()
+                response = Response(
+                    status_code=401,
+                    content=f"Unauthorized: {e}",
+                    headers={
+                        "WWW-Authenticate": (
+                            f'Bearer realm="mcp", '
+                            f'resource_metadata="{settings.oauth_resource_metadata_url}"'
+                        )
+                    }
+                )
+                await response(scope, receive, send)
+                return
+        
+        # Continue to next middleware/app
+        await self.app(scope, receive, send)
 
 
 async def get_jwks() -> dict:
@@ -61,6 +148,9 @@ async def get_jwks() -> dict:
         settings = get_settings()
         jwks_url = settings.oauth_jwks_url
         
+        if not jwks_url:
+            raise ValueError("JWKS URL not configured")
+        
         logger.info(f"Fetching JWKS from {jwks_url}")
         
         async with httpx.AsyncClient(timeout=10.0, verify=settings.verify_ssl) as client:
@@ -73,7 +163,8 @@ async def get_jwks() -> dict:
                 logger.error(f"Failed to fetch JWKS from {jwks_url}: {e}")
                 raise
     
-    return _jwks_cache
+    # Type assertion: _jwks_cache is not None at this point
+    return _jwks_cache  # type: ignore
 
 
 def refresh_jwks_cache():
@@ -83,68 +174,16 @@ def refresh_jwks_cache():
     logger.info("JWKS cache cleared")
 
 
-@app.get("/.well-known/oauth-protected-resource")
-async def protected_resource_metadata():
-    """Serve OAuth Protected Resource Metadata.
-    
-    This endpoint advertises the OAuth configuration for this MCP server.
-    Clients use this to discover the authorization server.
-    
-    See: https://datatracker.ietf.org/doc/html/rfc8707
-    """
-    settings = get_settings()
-    
-    return JSONResponse({
-        "resource": settings.oauth_resource_uri,
-        "authorization_servers": [settings.oauth_issuer],
-    })
-
-
-def unauthorized_response() -> Response:
-    """Return 401 Unauthorized with proper WWW-Authenticate header.
-    
-    The WWW-Authenticate header includes a link to the resource metadata,
-    allowing clients to discover the authorization server.
-    """
-    settings = get_settings()
-    
-    return Response(
-        status_code=401,
-        headers={
-            "WWW-Authenticate": (
-                f'Bearer realm="mcp", '
-                f'resource_metadata="{settings.oauth_resource_metadata_url}"'
-            )
-        },
-        content="Unauthorized: Valid Bearer token required",
-    )
-
-
-async def verify_bearer_token(request: Request) -> Optional[dict]:
-    """Verify Bearer token from Authorization header.
-    
-    Validates:
-    1. Authorization header format (Bearer <token>)
-    2. JWT signature using Keycloak JWKS
-    3. Token expiration
-    4. Issuer (iss claim)
-    5. Audience (aud claim)
+async def verify_jwt_token(token: str) -> Optional[dict]:
+    """Verify JWT token using Keycloak JWKS.
     
     Args:
-        request: FastAPI request object
+        token: JWT token string
         
     Returns:
-        JWT claims dictionary if valid, None otherwise
+        Token claims dictionary if valid, None otherwise
     """
     settings = get_settings()
-    
-    # Extract Authorization header
-    auth_header = request.headers.get("authorization", "")
-    if not auth_header.lower().startswith("bearer "):
-        logger.warning("Missing or invalid Authorization header")
-        return None
-    
-    token = auth_header.split(" ", 1)[1].strip()
     
     # Fetch JWKS
     try:
@@ -189,59 +228,21 @@ async def verify_bearer_token(request: Request) -> Optional[dict]:
         return None
 
 
-@app.api_route("/mcp", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
-async def mcp_proxy(request: Request):
-    """Proxy MCP requests to FastMCP backend after JWT validation.
+@app.get("/.well-known/oauth-protected-resource")
+async def protected_resource_metadata():
+    """Serve OAuth Protected Resource Metadata.
     
-    Flow:
-    1. Validate Bearer token from Authorization header
-    2. If valid, forward request to FastMCP on localhost
-    3. If invalid, return 401 with WWW-Authenticate challenge
+    This endpoint advertises the OAuth configuration for this MCP server.
+    Clients use this to discover the authorization server.
     
-    Args:
-        request: FastAPI request object
-        
-    Returns:
-        Proxied response from FastMCP or 401 Unauthorized
+    See: https://datatracker.ietf.org/doc/html/rfc8707
     """
-    # Verify Bearer token
-    claims = await verify_bearer_token(request)
-    if claims is None:
-        return unauthorized_response()
-    
-    # Token is valid - proxy to FastMCP backend
     settings = get_settings()
-    fastmcp_url = f"http://{settings.fastmcp_host}:{settings.fastmcp_port}/mcp"
     
-    logger.debug(f"Proxying {request.method} request to {fastmcp_url}")
-    
-    try:
-        async with httpx.AsyncClient(timeout=None) as client:
-            # Forward request to FastMCP
-            upstream_response = await client.request(
-                method=request.method,
-                url=fastmcp_url,
-                headers={
-                    k: v for k, v in request.headers.items()
-                    if k.lower() not in ["host", "authorization"]  # Strip auth header
-                },
-                content=await request.body(),
-            )
-            
-            # Return FastMCP response
-            return Response(
-                content=upstream_response.content,
-                status_code=upstream_response.status_code,
-                headers=dict(upstream_response.headers),
-                media_type=upstream_response.headers.get("content-type"),
-            )
-            
-    except Exception as e:
-        logger.error(f"Failed to proxy request to FastMCP: {e}")
-        return Response(
-            status_code=502,
-            content=f"Bad Gateway: FastMCP backend unreachable: {e}",
-        )
+    return JSONResponse({
+        "resource": settings.oauth_resource_uri,
+        "authorization_servers": [settings.oauth_issuer],
+    })
 
 
 @app.get("/health")
@@ -257,7 +258,7 @@ async def health_check():
         "status": "healthy",
         "jwks_cached": _jwks_cache is not None,
         "oauth_issuer": settings.oauth_issuer,
-        "fastmcp_backend": f"http://{settings.fastmcp_host}:{settings.fastmcp_port}",
+        "mcp_integrated": True,
     })
 
 
@@ -273,6 +274,13 @@ async def admin_refresh_jwks():
     return JSONResponse({"message": "JWKS cache cleared, will refresh on next request"})
 
 
+# Mount FastMCP's HTTP app at /mcp with JWT auth middleware
+# This allows FastMCP to handle the MCP protocol while we handle authentication
+mcp_http_app = fastmcp_server.http_app(path="/mcp")
+app.add_middleware(JWTAuthMiddleware)
+app.mount("/mcp", mcp_http_app)
+
+
 def main():
     """Run the auth wrapper server."""
     import uvicorn
@@ -280,13 +288,13 @@ def main():
     settings = get_settings()
     
     logger.info("=" * 80)
-    logger.info("Starting Dependency Track MCP Auth Wrapper")
+    logger.info("Starting Dependency Track MCP Server with OAuth")
     logger.info("=" * 80)
-    logger.info(f"Auth Wrapper: http://{settings.server_host}:{settings.server_port}")
-    logger.info(f"FastMCP Backend: http://{settings.fastmcp_host}:{settings.fastmcp_port}")
+    logger.info(f"Server: http://{settings.server_host}:{settings.server_port}")
     logger.info(f"OAuth Issuer: {settings.oauth_issuer}")
     logger.info(f"JWKS URL: {settings.oauth_jwks_url}")
     logger.info(f"Required Audience: {settings.oauth_audience or '(not enforced)'}")
+    logger.info(f"MCP Integration: Direct (no separate FastMCP HTTP server)")
     logger.info("=" * 80)
     
     uvicorn.run(
