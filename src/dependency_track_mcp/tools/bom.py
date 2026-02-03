@@ -233,3 +233,33 @@ def register_bom_tools(mcp: FastMCP) -> None:
             }
         except DependencyTrackError as e:
             return {"error": str(e), "details": e.details}
+
+    @mcp.tool(
+        description="Validate a Software Bill of Materials (SBOM) without importing it",
+        tags=[Scopes.UPLOAD_BOM],
+    )
+    async def validate_bom(
+        bom: Annotated[
+            str, Field(description="SBOM content (CycloneDX or SPDX in JSON/XML format)")
+        ] = "",
+    ) -> dict:
+        """
+        Validate an SBOM against Dependency Track's parser without persisting it.
+
+        Returns whether the BOM is valid along with any validation errors.
+        """
+        try:
+            if not bom:
+                return {"error": "BOM content is required"}
+
+            client = get_client()
+            bom_encoded = base64.b64encode(bom.encode("utf-8")).decode("utf-8")
+            payload = {"bom": bom_encoded}
+
+            data = await client.post("/bom/validate", data=payload)
+            return {
+                "valid": data.get("valid", False),
+                "validationErrors": data.get("validationErrors", []),
+            }
+        except DependencyTrackError as e:
+            return {"error": str(e), "details": e.details}

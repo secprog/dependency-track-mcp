@@ -130,6 +130,40 @@ def register_component_tools(mcp: FastMCP) -> None:
             return {"error": str(e), "details": e.details}
 
     @mcp.tool(
+        description="List projects that use a specific component",
+        tags=[Scopes.READ_COMPONENTS],
+    )
+    async def get_component_projects(
+        component_uuid: Annotated[str, Field(description="Component UUID")],
+        page: Annotated[int, Field(ge=1, description="Page number")] = 1,
+        page_size: Annotated[
+            int, Field(ge=1, le=100, description="Items per page")
+        ] = 100,
+    ) -> dict:
+        """
+        Get projects where a component is used.
+
+        Returns project metadata with pagination support.
+        """
+        try:
+            client = get_client()
+            params = {"pageNumber": page, "pageSize": page_size}
+            data, headers = await client.get_with_headers(
+                f"/component/{component_uuid}/projects",
+                params=params,
+            )
+            total_count = headers.get("X-Total-Count", len(data))
+
+            return {
+                "projects": data,
+                "total": int(total_count),
+                "page": page,
+                "page_size": page_size,
+            }
+        except DependencyTrackError as e:
+            return {"error": str(e), "details": e.details}
+
+    @mcp.tool(
         description="Create a new component in a project",
         tags=[Scopes.WRITE_COMPONENTS],
     )

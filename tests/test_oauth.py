@@ -2,7 +2,7 @@
 
 import base64
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -22,10 +22,11 @@ class TestJWTPayload:
 
     def test_jwt_payload_with_scope_field(self):
         """Test JWT payload with 'scope' field."""
+        now = datetime.now(UTC).replace(tzinfo=None)
         payload = JWTPayload(
             sub="user123",
-            iat=int(datetime.utcnow().timestamp()),
-            exp=int((datetime.utcnow() + timedelta(hours=1)).timestamp()),
+            iat=int(now.timestamp()),
+            exp=int((now + timedelta(hours=1)).timestamp()),
             scope="read:projects read:vulnerabilities",
         )
         scopes = payload.get_scopes()
@@ -35,8 +36,8 @@ class TestJWTPayload:
         """Test JWT payload with 'scopes' field (alternative)."""
         payload = JWTPayload(
             sub="user123",
-            iat=int(datetime.utcnow().timestamp()),
-            exp=int((datetime.utcnow() + timedelta(hours=1)).timestamp()),
+            iat=int(datetime.now(UTC).replace(tzinfo=None).timestamp()),
+            exp=int((datetime.now(UTC).replace(tzinfo=None) + timedelta(hours=1)).timestamp()),
             scopes="write:analysis upload:bom",
         )
         scopes = payload.get_scopes()
@@ -46,18 +47,19 @@ class TestJWTPayload:
         """Test JWT payload with no scope claims."""
         payload = JWTPayload(
             sub="user123",
-            iat=int(datetime.utcnow().timestamp()),
-            exp=int((datetime.utcnow() + timedelta(hours=1)).timestamp()),
+            iat=int(datetime.now(UTC).replace(tzinfo=None).timestamp()),
+            exp=int((datetime.now(UTC).replace(tzinfo=None) + timedelta(hours=1)).timestamp()),
         )
         scopes = payload.get_scopes()
         assert scopes == set()
 
     def test_jwt_payload_with_empty_scopes(self):
         """Test JWT payload with empty scope string."""
+        now = datetime.now(UTC).replace(tzinfo=None)
         payload = JWTPayload(
             sub="user123",
-            iat=int(datetime.utcnow().timestamp()),
-            exp=int((datetime.utcnow() + timedelta(hours=1)).timestamp()),
+            iat=int(now.timestamp()),
+            exp=int((now + timedelta(hours=1)).timestamp()),
             scope="",
         )
         scopes = payload.get_scopes()
@@ -81,7 +83,7 @@ class TestJWTValidator:
         expired: bool = False,
     ) -> str:
         """Create a test JWT token."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC).replace(tzinfo=None)
         exp_time = now - timedelta(minutes=1) if expired else now + timedelta(hours=1)
 
         payload = {
@@ -122,7 +124,7 @@ class TestJWTValidator:
 
     def test_jwt_expiration_validation_valid(self, validator):
         """Test expiration validation for valid token."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC).replace(tzinfo=None)
         payload = JWTPayload(
             sub="user123",
             iat=int(now.timestamp()),
@@ -133,7 +135,7 @@ class TestJWTValidator:
 
     def test_jwt_expiration_validation_expired(self, validator):
         """Test expiration validation for expired token."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC).replace(tzinfo=None)
         payload = JWTPayload(
             sub="user123",
             iat=int(now.timestamp()),
@@ -144,7 +146,7 @@ class TestJWTValidator:
 
     def test_jwt_issuer_validation_matches(self, validator):
         """Test issuer validation when issuer matches."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC).replace(tzinfo=None)
         payload = JWTPayload(
             sub="user123",
             iat=int(now.timestamp()),
@@ -156,7 +158,7 @@ class TestJWTValidator:
 
     def test_jwt_issuer_validation_mismatch(self, validator):
         """Test issuer validation fails for mismatched issuer."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC).replace(tzinfo=None)
         payload = JWTPayload(
             sub="user123",
             iat=int(now.timestamp()),
@@ -168,7 +170,7 @@ class TestJWTValidator:
 
     def test_jwt_issuer_validation_missing(self, validator):
         """Test issuer validation fails when issuer is missing."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC).replace(tzinfo=None)
         payload = JWTPayload(
             sub="user123",
             iat=int(now.timestamp()),
@@ -179,7 +181,7 @@ class TestJWTValidator:
 
     def test_jwt_audience_validation_matches(self, validator):
         """Test audience validation when audience matches."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC).replace(tzinfo=None)
         payload = JWTPayload(
             sub="user123",
             iat=int(now.timestamp()),
@@ -191,7 +193,7 @@ class TestJWTValidator:
 
     def test_jwt_audience_validation_list_matches(self, validator):
         """Test audience validation when audience is in list."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC).replace(tzinfo=None)
         payload = JWTPayload(
             sub="user123",
             iat=int(now.timestamp()),
@@ -203,7 +205,7 @@ class TestJWTValidator:
 
     def test_jwt_audience_validation_mismatch(self, validator):
         """Test audience validation fails for mismatched audience."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC).replace(tzinfo=None)
         payload = JWTPayload(
             sub="user123",
             iat=int(now.timestamp()),
@@ -214,13 +216,12 @@ class TestJWTValidator:
             validator.validate_audience(payload, expected_audience="my-app")
 
 
-@pytest.mark.asyncio
 class TestAuthorizationContext:
     """Test authorization context."""
 
     def test_authorization_context_not_expired(self):
         """Test expired check for valid token."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC).replace(tzinfo=None)
         context = AuthorizationContext(
             token="test-token",
             subject="user123",
@@ -232,7 +233,7 @@ class TestAuthorizationContext:
 
     def test_authorization_context_expired(self):
         """Test expired check for expired token."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC).replace(tzinfo=None)
         context = AuthorizationContext(
             token="test-token",
             subject="user123",
@@ -248,8 +249,8 @@ class TestAuthorizationContext:
             token="test-token",
             subject="user123",
             scopes={"read:projects", "read:vulnerabilities"},
-            issued_at=datetime.utcnow(),
-            expires_at=datetime.utcnow() + timedelta(hours=1),
+            issued_at=datetime.now(UTC).replace(tzinfo=None),
+            expires_at=datetime.now(UTC).replace(tzinfo=None) + timedelta(hours=1),
         )
         assert context.has_scope("read:projects")
 
@@ -259,8 +260,8 @@ class TestAuthorizationContext:
             token="test-token",
             subject="user123",
             scopes={"read:projects"},
-            issued_at=datetime.utcnow(),
-            expires_at=datetime.utcnow() + timedelta(hours=1),
+            issued_at=datetime.now(UTC).replace(tzinfo=None),
+            expires_at=datetime.now(UTC).replace(tzinfo=None) + timedelta(hours=1),
         )
         assert not context.has_scope("write:projects")
 
@@ -270,8 +271,8 @@ class TestAuthorizationContext:
             token="test-token",
             subject="user123",
             scopes={"read:projects", "read:vulnerabilities"},
-            issued_at=datetime.utcnow(),
-            expires_at=datetime.utcnow() + timedelta(hours=1),
+            issued_at=datetime.now(UTC).replace(tzinfo=None),
+            expires_at=datetime.now(UTC).replace(tzinfo=None) + timedelta(hours=1),
         )
         required = {"write:projects", "read:projects"}
         assert context.has_any_scope(required)
@@ -282,8 +283,8 @@ class TestAuthorizationContext:
             token="test-token",
             subject="user123",
             scopes={"read:projects"},
-            issued_at=datetime.utcnow(),
-            expires_at=datetime.utcnow() + timedelta(hours=1),
+            issued_at=datetime.now(UTC).replace(tzinfo=None),
+            expires_at=datetime.now(UTC).replace(tzinfo=None) + timedelta(hours=1),
         )
         required = {"write:projects", "write:vulnerabilities"}
         assert not context.has_any_scope(required)
@@ -294,8 +295,8 @@ class TestAuthorizationContext:
             token="test-token",
             subject="user123",
             scopes={"read:projects", "read:vulnerabilities", "write:analysis"},
-            issued_at=datetime.utcnow(),
-            expires_at=datetime.utcnow() + timedelta(hours=1),
+            issued_at=datetime.now(UTC).replace(tzinfo=None),
+            expires_at=datetime.now(UTC).replace(tzinfo=None) + timedelta(hours=1),
         )
         required = {"read:projects", "read:vulnerabilities"}
         assert context.has_all_scopes(required)
@@ -306,8 +307,8 @@ class TestAuthorizationContext:
             token="test-token",
             subject="user123",
             scopes={"read:projects"},
-            issued_at=datetime.utcnow(),
-            expires_at=datetime.utcnow() + timedelta(hours=1),
+            issued_at=datetime.now(UTC).replace(tzinfo=None),
+            expires_at=datetime.now(UTC).replace(tzinfo=None) + timedelta(hours=1),
         )
         required = {"read:projects", "read:vulnerabilities"}
         assert not context.has_all_scopes(required)
@@ -342,7 +343,7 @@ class TestOAuth2AuthorizationMiddleware:
         Note: This test mocks the JWKS fetch and JWT decode to test the middleware logic
         without requiring real cryptographic verification.
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC).replace(tzinfo=None)
         payload = {
             "sub": "user123",
             "iat": int(now.timestamp()),
@@ -391,7 +392,7 @@ class TestOAuth2AuthorizationMiddleware:
         self, middleware, mock_jwks
     ):
         """Test validation fails when token has insufficient scopes."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC).replace(tzinfo=None)
         payload = {
             "sub": "user123",
             "iat": int(now.timestamp()),
@@ -419,7 +420,7 @@ class TestOAuth2AuthorizationMiddleware:
 
     async def test_validate_authorization_header_custom_scopes(self, middleware, mock_jwks):
         """Test validation with custom required scopes."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC).replace(tzinfo=None)
         payload = {
             "sub": "user123",
             "iat": int(now.timestamp()),
@@ -448,3 +449,4 @@ class TestOAuth2AuthorizationMiddleware:
                     required_scopes={"write:analysis"},
                 )
                 assert context.has_scope("write:analysis")
+

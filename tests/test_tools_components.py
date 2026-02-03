@@ -200,44 +200,43 @@ class TestGetDependencyGraphTool:
             assert "error" in result
 
 
-# TODO: Implement get_component_projects tool in components.py before enabling these tests
-# class TestGetComponentProjectsTool:
-#     """Tests for get_component_projects tool."""
-#
-#     @pytest.mark.asyncio
-#     async def test_get_component_projects_success(self, register_tools):
-#         """Test getting projects using component."""
-#         mock_data = [{"uuid": "proj-1", "name": "Project 1"}]
-#         
-#         with patch.object(
-#             DependencyTrackClient, "get_instance"
-#         ) as mock_get_instance:
-#             mock_client = AsyncMock()
-#             mock_client.get_with_headers = AsyncMock(
-#                 return_value=(mock_data, {"X-Total-Count": "1"})
-#             )
-#             mock_get_instance.return_value = mock_client
-#             
-#             tool = find_tool(register_tools, "get_component_projects")
-#             assert tool is not None
-#             result = await tool.fn(component_uuid="comp-1")
-#             
-#             assert "projects" in result
-#             assert result["total"] == 1
-#
-#     @pytest.mark.asyncio
-#     async def test_get_component_projects_error(self, register_tools):
-#         """Test getting component projects with error."""
-#         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
-#             mock_client = AsyncMock()
-#             mock_client.get_with_headers = AsyncMock(side_effect=DependencyTrackError("Boom"))
-#             mock_get_instance.return_value = mock_client
-#
-#             tool = find_tool(register_tools, "get_component_projects")
-#             assert tool is not None
-#             result = await tool.fn(component_uuid="comp-1")
-#
-#             assert "error" in result
+class TestGetComponentProjectsTool:
+    """Tests for get_component_projects tool."""
+
+    @pytest.mark.asyncio
+    async def test_get_component_projects_success(self, register_tools):
+        """Test getting projects using component."""
+        mock_data = [{"uuid": "proj-1", "name": "Project 1"}]
+        
+        with patch.object(
+            DependencyTrackClient, "get_instance"
+        ) as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get_with_headers = AsyncMock(
+                return_value=(mock_data, {"X-Total-Count": "1"})
+            )
+            mock_get_instance.return_value = mock_client
+            
+            tool = find_tool(register_tools, "get_component_projects")
+            assert tool is not None
+            result = await tool.fn(component_uuid="comp-1")
+            
+            assert "projects" in result
+            assert result["total"] == 1
+
+    @pytest.mark.asyncio
+    async def test_get_component_projects_error(self, register_tools):
+        """Test getting component projects with error."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get_with_headers = AsyncMock(side_effect=DependencyTrackError("Boom"))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "get_component_projects")
+            assert tool is not None
+            result = await tool.fn(component_uuid="comp-1")
+
+            assert "error" in result
 
 
 class TestCreateComponentTool:

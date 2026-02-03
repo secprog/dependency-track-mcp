@@ -15,7 +15,7 @@ import asyncio
 import json
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Optional, Set
 from urllib.parse import urljoin
 
@@ -88,7 +88,7 @@ class AuthorizationContext:
 
     def is_expired(self) -> bool:
         """Check if token is expired."""
-        return datetime.utcnow() >= self.expires_at
+        return datetime.now(UTC).replace(tzinfo=None) >= self.expires_at
 
     def has_scope(self, required_scope: str) -> bool:
         """Check if token has the required scope."""
@@ -248,9 +248,9 @@ class JWTValidator:
             InvalidTokenError: If token is expired
         """
         exp_timestamp = payload.exp
-        exp_time = datetime.utcfromtimestamp(exp_timestamp)
+        exp_time = datetime.fromtimestamp(exp_timestamp, UTC).replace(tzinfo=None)
 
-        if datetime.utcnow() >= exp_time:
+        if datetime.now(UTC).replace(tzinfo=None) >= exp_time:
             raise InvalidTokenError(
                 f"Token expired at {exp_time.isoformat()}",
             )
@@ -400,8 +400,8 @@ class JWTValidator:
             token=token,
             subject=payload.sub,
             scopes=token_scopes,
-            issued_at=datetime.utcfromtimestamp(payload.iat),
-            expires_at=datetime.utcfromtimestamp(payload.exp),
+            issued_at=datetime.fromtimestamp(payload.iat, UTC).replace(tzinfo=None),
+            expires_at=datetime.fromtimestamp(payload.exp, UTC).replace(tzinfo=None),
             issuer=payload.iss,
             audience=payload.aud,
         )
