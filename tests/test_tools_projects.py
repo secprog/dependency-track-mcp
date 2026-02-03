@@ -330,3 +330,301 @@ class TestDeleteProjectTool:
             result = await tool.fn(uuid="proj-1")
 
             assert "error" in result
+
+
+class TestProjectChildrenTools:
+    """Tests for project children tools."""
+
+    @pytest.mark.asyncio
+    async def test_get_project_children_by_classifier_success(self, register_tools):
+        """Test get_project_children_by_classifier tool."""
+        mock_data = [{"uuid": "child-1", "classifier": "APPLICATION"}]
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get_with_headers = AsyncMock(return_value=(mock_data, {"X-Total-Count": "1"}))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "get_project_children_by_classifier")
+            assert tool is not None
+            result = await tool.fn(uuid="proj-1", classifier="APPLICATION")
+
+            assert result["total"] == 1
+            assert "children" in result
+
+    @pytest.mark.asyncio
+    async def test_get_project_children_by_classifier_error(self, register_tools):
+        """Test get_project_children_by_classifier error handling."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get_with_headers = AsyncMock(side_effect=DependencyTrackError("Boom"))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "get_project_children_by_classifier")
+            assert tool is not None
+            result = await tool.fn(uuid="proj-1", classifier="APPLICATION")
+
+            assert "error" in result
+
+    @pytest.mark.asyncio
+    async def test_get_project_children_by_tag_success(self, register_tools):
+        """Test get_project_children_by_tag tool."""
+        mock_data = [{"uuid": "child-1", "tags": [{"name": "prod"}]}]
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get_with_headers = AsyncMock(return_value=(mock_data, {"X-Total-Count": "1"}))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "get_project_children_by_tag")
+            assert tool is not None
+            result = await tool.fn(uuid="proj-1", tag="prod")
+
+            assert result["total"] == 1
+            assert "children" in result
+
+    @pytest.mark.asyncio
+    async def test_get_project_children_by_tag_error(self, register_tools):
+        """Test get_project_children_by_tag error handling."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get_with_headers = AsyncMock(side_effect=DependencyTrackError("Boom"))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "get_project_children_by_tag")
+            assert tool is not None
+            result = await tool.fn(uuid="proj-1", tag="prod")
+
+            assert "error" in result
+
+
+class TestProjectFilterTools:
+    """Tests for project filtering tools."""
+
+    @pytest.mark.asyncio
+    async def test_list_projects_by_classifier_success(self, register_tools):
+        """Test list_projects_by_classifier tool."""
+        mock_data = [{"uuid": "proj-1", "classifier": "APPLICATION"}]
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get_with_headers = AsyncMock(return_value=(mock_data, {"X-Total-Count": "1"}))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "list_projects_by_classifier")
+            assert tool is not None
+            result = await tool.fn(classifier="APPLICATION", page=1, page_size=50)
+
+            assert result["total"] == 1
+            assert "projects" in result
+
+    @pytest.mark.asyncio
+    async def test_list_projects_by_classifier_error(self, register_tools):
+        """Test list_projects_by_classifier error handling."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get_with_headers = AsyncMock(side_effect=DependencyTrackError("Boom"))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "list_projects_by_classifier")
+            assert tool is not None
+            result = await tool.fn(classifier="APPLICATION")
+
+            assert "error" in result
+
+    @pytest.mark.asyncio
+    async def test_list_projects_by_tag_success(self, register_tools):
+        """Test list_projects_by_tag tool."""
+        mock_data = [{"uuid": "proj-1", "tags": [{"name": "prod"}]}]
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get_with_headers = AsyncMock(return_value=(mock_data, {"X-Total-Count": "1"}))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "list_projects_by_tag")
+            assert tool is not None
+            result = await tool.fn(tag="prod")
+
+            assert result["total"] == 1
+            assert "projects" in result
+
+    @pytest.mark.asyncio
+    async def test_list_projects_by_tag_error(self, register_tools):
+        """Test list_projects_by_tag error handling."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get_with_headers = AsyncMock(side_effect=DependencyTrackError("Boom"))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "list_projects_by_tag")
+            assert tool is not None
+            result = await tool.fn(tag="prod")
+
+            assert "error" in result
+
+    @pytest.mark.asyncio
+    async def test_get_latest_project_version_success(self, register_tools):
+        """Test get_latest_project_version tool."""
+        mock_data = {"uuid": "proj-1", "name": "Project", "version": "2.0"}
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get = AsyncMock(return_value=mock_data)
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "get_latest_project_version")
+            assert tool is not None
+            result = await tool.fn(name="Project")
+
+            assert result["project"]["version"] == "2.0"
+
+    @pytest.mark.asyncio
+    async def test_get_latest_project_version_error(self, register_tools):
+        """Test get_latest_project_version error handling."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get = AsyncMock(side_effect=DependencyTrackError("Boom"))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "get_latest_project_version")
+            assert tool is not None
+            result = await tool.fn(name="Project")
+
+            assert "error" in result
+
+
+class TestProjectOperationsTools:
+    """Tests for project operations tools."""
+
+    @pytest.mark.asyncio
+    async def test_clone_project_success(self, register_tools):
+        """Test clone_project tool."""
+        mock_data = {"uuid": "proj-2", "name": "Cloned Project", "version": "2.0"}
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.put = AsyncMock(return_value=mock_data)
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "clone_project")
+            assert tool is not None
+            result = await tool.fn(
+                uuid="proj-1",
+                version="2.0",
+                include_tags=True,
+                include_components=False,
+            )
+
+            assert result["project"]["version"] == "2.0"
+            assert "message" in result
+
+    @pytest.mark.asyncio
+    async def test_clone_project_error(self, register_tools):
+        """Test clone_project error handling."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.put = AsyncMock(side_effect=DependencyTrackError("Boom"))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "clone_project")
+            assert tool is not None
+            result = await tool.fn(uuid="proj-1", version="2.0")
+
+            assert "error" in result
+
+    @pytest.mark.asyncio
+    async def test_batch_delete_projects_success(self, register_tools):
+        """Test batch_delete_projects tool."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.post = AsyncMock(return_value=None)
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "batch_delete_projects")
+            assert tool is not None
+            result = await tool.fn(uuids=["proj-1", "proj-2", "proj-3"])
+
+            assert "message" in result
+            assert "3 projects" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_batch_delete_projects_error(self, register_tools):
+        """Test batch_delete_projects error handling."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.post = AsyncMock(side_effect=DependencyTrackError("Boom"))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "batch_delete_projects")
+            assert tool is not None
+            result = await tool.fn(uuids=["proj-1"])
+
+            assert "error" in result
+
+    @pytest.mark.asyncio
+    async def test_patch_project_success(self, register_tools):
+        """Test patch_project tool."""
+        mock_data = {"uuid": "proj-1", "name": "Patched", "active": False}
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.patch = AsyncMock(return_value=mock_data)
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "patch_project")
+            assert tool is not None
+            result = await tool.fn(
+                uuid="proj-1",
+                name="Patched",
+                active=False,
+                tags=["staging"],
+            )
+
+            assert result["project"]["name"] == "Patched"
+            assert "message" in result
+
+    @pytest.mark.asyncio
+    async def test_patch_project_error(self, register_tools):
+        """Test patch_project error handling."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.patch = AsyncMock(side_effect=DependencyTrackError("Boom"))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "patch_project")
+            assert tool is not None
+            result = await tool.fn(uuid="proj-1", name="Patched")
+
+            assert "error" in result
+
+    @pytest.mark.asyncio
+    async def test_list_projects_without_descendants_success(self, register_tools):
+        """Test list_projects_without_descendants tool."""
+        mock_data = [{"uuid": "proj-2", "name": "Other Project"}]
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get_with_headers = AsyncMock(return_value=(mock_data, {"X-Total-Count": "1"}))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "list_projects_without_descendants")
+            assert tool is not None
+            result = await tool.fn(uuid="proj-1")
+
+            assert result["total"] == 1
+            assert "projects" in result
+
+    @pytest.mark.asyncio
+    async def test_list_projects_without_descendants_error(self, register_tools):
+        """Test list_projects_without_descendants error handling."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get_with_headers = AsyncMock(side_effect=DependencyTrackError("Boom"))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "list_projects_without_descendants")
+            assert tool is not None
+            result = await tool.fn(uuid="proj-1")
+
+            assert "error" in result

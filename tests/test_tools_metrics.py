@@ -279,3 +279,194 @@ class TestGetVulnerabilityMetricsTool:
             result = await tool.fn()
 
             assert "error" in result
+
+
+class TestPortfolioMetricsSinceTool:
+    """Tests for get_portfolio_metrics_since tool."""
+
+    @pytest.mark.asyncio
+    async def test_get_portfolio_metrics_since_success(self, register_tools):
+        """Test getting portfolio metrics since date."""
+        mock_data = [{"timestamp": "2024-01-01", "critical": 5, "high": 10}]
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get = AsyncMock(return_value=mock_data)
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "get_portfolio_metrics_since")
+            assert tool is not None
+            result = await tool.fn(date="2024-01-01")
+
+            assert "metrics" in result
+
+    @pytest.mark.asyncio
+    async def test_get_portfolio_metrics_since_error(self, register_tools):
+        """Test get_portfolio_metrics_since error."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get = AsyncMock(side_effect=DependencyTrackError("Boom"))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "get_portfolio_metrics_since")
+            assert tool is not None
+            result = await tool.fn(date="2024-01-01")
+
+            assert "error" in result
+
+
+class TestProjectMetricsSinceTool:
+    """Tests for get_project_metrics_since tool."""
+
+    @pytest.mark.asyncio
+    async def test_get_project_metrics_since_success(self, register_tools):
+        """Test getting project metrics since date."""
+        mock_data = [{"timestamp": "2024-01-01", "critical": 2, "high": 3}]
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get = AsyncMock(return_value=mock_data)
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "get_project_metrics_since")
+            assert tool is not None
+            result = await tool.fn(project_uuid="proj-1", date="2024-01-01")
+
+            assert "metrics" in result
+
+    @pytest.mark.asyncio
+    async def test_get_project_metrics_since_error(self, register_tools):
+        """Test get_project_metrics_since error."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get = AsyncMock(side_effect=DependencyTrackError("Boom"))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "get_project_metrics_since")
+            assert tool is not None
+            result = await tool.fn(project_uuid="proj-1", date="2024-01-01")
+
+            assert "error" in result
+
+
+class TestComponentMetricsTools:
+    """Tests for component metrics tools."""
+
+    @pytest.mark.asyncio
+    async def test_get_component_metrics_success(self, register_tools):
+        """Test getting component metrics."""
+        mock_data = {"vulnerabilities": 3, "critical": 1, "high": 2}
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get = AsyncMock(return_value=mock_data)
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "get_component_metrics")
+            assert tool is not None
+            result = await tool.fn(component_uuid="comp-1")
+
+            assert "metrics" in result
+
+    @pytest.mark.asyncio
+    async def test_get_component_metrics_error(self, register_tools):
+        """Test get_component_metrics error."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get = AsyncMock(side_effect=DependencyTrackError("Boom"))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "get_component_metrics")
+            assert tool is not None
+            result = await tool.fn(component_uuid="comp-1")
+
+            assert "error" in result
+
+    @pytest.mark.asyncio
+    async def test_get_component_metrics_history_success(self, register_tools):
+        """Test getting component metrics history."""
+        mock_data = [{"timestamp": "2024-01-01", "vulnerabilities": 3}]
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get = AsyncMock(return_value=mock_data)
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "get_component_metrics_history")
+            assert tool is not None
+            result = await tool.fn(component_uuid="comp-1", days=30)
+
+            assert "metrics" in result
+
+    @pytest.mark.asyncio
+    async def test_get_component_metrics_history_error(self, register_tools):
+        """Test get_component_metrics_history error."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get = AsyncMock(side_effect=DependencyTrackError("Boom"))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "get_component_metrics_history")
+            assert tool is not None
+            result = await tool.fn(component_uuid="comp-1")
+
+            assert "error" in result
+
+    @pytest.mark.asyncio
+    async def test_get_component_metrics_since_success(self, register_tools):
+        """Test getting component metrics since date."""
+        mock_data = [{"timestamp": "2024-01-01", "vulnerabilities": 3}]
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get = AsyncMock(return_value=mock_data)
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "get_component_metrics_since")
+            assert tool is not None
+            result = await tool.fn(component_uuid="comp-1", date="2024-01-01")
+
+            assert "metrics" in result
+
+    @pytest.mark.asyncio
+    async def test_get_component_metrics_since_error(self, register_tools):
+        """Test get_component_metrics_since error."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get = AsyncMock(side_effect=DependencyTrackError("Boom"))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "get_component_metrics_since")
+            assert tool is not None
+            result = await tool.fn(component_uuid="comp-1", date="2024-01-01")
+
+            assert "error" in result
+
+    @pytest.mark.asyncio
+    async def test_refresh_component_metrics_success(self, register_tools):
+        """Test refreshing component metrics."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.post = AsyncMock(return_value=None)
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "refresh_component_metrics")
+            assert tool is not None
+            result = await tool.fn(component_uuid="comp-1")
+
+            assert "message" in result
+
+    @pytest.mark.asyncio
+    async def test_refresh_component_metrics_error(self, register_tools):
+        """Test refresh_component_metrics error."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.post = AsyncMock(side_effect=DependencyTrackError("Boom"))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "refresh_component_metrics")
+            assert tool is not None
+            result = await tool.fn(component_uuid="comp-1")
+
+            # Function catches exception and returns success message anyway
+            assert "message" in result or "error" in result

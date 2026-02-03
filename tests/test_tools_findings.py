@@ -247,3 +247,107 @@ class TestListFindingsGroupedTool:
             result = await tool.fn()
 
             assert "error" in result
+
+
+class TestListAllFindingsTool:
+    """Tests for list_all_findings tool."""
+
+    @pytest.mark.asyncio
+    async def test_list_all_findings_success(self, register_tools):
+        """Test listing all findings."""
+        mock_data = [{"component": {"name": "lodash"}}]
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get_with_headers = AsyncMock(return_value=(mock_data, {"X-Total-Count": "1"}))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "list_all_findings")
+            assert tool is not None
+            result = await tool.fn()
+
+            assert "findings" in result
+            assert result["total"] == 1
+
+    @pytest.mark.asyncio
+    async def test_list_all_findings_error(self, register_tools):
+        """Test list_all_findings with error."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get_with_headers = AsyncMock(side_effect=DependencyTrackError("Boom"))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "list_all_findings")
+            assert tool is not None
+            result = await tool.fn()
+
+            assert "error" in result
+
+
+class TestAnalyzeProjectTool:
+    """Tests for analyze_project tool."""
+
+    @pytest.mark.asyncio
+    async def test_analyze_project_success(self, register_tools):
+        """Test triggering project analysis."""
+        mock_data = {"token": "abc123"}
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.post = AsyncMock(return_value=mock_data)
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "analyze_project")
+            assert tool is not None
+            result = await tool.fn(project_uuid="proj-1")
+
+            assert "token" in result
+            assert "message" in result
+
+    @pytest.mark.asyncio
+    async def test_analyze_project_error(self, register_tools):
+        """Test analyze_project with error."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.post = AsyncMock(side_effect=DependencyTrackError("Boom"))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "analyze_project")
+            assert tool is not None
+            result = await tool.fn(project_uuid="proj-1")
+
+            assert "error" in result
+
+
+class TestExportProjectFindingsTool:
+    """Tests for export_project_findings tool."""
+
+    @pytest.mark.asyncio
+    async def test_export_project_findings_success(self, register_tools):
+        """Test exporting project findings."""
+        mock_data = {"version": "1.0", "findings": []}
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get = AsyncMock(return_value=mock_data)
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "export_project_findings")
+            assert tool is not None
+            result = await tool.fn(project_uuid="proj-1")
+
+            assert "findings" in result
+
+    @pytest.mark.asyncio
+    async def test_export_project_findings_error(self, register_tools):
+        """Test export_project_findings with error."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get = AsyncMock(side_effect=DependencyTrackError("Boom"))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "export_project_findings")
+            assert tool is not None
+            result = await tool.fn(project_uuid="proj-1")
+
+            assert "error" in result

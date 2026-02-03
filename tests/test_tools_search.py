@@ -210,3 +210,105 @@ class TestSearchLicensesTool:
             result = await tool.fn(query="MIT")
 
             assert "error" in result
+
+
+class TestSearchServicesTool:
+    """Tests for search_services tool."""
+
+    @pytest.mark.asyncio
+    async def test_search_services_success(self, register_tools):
+        """Test searching for services."""
+        mock_data = [{"uuid": "svc-1", "name": "API Service", "version": "1.0"}]
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get_with_headers = AsyncMock(return_value=(mock_data, {"X-Total-Count": "1"}))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "search_services")
+            assert tool is not None
+            result = await tool.fn(query="API")
+
+            assert "services" in result
+            assert result["total"] == 1
+
+    @pytest.mark.asyncio
+    async def test_search_services_error(self, register_tools):
+        """Test search_services error handling."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get_with_headers = AsyncMock(side_effect=DependencyTrackError("Boom"))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "search_services")
+            assert tool is not None
+            result = await tool.fn(query="API")
+
+            assert "error" in result
+
+
+class TestSearchVulnerableSoftwareTool:
+    """Tests for search_vulnerable_software tool."""
+
+    @pytest.mark.asyncio
+    async def test_search_vulnerable_software_success(self, register_tools):
+        """Test searching for vulnerable software."""
+        mock_data = [{"cpe": "cpe:2.3:a:apache:log4j:2.14.1", "vulnerabilities": []}]
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get_with_headers = AsyncMock(return_value=(mock_data, {"X-Total-Count": "1"}))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "search_vulnerable_software")
+            assert tool is not None
+            result = await tool.fn(query="log4j")
+
+            assert "vulnerableSoftware" in result
+            assert result["total"] == 1
+
+    @pytest.mark.asyncio
+    async def test_search_vulnerable_software_error(self, register_tools):
+        """Test search_vulnerable_software error handling."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get_with_headers = AsyncMock(side_effect=DependencyTrackError("Boom"))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "search_vulnerable_software")
+            assert tool is not None
+            result = await tool.fn(query="log4j")
+
+            assert "error" in result
+
+
+class TestReindexSearchTool:
+    """Tests for reindex_search tool."""
+
+    @pytest.mark.asyncio
+    async def test_reindex_search_success(self, register_tools):
+        """Test triggering search reindex."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.post = AsyncMock(return_value=None)
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "reindex_search")
+            assert tool is not None
+            result = await tool.fn()
+
+            assert "message" in result
+
+    @pytest.mark.asyncio
+    async def test_reindex_search_error(self, register_tools):
+        """Test reindex_search error handling."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.post = AsyncMock(side_effect=DependencyTrackError("Boom"))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "reindex_search")
+            assert tool is not None
+            result = await tool.fn()
+
+            assert "error" in result
