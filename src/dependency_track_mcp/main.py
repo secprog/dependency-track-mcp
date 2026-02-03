@@ -329,7 +329,10 @@ def main():
     logger.info(f"Server: {protocol}://{settings.server_host}:{settings.server_port}")
     logger.info(f"OAuth Issuer: {settings.oauth_issuer}")
     logger.info(f"JWKS URL: {settings.oauth_jwks_url}")
-    logger.info(f"Required Audience: {settings.oauth_audience or '(not enforced)'}")
+    if settings.oauth_audience:
+        logger.info("Required Audience: configured (value not logged)")
+    else:
+        logger.info("Required Audience: (not enforced)")
     logger.info(f"MCP Integration: Direct (no separate FastMCP HTTP server)")
     logger.info("=" * 80)
 
