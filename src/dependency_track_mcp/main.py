@@ -327,7 +327,7 @@ def main():
     logger.info("Starting Dependency Track MCP Server with OAuth")
     logger.info("=" * 80)
     logger.info(f"Server: {protocol}://{settings.server_host}:{settings.server_port}")
-    logger.info(f"OAuth Issuer: {settings.oauth_issuer}")
+    logger.info("OAuth Issuer: configured (value not logged)")
     logger.info(f"JWKS URL: {settings.oauth_jwks_url}")
     if settings.oauth_audience:
         logger.info("Required Audience: configured (value not logged)")
