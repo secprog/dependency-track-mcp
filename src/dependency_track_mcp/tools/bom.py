@@ -174,27 +174,62 @@ def register_bom_tools(mcp: FastMCP) -> None:
             return {"error": str(e), "details": e.details}
 
     @mcp.tool(
-        description="Validate a BOM without uploading it",
+        description="Upload a BOM using POST method (alternative to PUT)",
         tags=[Scopes.UPLOAD_BOM],
     )
-    async def validate_bom(
+    async def upload_bom_post(
+        project_uuid: Annotated[
+            str | None, Field(description="Target project UUID (required if not auto-creating)")
+        ] = None,
+        project_name: Annotated[
+            str | None, Field(description="Project name (for auto-create)")
+        ] = None,
+        project_version: Annotated[
+            str | None, Field(description="Project version (for auto-create)")
+        ] = None,
         bom: Annotated[
             str, Field(description="SBOM content (CycloneDX or SPDX in JSON/XML format)")
-        ],
+        ] = "",
+        auto_create: Annotated[
+            bool, Field(description="Auto-create project if it doesn't exist")
+        ] = False,
     ) -> dict:
         """
-        Validate a Software Bill of Materials without uploading.
+        Upload a Software Bill of Materials using POST method.
 
-        Checks if the BOM is valid and can be processed by Dependency Track.
-        Useful for CI/CD validation before actual upload.
+        Alternative to upload_bom (PUT). Both methods achieve the same result.
+        Use this when your infrastructure requires POST for uploads.
         """
         try:
+            if not project_uuid and not (auto_create and project_name):
+                return {
+                    "error": "Either project_uuid or (auto_create with project_name) is required"
+                }
+
+            if not bom:
+                return {"error": "BOM content is required"}
+
             client = get_client()
+
+            # Base64 encode the BOM
             bom_encoded = base64.b64encode(bom.encode("utf-8")).decode("utf-8")
-            data = await client.post("/bom/validate", data={"bom": bom_encoded})
+
+            payload = {"bom": bom_encoded}
+
+            if project_uuid:
+                payload["project"] = project_uuid
+            if auto_create:
+                payload["autoCreate"] = True
+            if project_name:
+                payload["projectName"] = project_name
+            if project_version:
+                payload["projectVersion"] = project_version
+
+            data = await client.post("/bom", data=payload)
+
             return {
-                "valid": data.get("valid", True),
-                "validationErrors": data.get("validationErrors", []),
+                "token": data.get("token"),
+                "message": "BOM uploaded successfully. Use check_bom_processing to monitor status.",
             }
         except DependencyTrackError as e:
             return {"error": str(e), "details": e.details}

@@ -35,7 +35,7 @@ def register_metrics_tools(mcp: FastMCP) -> None:
             return {"error": str(e), "details": e.details}
 
     @mcp.tool(
-        description="Get historical security metrics for the portfolio",
+        description="Get historical security metrics for the portfolio by number of days",
         tags=[Scopes.READ_METRICS],
     )
     async def get_portfolio_metrics_history(
@@ -51,11 +51,29 @@ def register_metrics_tools(mcp: FastMCP) -> None:
         """
         try:
             client = get_client()
-            data = await client.get(
-                "/metrics/portfolio/since",
-                params={"days": days},
-            )
+            data = await client.get(f"/metrics/portfolio/{days}/days")
             return {"metrics": data, "days": days}
+        except DependencyTrackError as e:
+            return {"error": str(e), "details": e.details}
+
+    @mcp.tool(
+        description="Get historical security metrics for the portfolio since a specific date",
+        tags=[Scopes.READ_METRICS],
+    )
+    async def get_portfolio_metrics_since(
+        date: Annotated[
+            str, Field(description="Start date in ISO format (YYYY-MM-DD)")
+        ],
+    ) -> dict:
+        """
+        Get historical security metrics for the portfolio since a specific date.
+
+        Returns time-series data from the specified date to now.
+        """
+        try:
+            client = get_client()
+            data = await client.get(f"/metrics/portfolio/since/{date}")
+            return {"metrics": data, "since": date}
         except DependencyTrackError as e:
             return {"error": str(e), "details": e.details}
 
@@ -83,7 +101,7 @@ def register_metrics_tools(mcp: FastMCP) -> None:
             return {"error": str(e), "details": e.details}
 
     @mcp.tool(
-        description="Get historical security metrics for a project",
+        description="Get historical security metrics for a project by number of days",
         tags=[Scopes.READ_METRICS],
     )
     async def get_project_metrics_history(
@@ -100,11 +118,30 @@ def register_metrics_tools(mcp: FastMCP) -> None:
         """
         try:
             client = get_client()
-            data = await client.get(
-                f"/metrics/project/{project_uuid}/since",
-                params={"days": days},
-            )
+            data = await client.get(f"/metrics/project/{project_uuid}/days/{days}")
             return {"metrics": data, "days": days}
+        except DependencyTrackError as e:
+            return {"error": str(e), "details": e.details}
+
+    @mcp.tool(
+        description="Get historical security metrics for a project since a specific date",
+        tags=[Scopes.READ_METRICS],
+    )
+    async def get_project_metrics_since(
+        project_uuid: Annotated[str, Field(description="Project UUID")],
+        date: Annotated[
+            str, Field(description="Start date in ISO format (YYYY-MM-DD)")
+        ],
+    ) -> dict:
+        """
+        Get historical security metrics for a project since a specific date.
+
+        Returns time-series data from the specified date to now.
+        """
+        try:
+            client = get_client()
+            data = await client.get(f"/metrics/project/{project_uuid}/since/{date}")
+            return {"metrics": data, "since": date}
         except DependencyTrackError as e:
             return {"error": str(e), "details": e.details}
 
@@ -160,5 +197,87 @@ def register_metrics_tools(mcp: FastMCP) -> None:
             client = get_client()
             data = await client.get("/metrics/vulnerability")
             return {"metrics": data}
+        except DependencyTrackError as e:
+            return {"error": str(e), "details": e.details}
+
+    @mcp.tool(
+        description="Get current security metrics for a specific component",
+        tags=[Scopes.READ_METRICS],
+    )
+    async def get_component_metrics(
+        component_uuid: Annotated[str, Field(description="Component UUID")],
+    ) -> dict:
+        """
+        Get current security metrics for a specific component.
+
+        Returns component-specific metrics including vulnerability counts by severity.
+        """
+        try:
+            client = get_client()
+            data = await client.get(f"/metrics/component/{component_uuid}/current")
+            return {"metrics": data}
+        except DependencyTrackError as e:
+            return {"error": str(e), "details": e.details}
+
+    @mcp.tool(
+        description="Get historical security metrics for a component by number of days",
+        tags=[Scopes.READ_METRICS],
+    )
+    async def get_component_metrics_history(
+        component_uuid: Annotated[str, Field(description="Component UUID")],
+        days: Annotated[
+            int, Field(ge=1, le=365, description="Number of days of history")
+        ] = 30,
+    ) -> dict:
+        """
+        Get historical security metrics for a specific component.
+
+        Returns time-series data for tracking component vulnerability trends.
+        """
+        try:
+            client = get_client()
+            data = await client.get(f"/metrics/component/{component_uuid}/days/{days}")
+            return {"metrics": data, "days": days}
+        except DependencyTrackError as e:
+            return {"error": str(e), "details": e.details}
+
+    @mcp.tool(
+        description="Get historical security metrics for a component since a specific date",
+        tags=[Scopes.READ_METRICS],
+    )
+    async def get_component_metrics_since(
+        component_uuid: Annotated[str, Field(description="Component UUID")],
+        date: Annotated[
+            str, Field(description="Start date in ISO format (YYYY-MM-DD)")
+        ],
+    ) -> dict:
+        """
+        Get historical security metrics for a component since a specific date.
+
+        Returns time-series data from the specified date to now.
+        """
+        try:
+            client = get_client()
+            data = await client.get(f"/metrics/component/{component_uuid}/since/{date}")
+            return {"metrics": data, "since": date}
+        except DependencyTrackError as e:
+            return {"error": str(e), "details": e.details}
+
+    @mcp.tool(
+        description="Trigger a refresh of component metrics",
+        tags=[Scopes.READ_METRICS],
+    )
+    async def refresh_component_metrics(
+        component_uuid: Annotated[str, Field(description="Component UUID")],
+    ) -> dict:
+        """
+        Trigger a refresh of metrics for a specific component.
+
+        This recalculates vulnerability metrics for the component.
+        """
+        try:
+            client = get_client()
+            await client.get(f"/metrics/component/{component_uuid}/refresh")
+            return {"message": f"Component {component_uuid} metrics refresh initiated"}
         except DependencyTrackError as e:
             return {"error": str(e), "details": e.details}

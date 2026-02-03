@@ -202,3 +202,100 @@ def register_search_tools(mcp: FastMCP) -> None:
             }
         except DependencyTrackError as e:
             return {"error": str(e), "details": e.details}
+
+    @mcp.tool(
+        description="Search for services by name",
+        tags=[Scopes.SEARCH],
+    )
+    async def search_services(
+        query: Annotated[str, Field(description="Service name search query")],
+        page: Annotated[int, Field(ge=1, description="Page number")] = 1,
+        page_size: Annotated[
+            int, Field(ge=1, le=100, description="Items per page")
+        ] = 100,
+    ) -> dict:
+        """
+        Search for services by name.
+
+        Finds services matching the search query across all projects.
+        """
+        try:
+            client = get_client()
+            params = {
+                "query": query,
+                "pageNumber": page,
+                "pageSize": page_size,
+            }
+            data, headers = await client.get_with_headers(
+                "/search/service", params=params
+            )
+            total_count = headers.get("X-Total-Count", len(data))
+
+            return {
+                "services": data,
+                "total": int(total_count),
+                "query": query,
+                "page": page,
+                "page_size": page_size,
+            }
+        except DependencyTrackError as e:
+            return {"error": str(e), "details": e.details}
+
+    @mcp.tool(
+        description="Search for vulnerable software by CPE or keyword",
+        tags=[Scopes.SEARCH],
+    )
+    async def search_vulnerable_software(
+        query: Annotated[
+            str, Field(description="CPE or software name search query")
+        ],
+        page: Annotated[int, Field(ge=1, description="Page number")] = 1,
+        page_size: Annotated[
+            int, Field(ge=1, le=100, description="Items per page")
+        ] = 100,
+    ) -> dict:
+        """
+        Search for vulnerable software by CPE identifier or name.
+
+        Finds vulnerable software entries in the NVD database
+        that match the search query.
+        """
+        try:
+            client = get_client()
+            params = {
+                "query": query,
+                "pageNumber": page,
+                "pageSize": page_size,
+            }
+            data, headers = await client.get_with_headers(
+                "/search/vulnerablesoftware", params=params
+            )
+            total_count = headers.get("X-Total-Count", len(data))
+
+            return {
+                "vulnerableSoftware": data,
+                "total": int(total_count),
+                "query": query,
+                "page": page,
+                "page_size": page_size,
+            }
+        except DependencyTrackError as e:
+            return {"error": str(e), "details": e.details}
+
+    @mcp.tool(
+        description="Trigger reindexing of the search indexes",
+        tags=[Scopes.SEARCH],
+    )
+    async def reindex_search() -> dict:
+        """
+        Trigger a rebuild of Lucene search indexes.
+
+        This is an administrative operation that rebuilds all search
+        indexes. Use when search results appear to be stale or incomplete.
+        """
+        try:
+            client = get_client()
+            await client.post("/search/reindex")
+            return {"message": "Search reindex initiated"}
+        except DependencyTrackError as e:
+            return {"error": str(e), "details": e.details}

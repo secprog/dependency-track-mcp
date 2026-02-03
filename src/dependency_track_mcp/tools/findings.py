@@ -181,6 +181,36 @@ def register_finding_tools(mcp: FastMCP) -> None:
             return {"error": str(e), "details": e.details}
 
     @mcp.tool(
+        description="List all findings across the portfolio",
+        tags=[Scopes.READ_VULNERABILITIES],
+    )
+    async def list_all_findings(
+        page: Annotated[int, Field(ge=1, description="Page number")] = 1,
+        page_size: Annotated[
+            int, Field(ge=1, le=100, description="Items per page")
+        ] = 100,
+    ) -> dict:
+        """
+        List all findings across the entire portfolio.
+
+        Returns findings from all projects.
+        """
+        try:
+            client = get_client()
+            params = {"pageNumber": page, "pageSize": page_size}
+            data, headers = await client.get_with_headers("/finding", params=params)
+            total_count = headers.get("X-Total-Count", len(data))
+
+            return {
+                "findings": data,
+                "total": int(total_count),
+                "page": page,
+                "page_size": page_size,
+            }
+        except DependencyTrackError as e:
+            return {"error": str(e), "details": e.details}
+
+    @mcp.tool(
         description="Get findings summary grouped by vulnerability",
         tags=[Scopes.READ_VULNERABILITIES],
     )
@@ -199,7 +229,7 @@ def register_finding_tools(mcp: FastMCP) -> None:
         try:
             client = get_client()
             params = {"pageNumber": page, "pageSize": page_size}
-            data, headers = await client.get_with_headers("/finding", params=params)
+            data, headers = await client.get_with_headers("/finding/grouped", params=params)
             total_count = headers.get("X-Total-Count", len(data))
 
             return {
@@ -208,5 +238,48 @@ def register_finding_tools(mcp: FastMCP) -> None:
                 "page": page,
                 "page_size": page_size,
             }
+        except DependencyTrackError as e:
+            return {"error": str(e), "details": e.details}
+
+    @mcp.tool(
+        description="Trigger vulnerability analysis for a project",
+        tags=[Scopes.WRITE_ANALYSIS],
+    )
+    async def analyze_project(
+        project_uuid: Annotated[str, Field(description="Project UUID")],
+    ) -> dict:
+        """
+        Trigger vulnerability analysis for a specific project.
+
+        Initiates a background analysis of all components in the project
+        to identify vulnerabilities. Use this after uploading a new BOM.
+        """
+        try:
+            client = get_client()
+            data = await client.post(f"/finding/project/{project_uuid}/analyze")
+            return {
+                "token": data.get("token") if data else None,
+                "message": "Vulnerability analysis initiated",
+            }
+        except DependencyTrackError as e:
+            return {"error": str(e), "details": e.details}
+
+    @mcp.tool(
+        description="Export findings for a project in FPF format",
+        tags=[Scopes.READ_VULNERABILITIES],
+    )
+    async def export_project_findings(
+        project_uuid: Annotated[str, Field(description="Project UUID")],
+    ) -> dict:
+        """
+        Export all findings for a project in Finding Packaging Format (FPF).
+
+        Returns findings in a portable format suitable for import into
+        other tools or for archival purposes.
+        """
+        try:
+            client = get_client()
+            data = await client.get(f"/finding/project/{project_uuid}/export")
+            return {"findings": data}
         except DependencyTrackError as e:
             return {"error": str(e), "details": e.details}
