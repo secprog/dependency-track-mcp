@@ -467,4 +467,9 @@ def get_settings() -> Settings:
     Raises:
         ConfigurationError: If settings are invalid
     """
-    return Settings()
+    try:
+        return Settings() # type: ignore
+    except Exception as e:
+        raise ConfigurationError(
+            f"Failed to load settings from environment variables: {e}"
+        ) from e

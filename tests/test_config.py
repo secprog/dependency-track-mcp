@@ -119,7 +119,7 @@ class TestSettings:
         monkeypatch.delenv("DEPENDENCY_TRACK_API_KEY", raising=False)
         monkeypatch.delenv("MCP_OAUTH_ISSUER", raising=False)
         with pytest.raises(ValidationError):
-            Settings()  # Missing url, api_key, and oauth_issuer
+            Settings()  # type: ignore[call-arg]  # Missing url, api_key, and oauth_issuer
 
     def test_settings_missing_url(self, monkeypatch):
         """Test that url is required."""
@@ -128,7 +128,7 @@ class TestSettings:
         monkeypatch.delenv("DEPENDENCY_TRACK_API_KEY", raising=False)
         monkeypatch.delenv("MCP_OAUTH_ISSUER", raising=False)
         with pytest.raises(ValidationError):
-            Settings(api_key="test-key", oauth_issuer="https://auth.example.com")
+            Settings(url=None, api_key="test-key", oauth_issuer="https://auth.example.com")  # type: ignore
 
     def test_settings_missing_api_key(self, monkeypatch):
         """Test that api_key is required."""
@@ -137,7 +137,7 @@ class TestSettings:
         monkeypatch.delenv("DEPENDENCY_TRACK_API_KEY", raising=False)
         monkeypatch.delenv("MCP_OAUTH_ISSUER", raising=False)
         with pytest.raises(ValidationError):
-            Settings(url="https://example.com", oauth_issuer="https://auth.example.com")
+            Settings(url="https://example.com", api_key=None, oauth_issuer="https://auth.example.com")  # type: ignore
 
     def test_settings_missing_oauth_issuer(self, monkeypatch):
         """Test that oauth_issuer is required."""
@@ -145,7 +145,7 @@ class TestSettings:
         monkeypatch.delenv("DEPENDENCY_TRACK_API_KEY", raising=False)
         monkeypatch.delenv("MCP_OAUTH_ISSUER", raising=False)
         with pytest.raises(ValidationError):
-            Settings(url="https://example.com", api_key="test-key")
+            Settings(url="https://example.com", api_key="test-key")  # type: ignore[call-arg]
 
     def test_get_settings_returns_singleton(self, monkeypatch):
         """Test that get_settings returns cached instance."""
@@ -190,7 +190,11 @@ class TestSettings:
         monkeypatch.setenv("DEPENDENCY_TRACK_MAX_RETRIES", "5")
         monkeypatch.setenv("MCP_OAUTH_ISSUER", "https://auth.example.com")
 
-        settings = Settings()
+        settings = Settings(
+            url="https://env.example.com",
+            api_key="env-api-key",
+            oauth_issuer="https://auth.example.com",
+        )
         assert settings.url == "https://env.example.com"
         assert settings.api_key == "env-api-key"
         assert settings.timeout == 60

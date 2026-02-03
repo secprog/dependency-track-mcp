@@ -268,6 +268,130 @@ class TestUploadBomPostTool:
             assert "error" in result
 
 
+        @pytest.mark.asyncio
+        async def test_upload_bom_post_missing_project_uuid_and_auto_create_params(self, register_tools):
+            """Test upload_bom_post fails when neither project_uuid nor (auto_create + project_name) is provided."""
+            bom_content = '{"bomFormat": "CycloneDX", "specVersion": "1.3", "components": []}'
+        
+            with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+                mock_client = AsyncMock()
+                mock_get_instance.return_value = mock_client
+            
+                tool = find_tool(register_tools, "upload_bom_post")
+                assert tool is not None
+                # Missing both project_uuid and (auto_create + project_name)
+                result = await tool.fn(bom=bom_content)
+            
+                assert "error" in result
+                assert "Either project_uuid or (auto_create with project_name) is required" in result["error"]
+                # Ensure no API call was made
+                mock_client.post.assert_not_called()
+
+        @pytest.mark.asyncio
+        async def test_upload_bom_post_missing_bom_content(self, register_tools):
+            """Test upload_bom_post fails when BOM content is missing."""
+            with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+                mock_client = AsyncMock()
+                mock_get_instance.return_value = mock_client
+            
+                tool = find_tool(register_tools, "upload_bom_post")
+                assert tool is not None
+                # Missing BOM content
+                result = await tool.fn(project_uuid="proj-1", bom="")
+            
+                assert "error" in result
+                assert "BOM content is required" in result["error"]
+                # Ensure no API call was made
+                mock_client.post.assert_not_called()
+
+        @pytest.mark.asyncio
+        async def test_upload_bom_post_with_auto_create_and_project_name(self, register_tools):
+            """Test upload_bom_post with auto_create and project_name instead of project_uuid."""
+            bom_content = '{"bomFormat": "CycloneDX", "specVersion": "1.3", "components": []}'
+            mock_response = {
+                "token": "upload-token-123",
+            }
+        
+            with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+                mock_client = AsyncMock()
+                mock_client.post = AsyncMock(return_value=mock_response)
+                mock_get_instance.return_value = mock_client
+            
+                tool = find_tool(register_tools, "upload_bom_post")
+                assert tool is not None
+                result = await tool.fn(
+                    bom=bom_content,
+                    auto_create=True,
+                    project_name="NewProject",
+                    project_version="1.0.0"
+                )
+            
+                assert "token" in result
+            
+                # Verify payload was constructed correctly
+                call_args = mock_client.post.call_args
+                payload = call_args[1]["data"]
+                assert "bom" in payload
+                assert payload["autoCreate"] is True
+                assert payload["projectName"] == "NewProject"
+                assert payload["projectVersion"] == "1.0.0"
+
+                result = await tool.fn(bom=bom_content)
+        
+                assert "error" in result
+                assert "Either project_uuid or (auto_create with project_name) is required" in result["error"]
+                # Ensure no API call was made
+                mock_client.post.assert_not_called()
+
+        @pytest.mark.asyncio
+        async def test_upload_bom_post_missing_bom_content(self, register_tools):
+            """Test upload_bom_post fails when BOM content is missing."""
+            with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+                mock_client = AsyncMock()
+                mock_get_instance.return_value = mock_client
+        
+                tool = find_tool(register_tools, "upload_bom_post")
+                assert tool is not None
+                # Missing BOM content
+                result = await tool.fn(project_uuid="proj-1", bom="")
+        
+                assert "error" in result
+                assert "BOM content is required" in result["error"]
+                # Ensure no API call was made
+                mock_client.post.assert_not_called()
+
+        @pytest.mark.asyncio
+        async def test_upload_bom_post_with_auto_create_and_project_name(self, register_tools):
+            """Test upload_bom_post with auto_create and project_name instead of project_uuid."""
+            bom_content = '{"bomFormat": "CycloneDX", "specVersion": "1.3", "components": []}'
+            mock_response = {
+                "token": "upload-token-123",
+            }
+        
+            with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+                mock_client = AsyncMock()
+                mock_client.post = AsyncMock(return_value=mock_response)
+                mock_get_instance.return_value = mock_client
+            
+                tool = find_tool(register_tools, "upload_bom_post")
+                assert tool is not None
+                result = await tool.fn(
+                    bom=bom_content,
+                    auto_create=True,
+                    project_name="NewProject",
+                    project_version="1.0.0"
+                )
+            
+                assert "token" in result
+            
+                # Verify payload was constructed correctly
+                call_args = mock_client.post.call_args
+                payload = call_args[1]["data"]
+                assert "bom" in payload
+                assert payload["autoCreate"] is True
+                assert payload["projectName"] == "NewProject"
+                assert payload["projectVersion"] == "1.0.0"
+
 # TODO: Implement validate_bom tool in bom.py before enabling these tests
 # class TestValidateBomTool:
 #     """Tests for validate_bom tool."""

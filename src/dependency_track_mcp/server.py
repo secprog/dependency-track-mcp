@@ -20,7 +20,6 @@ import sys
 from typing import Optional
 
 from fastmcp import FastMCP
-from fastmcp.exceptions import McpError
 
 from dependency_track_mcp.client import DependencyTrackClient
 from dependency_track_mcp.config import (
