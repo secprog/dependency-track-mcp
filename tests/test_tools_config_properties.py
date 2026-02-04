@@ -207,7 +207,9 @@ class TestUpdateConfigPropertiesBatchTool:
             assert "properties" in result
             assert "message" in result
             assert "successfully" in result["message"].lower()
-            mock_client.post.assert_called_once_with("/configProperty/aggregate", data=mock_properties)
+            mock_client.post.assert_called_once_with(
+                "/configProperty/aggregate", data=mock_properties
+            )
 
     @pytest.mark.asyncio
     async def test_update_config_properties_batch_empty(self, register_tools):

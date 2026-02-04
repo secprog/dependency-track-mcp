@@ -1,6 +1,7 @@
 # Dependency Track MCP Server
 
-[![Tests](https://img.shields.io/badge/tests-829%20passing-brightgreen)](https://github.com/secprog/dependency-track-mcp)
+[![Tests](https://img.shields.io/badge/tests-909%20passing-brightgreen)](https://github.com/secprog/dependency-track-mcp)
+[![Code Coverage](https://img.shields.io/badge/code%20coverage-100%25-brightgreen)](https://github.com/secprog/dependency-track-mcp)
 [![API Coverage](https://img.shields.io/badge/API%20coverage-100%25-brightgreen)](https://github.com/secprog/dependency-track-mcp)
 [![Code Quality](https://img.shields.io/badge/ruff-passing-brightgreen)](https://github.com/secprog/dependency-track-mcp)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://github.com/secprog/dependency-track-mcp)
@@ -8,7 +9,7 @@
 
 An MCP (Model Context Protocol) server for [OWASP Dependency Track](https://dependencytrack.org/) - enabling AI assistants to interact with your Software Composition Analysis platform.
 
-**✨ Complete API Coverage**: 100% of Dependency Track API v4.13.6 endpoints implemented with 829 passing tests.
+**✨ Complete API Coverage**: 100% of Dependency Track API v4.13.6 endpoints implemented with 909 passing tests and 100% code coverage.
 
 ## Features
 
@@ -329,9 +330,10 @@ Tool groups are registered in [src/dependency_track_mcp/tools](src/dependency_tr
 
 ### Test Coverage
 
-- **829 tests** - 100% passing
+- **909 tests** - 100% passing
+- **100% code coverage** - All 3,313 lines of code fully tested
 - **100% API coverage** - All Dependency Track API v4.13.6 endpoints
-- **Unit tests** - Client, config, OAuth, models, scopes
+- **Unit tests** - Client, config, OAuth, models, scopes, all tools
 - **Integration tests** - End-to-end tool validation
 - **Mock-based** - Fast execution with respx HTTP mocking
 
@@ -364,10 +366,10 @@ pip install -e ".[dev]"
 ### Running Tests
 
 ```bash
-# Run all tests (829 tests)
+# Run all tests (909 tests)
 pytest
 
-# Run with coverage report
+# Run with coverage report (100% coverage)
 pytest --cov=src/dependency_track_mcp --cov-report=html
 
 # Run specific test categories

@@ -491,7 +491,7 @@ class TestMainFunction:
                 with patch("dependency_track_mcp.main.materialize_tls_files") as mock_materialize:
                     mock_materialize.return_value = ("cert.pem", "key.pem", None)
 
-                    with patch("uvicorn.run") as mock_uvicorn:
+                    with patch("uvicorn.run"):
                         with patch("dependency_track_mcp.main.cleanup_tls_temp_files"):
                             with patch("dependency_track_mcp.main.logger") as mock_logger:
                                 main()
