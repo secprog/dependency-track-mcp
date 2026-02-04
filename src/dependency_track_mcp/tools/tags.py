@@ -77,8 +77,8 @@ def register_tag_tools(mcp: FastMCP) -> None:
         """
         try:
             client = get_client()
-            payload = [{"name": name} for name in names]
-            await client.delete("/tag", params={"names": ",".join(names)})
+            tag_data = [{"name": name} for name in names]
+            await client.delete("/tag", data=tag_data)
             return {"message": f"Deleted {len(names)} tag(s) successfully"}
         except DependencyTrackError as e:
             return {"error": str(e), "details": e.details}
@@ -145,7 +145,10 @@ def register_tag_tools(mcp: FastMCP) -> None:
         """
         try:
             client = get_client()
-            await client.delete(f"/tag/{tag_name}/project", params={"uuids": ",".join(project_uuids)})
+            await client.delete(
+                f"/tag/{tag_name}/project",
+                params={"uuids": ",".join(project_uuids)},
+            )
             return {"message": f"Untagged {len(project_uuids)} project(s) successfully"}
         except DependencyTrackError as e:
             return {"error": str(e), "details": e.details}

@@ -51,7 +51,7 @@ def register_repository_tools(mcp: FastMCP) -> None:
         repo_type: Annotated[
             str,
             Field(
-                description="Repository type: CARGO, COMPOSER, CPAN, GEM, GO_MODULES, HEX, MAVEN, NPM, NUGET, PYPI, HACKAGE, GITHUB, NIX"
+                description="Repository type: CARGO, COMPOSER, "                "CPAN, GEM, GO_MODULES, HEX, MAVEN, NPM, "                "NUGET, PYPI, HACKAGE, GITHUB, NIX"
             ),
         ],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
@@ -87,7 +87,7 @@ def register_repository_tools(mcp: FastMCP) -> None:
         repo_type: Annotated[
             str,
             Field(
-                description="Repository type: CARGO, COMPOSER, CPAN, GEM, GO_MODULES, HEX, MAVEN, NPM, NUGET, PYPI, HACKAGE, GITHUB, NIX"
+                description="Repository type: CARGO, COMPOSER, "                "CPAN, GEM, GO_MODULES, HEX, MAVEN, NPM, "                "NUGET, PYPI, HACKAGE, GITHUB, NIX"
             ),
         ],
         identifier: Annotated[str, Field(description="Repository identifier/name")],

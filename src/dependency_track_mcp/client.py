@@ -244,9 +244,13 @@ class DependencyTrackClient:
         self,
         endpoint: str,
         params: dict[str, Any] | None = None,
+        data: dict[str, Any] | list | None = None,
     ) -> None:
         """Make a DELETE request."""
-        await self._request_with_retry("DELETE", endpoint, params=params)
+        kwargs = {"params": params}
+        if data is not None:
+            kwargs["json"] = data
+        await self._request_with_retry("DELETE", endpoint, **kwargs)
 
 
 # Convenience function for getting the client

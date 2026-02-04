@@ -299,12 +299,20 @@ def register_policy_tools(mcp: FastMCP) -> None:
         subject: Annotated[
             str,
             Field(
-                description="Condition subject: AGE, COORDINATES, CPE, CWE, HASH, LICENSE, LICENSE_GROUP, PACKAGE_URL, SEVERITY, SWID_TAGID, VERSION, COMPONENT_HASH, VULNERABILITY_ID"
+                description="Condition subject: AGE, "                "COORDINATES, CPE, CWE, HASH, LICENSE, "                "LICENSE_GROUP, PACKAGE_URL, SEVERITY, "                "SWID_TAGID, VERSION, COMPONENT_HASH, "                "VULNERABILITY_ID"
             ),
         ],
         operator: Annotated[
             str,
-            Field(description="Condition operator: IS, IS_NOT, MATCHES, NO_MATCH, NUMERIC_GREATER_THAN, NUMERIC_LESS_THAN, NUMERIC_EQUAL, NUMERIC_NOT_EQUAL, NUMERIC_GREATER_THAN_OR_EQUAL, NUMERIC_LESSER_THAN_OR_EQUAL, CONTAINS_ALL, CONTAINS_ANY"),
+            Field(
+                description="Condition operator: IS, IS_NOT, "
+                "MATCHES, NO_MATCH, NUMERIC_GREATER_THAN, "
+                "NUMERIC_LESS_THAN, NUMERIC_EQUAL, "
+                "NUMERIC_NOT_EQUAL, "
+                "NUMERIC_GREATER_THAN_OR_EQUAL, "
+                "NUMERIC_LESSER_THAN_OR_EQUAL, "
+                "CONTAINS_ALL, CONTAINS_ANY"
+            ),
         ],
         value: Annotated[str, Field(description="Condition value to match against")],
     ) -> dict:

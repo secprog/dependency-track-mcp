@@ -184,7 +184,7 @@ def register_component_tools(mcp: FastMCP) -> None:
         classifier: Annotated[
             str | None,
             Field(
-                description="Component classifier: APPLICATION, FRAMEWORK, LIBRARY, CONTAINER, OPERATING_SYSTEM, DEVICE, FIRMWARE, FILE"
+                description="Component classifier: APPLICATION, "                "FRAMEWORK, LIBRARY, CONTAINER, "                "OPERATING_SYSTEM, DEVICE, FIRMWARE, FILE"
             ),
         ] = None,
     ) -> dict:

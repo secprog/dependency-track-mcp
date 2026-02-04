@@ -21,7 +21,7 @@ def register_calculator_tools(mcp: FastMCP) -> None:
         vector: Annotated[
             str,
             Field(
-                description="CVSS vector string (e.g., CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)"
+                description="CVSS vector string "                "(e.g., CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)"
             ),
         ],
     ) -> dict:
@@ -46,7 +46,7 @@ def register_calculator_tools(mcp: FastMCP) -> None:
         vector: Annotated[
             str,
             Field(
-                description="OWASP Risk Rating vector string (e.g., SL:5/M:5/O:5/S:5/ED:5/EE:5/A:5/ID:5/LC:5/LI:5/LAV:5/LAC:5/FD:5/RD:5/NC:5/PV:5)"
+                description="OWASP Risk Rating vector "                "(e.g., SL:5/M:5/O:5/S:5/ED:5/EE:5/A:5/"                "ID:5/LC:5/LI:5/LAV:5/LAC:5/FD:5/RD:5/NC:5/PV:5)"
             ),
         ],
     ) -> dict:
@@ -56,10 +56,17 @@ def register_calculator_tools(mcp: FastMCP) -> None:
         Returns the likelihood score, technical impact score, and business impact score.
 
         Vector components:
-        - Threat Agent Factors: SL (Skill Level), M (Motive), O (Opportunity), S (Size)
-        - Vulnerability Factors: ED (Ease of Discovery), EE (Ease of Exploit), A (Awareness), ID (Intrusion Detection)
-        - Technical Impact: LC (Loss of Confidentiality), LI (Loss of Integrity), LAV (Loss of Availability), LAC (Loss of Accountability)
-        - Business Impact: FD (Financial Damage), RD (Reputation Damage), NC (Non-Compliance), PV (Privacy Violation)
+        - Threat Agent Factors: SL (Skill Level), M (Motive),
+          O (Opportunity), S (Size)
+        - Vulnerability Factors: ED (Ease of Discovery),
+          EE (Ease of Exploit), A (Awareness),
+          ID (Intrusion Detection)
+        - Technical Impact: LC (Loss of Confidentiality),
+          LI (Loss of Integrity), LAV (Loss of Availability),
+          LAC (Loss of Accountability)
+        - Business Impact: FD (Financial Damage),
+          RD (Reputation Damage), NC (Non-Compliance),
+          PV (Privacy Violation)
         """
         try:
             client = get_client()

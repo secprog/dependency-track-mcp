@@ -38,7 +38,7 @@ def register_permission_tools(mcp: FastMCP) -> None:
         permission: Annotated[
             str,
             Field(
-                description="Permission name (e.g., BOM_UPLOAD, VULNERABILITY_ANALYSIS, PROJECT_CREATION_UPLOAD, etc.)"
+                description="Permission name (e.g., BOM_UPLOAD, "                "VULNERABILITY_ANALYSIS, PROJECT_CREATION_UPLOAD)"
             ),
         ],
         team_uuid: Annotated[str, Field(description="Team UUID")],

@@ -115,7 +115,7 @@ def register_project_tools(mcp: FastMCP) -> None:
         classifier: Annotated[
             str | None,
             Field(
-                description="Project classifier (APPLICATION, FRAMEWORK, LIBRARY, CONTAINER, OPERATING_SYSTEM, DEVICE, FIRMWARE, FILE)"
+                description="Project classifier: APPLICATION, "                "FRAMEWORK, LIBRARY, CONTAINER, "                "OPERATING_SYSTEM, DEVICE, FIRMWARE, FILE"
             ),
         ] = None,
         tags: Annotated[
@@ -261,7 +261,7 @@ def register_project_tools(mcp: FastMCP) -> None:
         classifier: Annotated[
             str,
             Field(
-                description="Project classifier: APPLICATION, FRAMEWORK, LIBRARY, CONTAINER, OPERATING_SYSTEM, DEVICE, FIRMWARE, FILE"
+                description="Project classifier: APPLICATION, "                "FRAMEWORK, LIBRARY, CONTAINER, "                "OPERATING_SYSTEM, DEVICE, FIRMWARE, FILE"
             ),
         ],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
@@ -329,7 +329,7 @@ def register_project_tools(mcp: FastMCP) -> None:
         classifier: Annotated[
             str,
             Field(
-                description="Project classifier: APPLICATION, FRAMEWORK, LIBRARY, CONTAINER, OPERATING_SYSTEM, DEVICE, FIRMWARE, FILE"
+                description="Project classifier: APPLICATION, "                "FRAMEWORK, LIBRARY, CONTAINER, "                "OPERATING_SYSTEM, DEVICE, FIRMWARE, FILE"
             ),
         ],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,

@@ -97,7 +97,11 @@ def register_bom_tools(mcp: FastMCP) -> None:
             data = await client.get(f"/bom/token/{token}")
             return {
                 "processing": data.get("processing", False),
-                "message": "BOM is still processing" if data.get("processing") else "BOM processing complete",
+                "message": (
+                    "BOM is still processing"
+                    if data.get("processing")
+                    else "BOM processing complete"
+                ),
             }
         except DependencyTrackError as e:
             return {"error": str(e), "details": e.details}
@@ -114,7 +118,7 @@ def register_bom_tools(mcp: FastMCP) -> None:
         variant: Annotated[
             str,
             Field(
-                description="BOM variant: inventory (components only), withVulnerabilities (components + vulns), or vex (VEX format)"
+                description="BOM variant: inventory, "                "withVulnerabilities, or vex"
             ),
         ] = "inventory",
     ) -> dict:

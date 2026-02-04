@@ -73,7 +73,7 @@ def register_finding_tools(mcp: FastMCP) -> None:
         try:
             client = get_client()
             data = await client.get(
-                f"/analysis",
+                "/analysis",
                 params={
                     "component": component_uuid,
                     "vulnerability": vulnerability_uuid,
@@ -94,13 +94,13 @@ def register_finding_tools(mcp: FastMCP) -> None:
         state: Annotated[
             str | None,
             Field(
-                description="Analysis state: NOT_SET, EXPLOITABLE, IN_TRIAGE, RESOLVED, FALSE_POSITIVE, NOT_AFFECTED"
+                description="Analysis state: NOT_SET, "                "EXPLOITABLE, IN_TRIAGE, RESOLVED, "                "FALSE_POSITIVE, NOT_AFFECTED"
             ),
         ] = None,
         justification: Annotated[
             str | None,
             Field(
-                description="Justification: CODE_NOT_PRESENT, CODE_NOT_REACHABLE, REQUIRES_CONFIGURATION, REQUIRES_DEPENDENCY, REQUIRES_ENVIRONMENT, PROTECTED_BY_COMPILER, PROTECTED_AT_RUNTIME, PROTECTED_AT_PERIMETER, PROTECTED_BY_MITIGATING_CONTROL"
+                description="Justification: CODE_NOT_PRESENT, "                "CODE_NOT_REACHABLE, REQUIRES_CONFIGURATION, "                "REQUIRES_DEPENDENCY, REQUIRES_ENVIRONMENT, "                "PROTECTED_BY_COMPILER, PROTECTED_AT_RUNTIME, "                "PROTECTED_AT_PERIMETER, "                "PROTECTED_BY_MITIGATING_CONTROL"
             ),
         ] = None,
         response: Annotated[

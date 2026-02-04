@@ -54,7 +54,7 @@ def register_notification_tools(mcp: FastMCP) -> None:
         publisher_class: Annotated[
             str,
             Field(
-                description="Publisher class: SLACK, MS_TEAMS, MATTERMOST, EMAIL, CONSOLE, WEBHOOK, JIRA"
+                description="Publisher class: SLACK, MS_TEAMS, "                "MATTERMOST, EMAIL, CONSOLE, WEBHOOK, JIRA"
             ),
         ],
         template: Annotated[str, Field(description="Notification template content")],
