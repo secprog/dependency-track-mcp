@@ -271,18 +271,6 @@ async def health_check():
     )
 
 
-@app.post("/admin/refresh-jwks")
-async def admin_refresh_jwks():
-    """Admin endpoint to force JWKS cache refresh.
-
-    Use this after key rotation.
-
-    In production, protect this endpoint with authentication.
-    """
-    refresh_jwks_cache()
-    return JSONResponse({"message": "JWKS cache cleared, will refresh on next request"})
-
-
 # Mount FastMCP's HTTP app at /mcp with JWT auth middleware
 # This allows FastMCP to handle the MCP protocol while we handle authentication
 mcp_http_app = fastmcp_server.http_app(path="/mcp")

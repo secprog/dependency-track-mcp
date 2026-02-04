@@ -434,23 +434,6 @@ class TestHealthCheck:
                 dependency_track_mcp.main._jwks_cache = None
 
 
-class TestAdminRefreshJWKS:
-    """Tests for admin JWKS refresh endpoint."""
-
-    def test_admin_refresh_jwks(self, client):
-        """Test /admin/refresh-jwks endpoint."""
-        import dependency_track_mcp.main
-
-        dependency_track_mcp.main._jwks_cache = {"keys": []}
-
-        response = client.post("/admin/refresh-jwks")
-
-        assert response.status_code == 200
-        data = response.json()
-        assert "JWKS cache cleared" in data["message"]
-        assert dependency_track_mcp.main._jwks_cache is None
-
-
 class TestMainFunction:
     """Tests for main() server startup function."""
 
