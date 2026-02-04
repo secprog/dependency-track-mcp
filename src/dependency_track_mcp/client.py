@@ -53,7 +53,7 @@ class DependencyTrackClient:
 
     async def _get_client(self) -> httpx.AsyncClient:
         """Get or create the HTTP client.
-        
+
         Security: Client is configured with:
         - HTTPS base URL
         - X-Api-Key header for authentication (not exposed in logs)
@@ -81,7 +81,7 @@ class DependencyTrackClient:
 
     def _handle_error_response(self, response: httpx.Response) -> None:
         """Convert HTTP error responses to appropriate exceptions.
-        
+
         Security: Error messages are sanitized to prevent information disclosure.
         API keys and authentication headers are never included in error output.
         """
@@ -208,9 +208,7 @@ class DependencyTrackClient:
         params: dict[str, Any] | None = None,
     ) -> dict[str, Any] | list[Any] | None:
         """Make a POST request."""
-        response = await self._request_with_retry(
-            "POST", endpoint, json=data, params=params
-        )
+        response = await self._request_with_retry("POST", endpoint, json=data, params=params)
         if response.status_code == 204:
             return None
         return response.json()
@@ -222,9 +220,7 @@ class DependencyTrackClient:
         params: dict[str, Any] | None = None,
     ) -> dict[str, Any] | list[Any] | None:
         """Make a PUT request."""
-        response = await self._request_with_retry(
-            "PUT", endpoint, json=data, params=params
-        )
+        response = await self._request_with_retry("PUT", endpoint, json=data, params=params)
         if response.status_code == 204:
             return None
         return response.json()

@@ -21,7 +21,8 @@ def register_calculator_tools(mcp: FastMCP) -> None:
         vector: Annotated[
             str,
             Field(
-                description="CVSS vector string "                "(e.g., CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)"
+                description="CVSS vector string "
+                "(e.g., CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H)"
             ),
         ],
     ) -> dict:
@@ -46,7 +47,9 @@ def register_calculator_tools(mcp: FastMCP) -> None:
         vector: Annotated[
             str,
             Field(
-                description="OWASP Risk Rating vector "                "(e.g., SL:5/M:5/O:5/S:5/ED:5/EE:5/A:5/"                "ID:5/LC:5/LI:5/LAV:5/LAC:5/FD:5/RD:5/NC:5/PV:5)"
+                description="OWASP Risk Rating vector "
+                "(e.g., SL:5/M:5/O:5/S:5/ED:5/EE:5/A:5/"
+                "ID:5/LC:5/LI:5/LAV:5/LAC:5/FD:5/RD:5/NC:5/PV:5)"
             ),
         ],
     ) -> dict:

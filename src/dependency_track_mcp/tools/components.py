@@ -20,9 +20,7 @@ def register_component_tools(mcp: FastMCP) -> None:
     async def list_project_components(
         project_uuid: Annotated[str, Field(description="Project UUID")],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List all components in a project.
@@ -72,9 +70,7 @@ def register_component_tools(mcp: FastMCP) -> None:
         tags=[Scopes.READ_COMPONENTS],
     )
     async def find_component_by_purl(
-        purl: Annotated[
-            str, Field(description="Package URL (e.g., pkg:npm/lodash@4.17.21)")
-        ],
+        purl: Annotated[str, Field(description="Package URL (e.g., pkg:npm/lodash@4.17.21)")],
     ) -> dict:
         """
         Find components by their Package URL (PURL).
@@ -136,9 +132,7 @@ def register_component_tools(mcp: FastMCP) -> None:
     async def get_component_projects(
         component_uuid: Annotated[str, Field(description="Component UUID")],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         Get projects where a component is used.
@@ -178,13 +172,13 @@ def register_component_tools(mcp: FastMCP) -> None:
         ] = None,
         cpe: Annotated[str | None, Field(description="CPE identifier")] = None,
         description: Annotated[str | None, Field(description="Component description")] = None,
-        license_name: Annotated[
-            str | None, Field(description="License name or SPDX ID")
-        ] = None,
+        license_name: Annotated[str | None, Field(description="License name or SPDX ID")] = None,
         classifier: Annotated[
             str | None,
             Field(
-                description="Component classifier: APPLICATION, "                "FRAMEWORK, LIBRARY, CONTAINER, "                "OPERATING_SYSTEM, DEVICE, FIRMWARE, FILE"
+                description="Component classifier: APPLICATION, "
+                "FRAMEWORK, LIBRARY, CONTAINER, "
+                "OPERATING_SYSTEM, DEVICE, FIRMWARE, FILE"
             ),
         ] = None,
     ) -> dict:

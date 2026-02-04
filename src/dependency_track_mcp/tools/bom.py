@@ -112,14 +112,10 @@ def register_bom_tools(mcp: FastMCP) -> None:
     )
     async def export_project_bom(
         project_uuid: Annotated[str, Field(description="Project UUID")],
-        format: Annotated[
-            str, Field(description="Export format: json or xml")
-        ] = "json",
+        format: Annotated[str, Field(description="Export format: json or xml")] = "json",
         variant: Annotated[
             str,
-            Field(
-                description="BOM variant: inventory, "                "withVulnerabilities, or vex"
-            ),
+            Field(description="BOM variant: inventory, withVulnerabilities, or vex"),
         ] = "inventory",
     ) -> dict:
         """
@@ -157,9 +153,7 @@ def register_bom_tools(mcp: FastMCP) -> None:
     )
     async def export_component_bom(
         component_uuid: Annotated[str, Field(description="Component UUID")],
-        format: Annotated[
-            str, Field(description="Export format: json or xml")
-        ] = "json",
+        format: Annotated[str, Field(description="Export format: json or xml")] = "json",
     ) -> dict:
         """
         Export a component's information in CycloneDX BOM format.
@@ -170,9 +164,7 @@ def register_bom_tools(mcp: FastMCP) -> None:
         try:
             client = get_client()
             params = {"format": format}
-            data = await client.get(
-                f"/bom/cyclonedx/component/{component_uuid}", params=params
-            )
+            data = await client.get(f"/bom/cyclonedx/component/{component_uuid}", params=params)
             return {"bom": data, "format": format}
         except DependencyTrackError as e:
             return {"error": str(e), "details": e.details}

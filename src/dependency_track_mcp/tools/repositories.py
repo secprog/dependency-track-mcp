@@ -19,9 +19,7 @@ def register_repository_tools(mcp: FastMCP) -> None:
     )
     async def list_repositories(
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List all configured package repositories.
@@ -51,13 +49,13 @@ def register_repository_tools(mcp: FastMCP) -> None:
         repo_type: Annotated[
             str,
             Field(
-                description="Repository type: CARGO, COMPOSER, "                "CPAN, GEM, GO_MODULES, HEX, MAVEN, NPM, "                "NUGET, PYPI, HACKAGE, GITHUB, NIX"
+                description="Repository type: CARGO, COMPOSER, "
+                "CPAN, GEM, GO_MODULES, HEX, MAVEN, NPM, "
+                "NUGET, PYPI, HACKAGE, GITHUB, NIX"
             ),
         ],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List repositories that support a specific package type.
@@ -65,9 +63,7 @@ def register_repository_tools(mcp: FastMCP) -> None:
         try:
             client = get_client()
             params = {"pageNumber": page, "pageSize": page_size}
-            data, headers = await client.get_with_headers(
-                f"/repository/{repo_type}", params=params
-            )
+            data, headers = await client.get_with_headers(f"/repository/{repo_type}", params=params)
             total_count = headers.get("X-Total-Count", len(data))
 
             return {
@@ -87,7 +83,9 @@ def register_repository_tools(mcp: FastMCP) -> None:
         repo_type: Annotated[
             str,
             Field(
-                description="Repository type: CARGO, COMPOSER, "                "CPAN, GEM, GO_MODULES, HEX, MAVEN, NPM, "                "NUGET, PYPI, HACKAGE, GITHUB, NIX"
+                description="Repository type: CARGO, COMPOSER, "
+                "CPAN, GEM, GO_MODULES, HEX, MAVEN, NPM, "
+                "NUGET, PYPI, HACKAGE, GITHUB, NIX"
             ),
         ],
         identifier: Annotated[str, Field(description="Repository identifier/name")],
@@ -193,9 +191,7 @@ def register_repository_tools(mcp: FastMCP) -> None:
         tags=[Scopes.READ_REPOSITORIES],
     )
     async def resolve_latest_version(
-        purl: Annotated[
-            str, Field(description="Package URL to resolve (e.g., pkg:npm/lodash)")
-        ],
+        purl: Annotated[str, Field(description="Package URL to resolve (e.g., pkg:npm/lodash)")],
     ) -> dict:
         """
         Attempt to resolve the latest version of a component from configured repositories.

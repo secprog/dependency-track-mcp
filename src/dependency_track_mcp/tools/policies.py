@@ -18,13 +18,9 @@ def register_policy_tools(mcp: FastMCP) -> None:
         tags=[Scopes.READ_POLICIES],
     )
     async def list_policy_violations(
-        suppressed: Annotated[
-            bool, Field(description="Include suppressed violations")
-        ] = False,
+        suppressed: Annotated[bool, Field(description="Include suppressed violations")] = False,
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List all policy violations across the portfolio.
@@ -41,9 +37,7 @@ def register_policy_tools(mcp: FastMCP) -> None:
                 "pageSize": page_size,
                 "suppressed": str(suppressed).lower(),
             }
-            data, headers = await client.get_with_headers(
-                "/violation", params=params
-            )
+            data, headers = await client.get_with_headers("/violation", params=params)
             total_count = headers.get("X-Total-Count", len(data))
 
             return {
@@ -61,13 +55,9 @@ def register_policy_tools(mcp: FastMCP) -> None:
     )
     async def list_project_policy_violations(
         project_uuid: Annotated[str, Field(description="Project UUID")],
-        suppressed: Annotated[
-            bool, Field(description="Include suppressed violations")
-        ] = False,
+        suppressed: Annotated[bool, Field(description="Include suppressed violations")] = False,
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List policy violations for a specific project.
@@ -102,13 +92,9 @@ def register_policy_tools(mcp: FastMCP) -> None:
     )
     async def list_component_policy_violations(
         component_uuid: Annotated[str, Field(description="Component UUID")],
-        suppressed: Annotated[
-            bool, Field(description="Include suppressed violations")
-        ] = False,
+        suppressed: Annotated[bool, Field(description="Include suppressed violations")] = False,
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List policy violations for a specific component.
@@ -143,9 +129,7 @@ def register_policy_tools(mcp: FastMCP) -> None:
     )
     async def list_policies(
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List all security policies defined in Dependency Track.
@@ -299,7 +283,11 @@ def register_policy_tools(mcp: FastMCP) -> None:
         subject: Annotated[
             str,
             Field(
-                description="Condition subject: AGE, "                "COORDINATES, CPE, CWE, HASH, LICENSE, "                "LICENSE_GROUP, PACKAGE_URL, SEVERITY, "                "SWID_TAGID, VERSION, COMPONENT_HASH, "                "VULNERABILITY_ID"
+                description="Condition subject: AGE, "
+                "COORDINATES, CPE, CWE, HASH, LICENSE, "
+                "LICENSE_GROUP, PACKAGE_URL, SEVERITY, "
+                "SWID_TAGID, VERSION, COMPONENT_HASH, "
+                "VULNERABILITY_ID"
             ),
         ],
         operator: Annotated[

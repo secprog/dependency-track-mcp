@@ -20,13 +20,9 @@ def register_project_tools(mcp: FastMCP) -> None:
     async def list_projects(
         name: Annotated[str | None, Field(description="Filter by project name")] = None,
         tag: Annotated[str | None, Field(description="Filter by tag")] = None,
-        active: Annotated[
-            bool | None, Field(description="Filter by active status")
-        ] = None,
+        active: Annotated[bool | None, Field(description="Filter by active status")] = None,
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List all projects in Dependency Track.
@@ -106,21 +102,17 @@ def register_project_tools(mcp: FastMCP) -> None:
     )
     async def create_project(
         name: Annotated[str, Field(description="Project name")],
-        version: Annotated[
-            str | None, Field(description="Project version")
-        ] = None,
-        description: Annotated[
-            str | None, Field(description="Project description")
-        ] = None,
+        version: Annotated[str | None, Field(description="Project version")] = None,
+        description: Annotated[str | None, Field(description="Project description")] = None,
         classifier: Annotated[
             str | None,
             Field(
-                description="Project classifier: APPLICATION, "                "FRAMEWORK, LIBRARY, CONTAINER, "                "OPERATING_SYSTEM, DEVICE, FIRMWARE, FILE"
+                description="Project classifier: APPLICATION, "
+                "FRAMEWORK, LIBRARY, CONTAINER, "
+                "OPERATING_SYSTEM, DEVICE, FIRMWARE, FILE"
             ),
         ] = None,
-        tags: Annotated[
-            list[str] | None, Field(description="List of tags to assign")
-        ] = None,
+        tags: Annotated[list[str] | None, Field(description="List of tags to assign")] = None,
         parent_uuid: Annotated[
             str | None, Field(description="Parent project UUID for hierarchy")
         ] = None,
@@ -158,15 +150,9 @@ def register_project_tools(mcp: FastMCP) -> None:
     async def update_project(
         uuid: Annotated[str, Field(description="Project UUID to update")],
         name: Annotated[str | None, Field(description="New project name")] = None,
-        version: Annotated[
-            str | None, Field(description="New project version")
-        ] = None,
-        description: Annotated[
-            str | None, Field(description="New description")
-        ] = None,
-        active: Annotated[
-            bool | None, Field(description="Set active status")
-        ] = None,
+        version: Annotated[str | None, Field(description="New project version")] = None,
+        description: Annotated[str | None, Field(description="New description")] = None,
+        active: Annotated[bool | None, Field(description="Set active status")] = None,
         tags: Annotated[
             list[str] | None, Field(description="New list of tags (replaces existing)")
         ] = None,
@@ -226,9 +212,7 @@ def register_project_tools(mcp: FastMCP) -> None:
     async def get_project_children(
         uuid: Annotated[str, Field(description="Parent project UUID")],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         Get child projects of a parent project.
@@ -261,13 +245,13 @@ def register_project_tools(mcp: FastMCP) -> None:
         classifier: Annotated[
             str,
             Field(
-                description="Project classifier: APPLICATION, "                "FRAMEWORK, LIBRARY, CONTAINER, "                "OPERATING_SYSTEM, DEVICE, FIRMWARE, FILE"
+                description="Project classifier: APPLICATION, "
+                "FRAMEWORK, LIBRARY, CONTAINER, "
+                "OPERATING_SYSTEM, DEVICE, FIRMWARE, FILE"
             ),
         ],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         Get child projects of a parent project filtered by classifier.
@@ -297,9 +281,7 @@ def register_project_tools(mcp: FastMCP) -> None:
         uuid: Annotated[str, Field(description="Parent project UUID")],
         tag: Annotated[str, Field(description="Tag to filter by")],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         Get child projects of a parent project filtered by tag.
@@ -329,13 +311,13 @@ def register_project_tools(mcp: FastMCP) -> None:
         classifier: Annotated[
             str,
             Field(
-                description="Project classifier: APPLICATION, "                "FRAMEWORK, LIBRARY, CONTAINER, "                "OPERATING_SYSTEM, DEVICE, FIRMWARE, FILE"
+                description="Project classifier: APPLICATION, "
+                "FRAMEWORK, LIBRARY, CONTAINER, "
+                "OPERATING_SYSTEM, DEVICE, FIRMWARE, FILE"
             ),
         ],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List all projects filtered by classifier type.
@@ -364,9 +346,7 @@ def register_project_tools(mcp: FastMCP) -> None:
     async def list_projects_by_tag(
         tag: Annotated[str, Field(description="Tag to filter by")],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List all projects that have the specified tag.
@@ -374,9 +354,7 @@ def register_project_tools(mcp: FastMCP) -> None:
         try:
             client = get_client()
             params = {"pageNumber": page, "pageSize": page_size}
-            data, headers = await client.get_with_headers(
-                f"/project/tag/{tag}", params=params
-            )
+            data, headers = await client.get_with_headers(f"/project/tag/{tag}", params=params)
             total_count = headers.get("X-Total-Count", len(data))
 
             return {
@@ -414,9 +392,7 @@ def register_project_tools(mcp: FastMCP) -> None:
     async def clone_project(
         uuid: Annotated[str, Field(description="Project UUID to clone")],
         version: Annotated[str, Field(description="Version for the cloned project")],
-        include_tags: Annotated[
-            bool, Field(description="Include tags in the clone")
-        ] = True,
+        include_tags: Annotated[bool, Field(description="Include tags in the clone")] = True,
         include_properties: Annotated[
             bool, Field(description="Include properties in the clone")
         ] = True,
@@ -429,9 +405,7 @@ def register_project_tools(mcp: FastMCP) -> None:
         include_audit_history: Annotated[
             bool, Field(description="Include audit history in the clone")
         ] = False,
-        include_acl: Annotated[
-            bool, Field(description="Include ACL in the clone")
-        ] = True,
+        include_acl: Annotated[bool, Field(description="Include ACL in the clone")] = True,
         include_policy_violations: Annotated[
             bool, Field(description="Include policy violations in the clone")
         ] = False,
@@ -491,9 +465,7 @@ def register_project_tools(mcp: FastMCP) -> None:
         description: Annotated[str | None, Field(description="New description")] = None,
         active: Annotated[bool | None, Field(description="Set active status")] = None,
         classifier: Annotated[str | None, Field(description="New classifier")] = None,
-        tags: Annotated[
-            list[str] | None, Field(description="New list of tags")
-        ] = None,
+        tags: Annotated[list[str] | None, Field(description="New list of tags")] = None,
     ) -> dict:
         """
         Partially update a project using PATCH method.
@@ -530,9 +502,7 @@ def register_project_tools(mcp: FastMCP) -> None:
     async def list_projects_without_descendants(
         uuid: Annotated[str, Field(description="Project UUID to exclude descendants of")],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List all projects excluding descendants of the specified project.

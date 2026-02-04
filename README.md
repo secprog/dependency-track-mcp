@@ -4,13 +4,15 @@ An MCP (Model Context Protocol) server for [OWASP Dependency Track](https://depe
 
 ## Features
 
-- **Project Management**: List, create, update, and delete projects
-- **Component Analysis**: View components, dependencies, and their relationships
-- **Vulnerability Management**: Query vulnerabilities, findings, and CVE details
-- **Security Metrics**: Access portfolio and project-level security metrics
-- **Policy Compliance**: Monitor policy violations and compliance status
-- **SBOM Operations**: Upload and export Software Bills of Materials (CycloneDX/SPDX)
-- **Search**: Full-text search across projects, components, and vulnerabilities
+- **Project Management**: Create, update, and track projects and hierarchies
+- **Component Analysis**: View components, dependencies, hashes, and usage
+- **Vulnerability Management**: Query vulnerabilities, findings, triage, and VEX
+- **Security Metrics**: Portfolio and project metrics with history
+- **Policy Compliance**: Policies, violations, and enforcement visibility
+- **SBOM Operations**: Upload, validate, and export SBOMs (CycloneDX/SPDX)
+- **Reference Data**: Licenses, license groups, tags, CWE, repositories, services
+- **Administration**: Teams, users, permissions, ACL, notifications, LDAP, OIDC
+- **System & Integrations**: Badges, calculator, integrations, events, version info
 
 ## Installation
 
@@ -40,13 +42,13 @@ Authorization: Bearer <your_oauth2_token>
 Follow these security best practices:
 
 - **Configure OAuth 2.1 issuer** - Set `MCP_OAUTH_ISSUER` to your OAuth provider
-- **Never commit API keys** - Use environment variables or `.env` files (already in `.gitignore`)
+- **Never commit API keys** - Use environment variables or an environment file based on [.env.example](.env.example) (already ignored by [.gitignore](.gitignore))
 - **Use HTTPS only** - Always connect to Dependency Track over HTTPS with valid certificates
 - **Minimal scopes** - Request only the scopes your use case needs
 - **Rotate credentials** - Change API keys and tokens periodically
 - **Secure client configs** - Restrict file permissions on MCP client configuration files
 
-📖 See [SECURITY.md](SECURITY.md) for comprehensive security guidance and OAuth 2.1 details.
+📖 See [KEYCLOAK_SETUP.md](KEYCLOAK_SETUP.md) and [.env.example](.env.example) for OAuth 2.1 setup and configuration examples.
 
 ### Environment Variables
 
@@ -55,8 +57,10 @@ Set the following environment variables:
 ```bash
 # OAuth 2.1 Authorization (REQUIRED)
 export MCP_OAUTH_ISSUER=https://auth.example.com
+export MCP_OAUTH_JWKS_URL=https://auth.example.com/.well-known/jwks.json  # Optional (auto-derived if omitted)
 export MCP_OAUTH_AUDIENCE=dependency-track-mcp  # Optional
-export MCP_OAUTH_REQUIRED_SCOPES="read:projects read:vulnerabilities"
+export MCP_OAUTH_REQUIRED_SCOPES="read:projects read:vulnerabilities"  # Optional
+export MCP_OAUTH_RESOURCE_URI=https://your-mcp-host.example.com/mcp  # Optional
 
 # Dependency Track Backend (for server-to-API auth only)
 export DEPENDENCY_TRACK_URL=https://dependency-track.example.com
@@ -66,9 +70,17 @@ export DEPENDENCY_TRACK_API_KEY=your-dtrack-api-key
 export DEPENDENCY_TRACK_TIMEOUT=30
 export DEPENDENCY_TRACK_VERIFY_SSL=true
 export DEPENDENCY_TRACK_MAX_RETRIES=3
+
+# Server Settings (HTTPS by default)
+export MCP_SERVER_HOST=0.0.0.0
+export MCP_SERVER_PORT=9000
+export MCP_SERVER_TLS_CERT="-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
+export MCP_SERVER_TLS_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+export MCP_SERVER_TLS_CA_CERTS="-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"  # Optional
+export MCP_SERVER_TLS_KEYFILE_PASSWORD=your_password  # Optional
 ```
 
-Or create a `.env` file based on `.env.example`.
+Or create an environment file based on [.env.example](.env.example).
 
 ### OAuth 2.1 Setup
 
@@ -101,11 +113,18 @@ dependency-track-mcp
 python -m dependency_track_mcp.main
 ```
 
-This starts an HTTPS server with JWT authentication via Keycloak/OIDC.
+This starts a FastAPI server with OAuth 2.1 JWT authentication and mounts the MCP endpoint at `/mcp`. If TLS certs are provided, it serves HTTPS. HTTP is only allowed when `MCP_DEV_ALLOW_HTTP=true`.
+
+### HTTP Endpoints
+
+- `/mcp` - MCP protocol endpoint (protected by OAuth 2.1 Bearer tokens)
+- `/.well-known/oauth-protected-resource` - OAuth resource metadata (RFC 8707)
+- `/health` - Health check
+- `/admin/refresh-jwks` - JWKS cache refresh (protect in production)
 
 ### Configuration for Production
 
-Required environment variables (or `.env` file):
+Required environment variables (or an environment file based on [.env.example](.env.example)):
 
 ```bash
 # OAuth 2.1 (required)
@@ -134,38 +153,22 @@ DEPENDENCY_TRACK_URL=http://localhost:8081
 
 See [KEYCLOAK_SETUP.md](KEYCLOAK_SETUP.md) for setting up local Keycloak.
 
-### With Claude Desktop
+### Quick Start Script
 
-Add to your Claude Desktop configuration (`claude_desktop_config.json`):
+If you prefer a simple launcher with environment-file validation, use [start_services.py](start_services.py).
 
-```json
-{
-  "mcpServers": {
-    "dependency-track": {
-      "command": "python",
-      "args": ["-m", "dependency_track_mcp.main"],
-      "env": {
-        "MCP_OAUTH_ISSUER": "https://auth.example.com",
-        "MCP_OAUTH_AUDIENCE": "mcp-api",
-        "MCP_OAUTH_REQUIRED_SCOPES": "read:projects read:vulnerabilities",
-        "MCP_SERVER_TLS_CERT": "...",
-        "MCP_SERVER_TLS_KEY": "...",
-        "DEPENDENCY_TRACK_URL": "https://your-instance.example.com",
-        "DEPENDENCY_TRACK_API_KEY": "your-dtrack-api-key"
-      }
-    }
-  }
-}
-```
+### Client Configuration (HTTP transport)
+
+Point your MCP client at the HTTP endpoint and include a Bearer token:
+
+- MCP endpoint: `https://<host>:<port>/mcp` (use `http://` only when `MCP_DEV_ALLOW_HTTP=true`)
+- Authorization header: `Authorization: Bearer <oauth2_token>`
 
 **Security Notes**:
-- The Dependency Track API key is stored in the configuration file
+- The Dependency Track API key is stored server-side only (not exposed to clients)
 - OAuth tokens are transmitted at runtime (not stored in config)
 - TLS certificates can be provided as PEM content (use `\n` for newlines)
-- Ensure your `claude_desktop_config.json` file has restricted permissions:
-  - macOS/Linux: `chmod 600 ~/Library/Application\ Support/Claude/claude_desktop_config.json`
-  - Windows: Use NTFS permissions to restrict access to your user account only
-- MCP client is responsible for obtaining and providing valid OAuth tokens
+- Restrict file permissions on any client config that includes secrets
 
 ## MCP Scopes
 
@@ -176,12 +179,36 @@ The server validates the following OAuth 2.1 scopes:
 | `read:projects` | List and view projects |
 | `write:projects` | Create, update, and delete projects |
 | `read:components` | List and view components |
+| `write:components` | Create/update components (where supported) |
 | `read:vulnerabilities` | View vulnerabilities and findings |
+| `write:vulnerabilities` | Update vulnerability data (where supported) |
 | `write:analysis` | Record analysis decisions (triage) |
 | `read:metrics` | View security metrics |
 | `read:policies` | View policy violations |
+| `write:policies` | Create/update policies |
 | `upload:bom` | Upload SBOM files |
+| `upload:vex` | Upload VEX documents |
 | `search` | Search functionality |
+| `read:licenses` | List and view licenses |
+| `write:licenses` | Create/update licenses |
+| `read:tags` | List and view tags |
+| `write:tags` | Create/update tags |
+| `read:services` | List and view services |
+| `write:services` | Create/update services |
+| `read:repositories` | List and view repositories |
+| `write:repositories` | Create/update repositories |
+| `read:cwe` | View CWE reference data |
+| `admin:config` | Read/write configuration properties |
+| `admin:teams` | Manage teams |
+| `admin:users` | Manage users |
+| `admin:permissions` | Manage permissions |
+| `admin:acl` | Manage access control lists |
+| `admin:notifications` | Manage notifications |
+| `admin:ldap` | Manage LDAP settings |
+| `admin:oidc` | Manage OIDC settings |
+| `system:version` | Version and system info |
+| `system:badges` | Project badges |
+| `system:calculator` | Risk calculator |
 
 **Token Scope Claims**: Your OAuth tokens should include scopes in one of these formats:
 
@@ -192,61 +219,13 @@ The server validates the following OAuth 2.1 scopes:
 
 ## Available Tools
 
-### Project Tools
-- `list_projects` - List all projects with filtering and pagination
-- `get_project` - Get project details by UUID
-- `lookup_project` - Find project by name and version
-- `create_project` - Create a new project
-- `update_project` - Update project properties
-- `delete_project` - Delete a project
-- `get_project_children` - Get child projects
+Tool groups are registered in [src/dependency_track_mcp/tools](src/dependency_track_mcp/tools) and include:
 
-### Component Tools
-- `list_project_components` - List components in a project
-- `get_component` - Get component details
-- `find_component_by_purl` - Find by Package URL
-- `find_component_by_hash` - Find by file hash
-- `get_dependency_graph` - Get project dependency graph
-- `get_component_projects` - Find projects using a component
-
-### Vulnerability Tools
-- `get_vulnerability` - Get vulnerability details
-- `get_affected_projects` - Find projects affected by a CVE
-- `list_component_vulnerabilities` - List vulnerabilities for a component
-
-### Finding & Analysis Tools
-- `list_project_findings` - List security findings for a project
-- `get_finding_analysis` - Get analysis decision for a finding
-- `update_finding_analysis` - Record triage decision
-- `list_findings_grouped` - Get findings grouped by vulnerability
-
-### Metrics Tools
-- `get_portfolio_metrics` - Get portfolio-wide metrics
-- `get_portfolio_metrics_history` - Get historical portfolio metrics
-- `get_project_metrics` - Get project metrics
-- `get_project_metrics_history` - Get historical project metrics
-- `refresh_portfolio_metrics` - Trigger metrics refresh
-- `refresh_project_metrics` - Trigger project metrics refresh
-
-### Policy Tools
-- `list_policy_violations` - List all policy violations
-- `list_project_policy_violations` - List violations for a project
-- `list_component_policy_violations` - List violations for a component
-- `list_policies` - List all security policies
-
-### BOM Tools
-- `upload_bom` - Upload SBOM (CycloneDX/SPDX)
-- `check_bom_processing` - Check BOM processing status
-- `export_project_bom` - Export project as CycloneDX
-- `export_component_bom` - Export component as CycloneDX
-- `validate_bom` - Validate BOM without uploading
-
-### Search Tools
-- `search` - Global search across all entities
-- `search_projects` - Search projects
-- `search_components` - Search components
-- `search_vulnerabilities` - Search vulnerabilities
-- `search_licenses` - Search licenses
+- **Core SCA**: Projects, components, vulnerabilities, findings, metrics, policies, BOM, search
+- **Reference Data**: Licenses, license groups, tags, CWE, repositories, services, VEX
+- **Properties**: Project, component, and config properties
+- **Administration**: Teams, users, permissions, ACL, notifications, LDAP, OIDC
+- **System & Integrations**: Version, badges, calculator, integrations, events
 
 ## Development
 
@@ -283,18 +262,16 @@ This MCP server implements OAuth 2.1 bearer token authorization as required by t
 - 🛡️ **Input Validation** - Pydantic models for all inputs/outputs
 - 🚫 **No Token Passthrough** - OAuth tokens not sent to backend
 - 📊 **Scope-Based Authorization** - Fine-grained permission control
-- ⚡ **Rate Limiting** - Exponential backoff and retry logic
+- ⚡ **Retry/Backoff** - Resilient HTTP client with retries
 
 **OAuth 2.1 Requirements**:
 - All requests must include valid Bearer token in Authorization header
 - Tokens must be valid JWTs with required claims (`sub`, `iat`, `exp`, `scope`/`scopes`)
 - Server validates token expiration, issuer, and required scopes
 - MCP client is responsible for obtaining tokens from OAuth provider
-- Token signature verification delegated to MCP client layer or JWKS endpoint
+- Token signature verification is performed using JWKS (auto-derived from issuer)
 
-For detailed security information, threat model, deployment guidelines, and OAuth 2.1 configuration, see [SECURITY.md](SECURITY.md).
-
-**Reporting Security Issues**: Please report security vulnerabilities responsibly by emailing the maintainer directly (see [SECURITY.md](SECURITY.md)) rather than opening public issues.
+To validate your configuration locally, run [verify_security.py](verify_security.py).
 
 ## License
 
