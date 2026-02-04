@@ -14,7 +14,6 @@ import os
 import tempfile
 import warnings
 from functools import lru_cache
-from typing import Optional
 from urllib.parse import urlparse
 
 from pydantic import AliasChoices, Field, field_validator, model_validator
@@ -31,7 +30,7 @@ class ConfigurationError(Exception):
 
 class Settings(BaseSettings):
     """Dependency Track MCP Server settings loaded from environment variables.
-    
+
     Security Enforcement:
     - OAuth 2.1 authorization is MANDATORY (required for MCP specification compliance)
     - HTTPS is MANDATORY for all URLs (HTTP is not allowed)
@@ -50,23 +49,31 @@ class Settings(BaseSettings):
     # OAuth 2.1 Authorization Settings (MANDATORY)
     oauth_enabled: bool = Field(
         default=True,
-        validation_alias=AliasChoices("oauth_enabled", "MCP_OAUTH_ENABLED", "DEPENDENCY_TRACK_OAUTH_ENABLED"),
+        validation_alias=AliasChoices(
+            "oauth_enabled", "MCP_OAUTH_ENABLED", "DEPENDENCY_TRACK_OAUTH_ENABLED"
+        ),
         description="Enable OAuth 2.1 authorization (MANDATORY for production)",
     )
     oauth_issuer: str = Field(
         ...,
-        validation_alias=AliasChoices("oauth_issuer", "MCP_OAUTH_ISSUER", "DEPENDENCY_TRACK_OAUTH_ISSUER"),
+        validation_alias=AliasChoices(
+            "oauth_issuer", "MCP_OAUTH_ISSUER", "DEPENDENCY_TRACK_OAUTH_ISSUER"
+        ),
         description="OAuth 2.1 token issuer URL - MUST use HTTPS (e.g., https://auth.example.com)",
     )
-    oauth_jwks_url: Optional[str] = Field(
+    oauth_jwks_url: str | None = Field(
         default=None,
-        validation_alias=AliasChoices("oauth_jwks_url", "MCP_OAUTH_JWKS_URL", "DEPENDENCY_TRACK_OAUTH_JWKS_URL"),
+        validation_alias=AliasChoices(
+            "oauth_jwks_url", "MCP_OAUTH_JWKS_URL", "DEPENDENCY_TRACK_OAUTH_JWKS_URL"
+        ),
         description="OAuth 2.1 JWKS endpoint URL (auto-derived from issuer if not specified). "
         "For Keycloak: https://keycloak.example.com/realms/<realm>/protocol/openid-connect/certs",
     )
-    oauth_audience: Optional[str] = Field(
+    oauth_audience: str | None = Field(
         default=None,
-        validation_alias=AliasChoices("oauth_audience", "MCP_OAUTH_AUDIENCE", "DEPENDENCY_TRACK_OAUTH_AUDIENCE"),
+        validation_alias=AliasChoices(
+            "oauth_audience", "MCP_OAUTH_AUDIENCE", "DEPENDENCY_TRACK_OAUTH_AUDIENCE"
+        ),
         description="OAuth 2.1 expected audience for tokens (aud claim). "
         "Configure this in Keycloak via an Audience mapper in a Client Scope.",
     )
@@ -81,14 +88,21 @@ class Settings(BaseSettings):
     )
     oauth_resource_uri: str = Field(
         default="https://mcp.example.com/mcp",
-        validation_alias=AliasChoices("oauth_resource_uri", "MCP_OAUTH_RESOURCE_URI", "DEPENDENCY_TRACK_OAUTH_RESOURCE_URI"),
-        description="Resource URI for this MCP server (used in /.well-known/oauth-protected-resource)",
+        validation_alias=AliasChoices(
+            "oauth_resource_uri", "MCP_OAUTH_RESOURCE_URI", "DEPENDENCY_TRACK_OAUTH_RESOURCE_URI"
+        ),
+        description=(
+            "Resource URI for this MCP server "
+            "(used in /.well-known/oauth-protected-resource)"
+        ),
     )
 
     # Development Settings
     dev_allow_http: bool = Field(
         default=False,
-        validation_alias=AliasChoices("dev_allow_http", "MCP_DEV_ALLOW_HTTP", "DEPENDENCY_TRACK_DEV_ALLOW_HTTP"),
+        validation_alias=AliasChoices(
+            "dev_allow_http", "MCP_DEV_ALLOW_HTTP", "DEPENDENCY_TRACK_DEV_ALLOW_HTTP"
+        ),
         description="DEVELOPMENT ONLY: Allow HTTP URLs (use https for production)",
     )
 
@@ -126,37 +140,49 @@ class Settings(BaseSettings):
     # HTTP Server Settings (for web deployment)
     server_transport: str = Field(
         default="http",
-        validation_alias=AliasChoices("server_transport", "MCP_SERVER_TRANSPORT", "DEPENDENCY_TRACK_SERVER_TRANSPORT"),
+        validation_alias=AliasChoices(
+            "server_transport", "MCP_SERVER_TRANSPORT", "DEPENDENCY_TRACK_SERVER_TRANSPORT"
+        ),
         description="Transport mode: 'http' (HTTPS web server via TLS)",
     )
     server_host: str = Field(
         default="0.0.0.0",
-        validation_alias=AliasChoices("server_host", "MCP_SERVER_HOST", "DEPENDENCY_TRACK_SERVER_HOST"),
+        validation_alias=AliasChoices(
+            "server_host", "MCP_SERVER_HOST", "DEPENDENCY_TRACK_SERVER_HOST"
+        ),
         description="HTTP server host address (when transport=http)",
     )
     server_port: int = Field(
         default=8000,
         ge=1,
         le=65535,
-        validation_alias=AliasChoices("server_port", "MCP_SERVER_PORT", "DEPENDENCY_TRACK_SERVER_PORT"),
+        validation_alias=AliasChoices(
+            "server_port", "MCP_SERVER_PORT", "DEPENDENCY_TRACK_SERVER_PORT"
+        ),
         description="HTTP server port (when transport=http)",
     )
-    server_tls_cert: Optional[str] = Field(
+    server_tls_cert: str | None = Field(
         default=None,
-        validation_alias=AliasChoices("server_tls_cert", "MCP_SERVER_TLS_CERT", "DEPENDENCY_TRACK_SERVER_TLS_CERT"),
+        validation_alias=AliasChoices(
+            "server_tls_cert", "MCP_SERVER_TLS_CERT", "DEPENDENCY_TRACK_SERVER_TLS_CERT"
+        ),
         description="PEM-encoded TLS certificate for HTTPS (required for HTTP transport)",
     )
-    server_tls_key: Optional[str] = Field(
+    server_tls_key: str | None = Field(
         default=None,
-        validation_alias=AliasChoices("server_tls_key", "MCP_SERVER_TLS_KEY", "DEPENDENCY_TRACK_SERVER_TLS_KEY"),
+        validation_alias=AliasChoices(
+            "server_tls_key", "MCP_SERVER_TLS_KEY", "DEPENDENCY_TRACK_SERVER_TLS_KEY"
+        ),
         description="PEM-encoded TLS private key for HTTPS (required for HTTP transport)",
     )
-    server_tls_ca_certs: Optional[str] = Field(
+    server_tls_ca_certs: str | None = Field(
         default=None,
-        validation_alias=AliasChoices("server_tls_ca_certs", "MCP_SERVER_TLS_CA_CERTS", "DEPENDENCY_TRACK_SERVER_TLS_CA_CERTS"),
+        validation_alias=AliasChoices(
+            "server_tls_ca_certs", "MCP_SERVER_TLS_CA_CERTS", "DEPENDENCY_TRACK_SERVER_TLS_CA_CERTS"
+        ),
         description="Optional PEM-encoded CA bundle for HTTPS (client cert verification)",
     )
-    server_tls_keyfile_password: Optional[str] = Field(
+    server_tls_keyfile_password: str | None = Field(
         default=None,
         validation_alias=AliasChoices(
             "server_tls_keyfile_password",
@@ -170,53 +196,54 @@ class Settings(BaseSettings):
     @classmethod
     def validate_dependency_track_url(cls, v: str) -> str:
         """Validate Dependency Track URL format.
-        
+
         Note: HTTPS requirement is checked in model_validator after dev_allow_http is loaded.
         """
         v = v.rstrip("/")
-        
+
         parsed = urlparse(v)
-        
+
         # Must have a scheme and host
         if not parsed.scheme or not parsed.netloc:
             raise ValueError(
                 "DEPENDENCY_TRACK_URL must be a valid URL "
                 "(e.g., https://dtrack.example.com or http://localhost:8080)"
             )
-        
+
         return v
 
     @field_validator("oauth_issuer")
     @classmethod
     def validate_oauth_issuer(cls, v: str) -> str:
         """Validate OAuth issuer URL format.
-        
+
         Note: HTTPS requirement is checked in model_validator after dev_allow_http is loaded.
         """
         parsed = urlparse(v)
-        
+
         # Must have a scheme and host
         if not parsed.scheme or not parsed.netloc:
             raise ValueError(
                 "MCP_OAUTH_ISSUER must be a valid URL "
                 "(e.g., https://auth.example.com or http://localhost:9000)"
             )
-        
+
         return v
 
     @field_validator("verify_ssl")
     @classmethod
     def validate_ssl_verification(cls, v: bool) -> bool:
         """Validate SSL verification setting.
-        
+
         Note: SSL verification can only be disabled via explicit environment variable.
         This is a safety measure to prevent accidental downgrade.
-        
+
         Raises:
             ValueError: If SSL verification is disabled (not recommended)
         """
         if not v:
             import warnings
+
             warnings.warn(
                 "SSL certificate verification is disabled (verify_ssl=false). "
                 "This is UNSAFE in production and should only be used for development/testing. "
@@ -229,7 +256,7 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def validate_urls_https_unless_dev(self) -> "Settings":
         """Validate HTTPS requirement for URLs (unless dev mode allows HTTP).
-        
+
         This runs after all field validators and model instantiation.
         Checks that URLs use HTTPS unless dev_allow_http is explicitly enabled.
         Also auto-derives JWKS URL from issuer if not provided.
@@ -245,7 +272,7 @@ class Settings(BaseSettings):
             else:
                 # Generic OIDC format - try standard path
                 self.oauth_jwks_url = f"{self.oauth_issuer}/.well-known/jwks.json"
-        
+
         # Check Dependency Track URL
         parsed_url = urlparse(self.url)
         if parsed_url.scheme == "http":
@@ -263,7 +290,7 @@ class Settings(BaseSettings):
                     UserWarning,
                     stacklevel=2,
                 )
-        
+
         # Check OAuth issuer URL (HTTP allowed in dev mode)
         parsed_issuer = urlparse(self.oauth_issuer)
         if parsed_issuer.scheme == "http":
@@ -287,7 +314,7 @@ class Settings(BaseSettings):
                 f"Got: {parsed_issuer.scheme}://... "
                 "Use https:// (production) or http:// (with MCP_DEV_ALLOW_HTTP=true for dev only)."
             )
-        
+
         # Warn if dev_allow_http is enabled
         if self.dev_allow_http:
             warnings.warn(
@@ -297,14 +324,14 @@ class Settings(BaseSettings):
                 UserWarning,
                 stacklevel=2,
             )
-        
+
         return self
 
     def validate_oauth_enabled(self) -> None:
         """Validate that OAuth 2.1 is enabled.
-        
+
         OAuth 2.1 is mandatory for MCP specification compliance and web deployment.
-        
+
         Raises:
             ConfigurationError: If OAuth is not properly configured
         """
@@ -312,24 +339,25 @@ class Settings(BaseSettings):
             raise ConfigurationError(
                 "OAuth 2.1 authorization is MANDATORY and cannot be disabled. "
                 "Set MCP_OAUTH_ENABLED=true to enable OAuth 2.1. "
-                "Disabling OAuth violates MCP specification requirements and is unsafe for web deployment."
+                "Disabling OAuth violates MCP specification requirements "
+                "and is unsafe for web deployment."
             )
 
     def validate_configuration_for_web_deployment(self) -> None:
         """Validate that configuration is safe for web deployment.
-        
+
         This performs comprehensive security checks to ensure the server can be
         safely deployed on the web.
-        
+
         Note: HTTP is allowed for development if dev_allow_http=true, but this
         should never be used in production deployments.
-        
+
         Raises:
             ConfigurationError: If configuration is unsafe
         """
         # Check OAuth is enabled
         self.validate_oauth_enabled()
-        
+
         # Check HTTPS for Dependency Track (unless dev_allow_http)
         if not self.url.startswith("https://"):
             if not self.dev_allow_http:
@@ -339,7 +367,7 @@ class Settings(BaseSettings):
                     "For development only, set MCP_DEV_ALLOW_HTTP=true"
                 )
             # else: dev_allow_http is true, HTTP is allowed for dev
-        
+
         # Check HTTPS for OAuth issuer (unless dev_allow_http)
         if not self.oauth_issuer.startswith("https://"):
             if not self.dev_allow_http:
@@ -356,14 +384,15 @@ class Settings(BaseSettings):
                 "TLS is required for HTTPS. Provide both MCP_SERVER_TLS_CERT "
                 "and MCP_SERVER_TLS_KEY to enable HTTPS."
             )
-        
+
         # Check SSL verification
         if not self.verify_ssl:
             raise ConfigurationError(
                 "SSL certificate verification must be enabled for web deployment. "
-                "Set DEPENDENCY_TRACK_VERIFY_SSL=true or remove the setting to use the default (true)."
+                "Set DEPENDENCY_TRACK_VERIFY_SSL=true or remove the setting "
+                "to use the default (true)."
             )
-        
+
         # Check that OAuth issuer is configured
         if not self.oauth_issuer:
             raise ConfigurationError(
@@ -386,11 +415,7 @@ class Settings(BaseSettings):
 
     def get_required_scopes(self) -> set[str]:
         """Get the set of required OAuth 2.1 scopes."""
-        return set(
-            scope.strip()
-            for scope in self.oauth_required_scopes.split()
-            if scope.strip()
-        )
+        return set(scope.strip() for scope in self.oauth_required_scopes.split() if scope.strip())
 
 
 _TLS_TEMP_FILES: list[str] = []
@@ -431,15 +456,14 @@ def _write_tls_temp_file(label: str, content: str) -> str:
     return temp.name
 
 
-def materialize_tls_files(settings: Settings) -> tuple[str, str, Optional[str]]:
+def materialize_tls_files(settings: Settings) -> tuple[str, str, str | None]:
     """Materialize TLS PEM content from env vars into temp files.
 
     Returns (certfile, keyfile, ca_certs) paths for server startup.
     """
     if not settings.server_tls_cert or not settings.server_tls_key:
         raise ConfigurationError(
-            "TLS is required for HTTPS. Provide MCP_SERVER_TLS_CERT and "
-            "MCP_SERVER_TLS_KEY."
+            "TLS is required for HTTPS. Provide MCP_SERVER_TLS_CERT and MCP_SERVER_TLS_KEY."
         )
 
     certfile = _write_tls_temp_file("cert", settings.server_tls_cert)
@@ -463,13 +487,11 @@ def cleanup_tls_temp_files() -> None:
 @lru_cache
 def get_settings() -> Settings:
     """Get cached settings instance.
-    
+
     Raises:
         ConfigurationError: If settings are invalid
     """
     try:
-        return Settings() # type: ignore
+        return Settings()  # type: ignore
     except Exception as e:
-        raise ConfigurationError(
-            f"Failed to load settings from environment variables: {e}"
-        ) from e
+        raise ConfigurationError(f"Failed to load settings from environment variables: {e}") from e

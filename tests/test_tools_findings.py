@@ -29,20 +29,18 @@ class TestListProjectFindingsTool:
                 "vulnerability": {"uuid": "vuln-1", "vulnId": "CVE-2021-44228"},
             }
         ]
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_data, {"X-Total-Count": "1"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_project_findings")
             assert tool is not None
             result = await tool.fn(project_uuid="proj-1")
-            
+
             assert "findings" in result
             assert result["total"] == 1
 
@@ -68,18 +66,16 @@ class TestGetFindingAnalysisTool:
     async def test_get_analysis_success(self, register_tools):
         """Test getting finding analysis."""
         mock_data = {"state": "RESOLVED", "justification": "CODE_NOT_PRESENT"}
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "get_finding_analysis")
             assert tool is not None
             result = await tool.fn(component_uuid="comp-1", vulnerability_uuid="vuln-1")
-            
+
             assert "analysis" in result
 
     @pytest.mark.asyncio
@@ -104,14 +100,12 @@ class TestUpdateFindingAnalysisTool:
     async def test_update_analysis_success(self, register_tools):
         """Test updating finding analysis."""
         mock_data = {"state": "RESOLVED", "justification": "CODE_NOT_PRESENT"}
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "update_finding_analysis")
             assert tool is not None
             result = await tool.fn(
@@ -120,7 +114,7 @@ class TestUpdateFindingAnalysisTool:
                 vulnerability_uuid="vuln-1",
                 state="RESOLVED",
             )
-            
+
             assert result["message"] == "Analysis decision recorded successfully"
 
     @pytest.mark.asyncio
@@ -153,7 +147,7 @@ class TestUpdateFindingAnalysisTool:
             vulnerability_uuid="vuln-1",
             state="INVALID_STATE",
         )
-        
+
         assert "error" in result
 
     @pytest.mark.asyncio
@@ -218,20 +212,18 @@ class TestListFindingsGroupedTool:
     async def test_list_findings_grouped_success(self, register_tools):
         """Test listing findings grouped by vulnerability."""
         mock_data = [{"vulnId": "CVE-2021-44228", "count": 5}]
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_data, {"X-Total-Count": "1"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_findings_grouped")
             assert tool is not None
             result = await tool.fn()
-            
+
             assert "findings" in result
 
     @pytest.mark.asyncio
@@ -259,7 +251,9 @@ class TestListAllFindingsTool:
 
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
-            mock_client.get_with_headers = AsyncMock(return_value=(mock_data, {"X-Total-Count": "1"}))
+            mock_client.get_with_headers = AsyncMock(
+                return_value=(mock_data, {"X-Total-Count": "1"})
+            )
             mock_get_instance.return_value = mock_client
 
             tool = find_tool(register_tools, "list_all_findings")

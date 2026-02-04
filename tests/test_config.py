@@ -1,6 +1,7 @@
 """Tests for configuration management."""
 
 import os
+
 import pytest
 from pydantic import ValidationError
 
@@ -137,7 +138,9 @@ class TestSettings:
         monkeypatch.delenv("DEPENDENCY_TRACK_API_KEY", raising=False)
         monkeypatch.delenv("MCP_OAUTH_ISSUER", raising=False)
         with pytest.raises(ValidationError):
-            Settings(url="https://example.com", api_key=None, oauth_issuer="https://auth.example.com")  # type: ignore
+            Settings(
+                url="https://example.com", api_key=None, oauth_issuer="https://auth.example.com"
+            )  # type: ignore
 
     def test_settings_missing_oauth_issuer(self, monkeypatch):
         """Test that oauth_issuer is required."""
@@ -238,6 +241,7 @@ class TestSettings:
             dev_allow_http=True,
         )
         assert settings.oauth_issuer == "http://localhost:9000"
+
     def test_settings_invalid_url_format(self):
         """Test that invalid URL format raises ValueError."""
         with pytest.raises(ValueError, match="must be a valid URL"):
@@ -281,7 +285,10 @@ class TestSettings:
             api_key="test-key",
             oauth_issuer="https://auth.example.com/realms/myrealm",
         )
-        assert settings.oauth_jwks_url == "https://auth.example.com/realms/myrealm/protocol/openid-connect/certs"
+        assert (
+            settings.oauth_jwks_url
+            == "https://auth.example.com/realms/myrealm/protocol/openid-connect/certs"
+        )
 
     def test_settings_oauth_jwks_url_auto_derived_generic(self):
         """Test that JWKS URL is auto-derived for generic OIDC."""
@@ -385,7 +392,9 @@ class TestSettings:
             server_tls_key="/path/to/key.pem",
             verify_ssl=False,
         )
-        with pytest.raises(ConfigurationError, match="SSL certificate verification must be enabled"):
+        with pytest.raises(
+            ConfigurationError, match="SSL certificate verification must be enabled"
+        ):
             settings.validate_configuration_for_web_deployment()
 
     def test_validate_configuration_for_web_deployment_no_oauth_issuer_fails(self):
@@ -421,8 +430,8 @@ class TestTLSHelpers:
 
     def test_materialize_tls_files_success(self):
         """Test successful TLS file materialization."""
-        from dependency_track_mcp.config import materialize_tls_files, cleanup_tls_temp_files
-        
+        from dependency_track_mcp.config import cleanup_tls_temp_files, materialize_tls_files
+
         settings = Settings(
             url="https://example.com",
             api_key="test-key",
@@ -430,14 +439,14 @@ class TestTLSHelpers:
             server_tls_cert="-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----",
             server_tls_key="-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----",
         )
-        
+
         certfile, keyfile, ca_certs = materialize_tls_files(settings)
-        
+
         try:
             assert os.path.exists(certfile)
             assert os.path.exists(keyfile)
             assert ca_certs is None
-            
+
             # Verify content
             with open(certfile) as f:
                 content = f.read()
@@ -447,8 +456,8 @@ class TestTLSHelpers:
 
     def test_materialize_tls_files_with_ca_certs(self):
         """Test TLS file materialization with CA certs."""
-        from dependency_track_mcp.config import materialize_tls_files, cleanup_tls_temp_files
-        
+        from dependency_track_mcp.config import cleanup_tls_temp_files, materialize_tls_files
+
         settings = Settings(
             url="https://example.com",
             api_key="test-key",
@@ -457,15 +466,15 @@ class TestTLSHelpers:
             server_tls_key="-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----",
             server_tls_ca_certs="-----BEGIN CERTIFICATE-----\nca\n-----END CERTIFICATE-----",
         )
-        
+
         certfile, keyfile, ca_certs = materialize_tls_files(settings)
-        
+
         try:
             assert os.path.exists(certfile)
             assert os.path.exists(keyfile)
             assert ca_certs is not None
             assert os.path.exists(ca_certs)
-            
+
             # Verify CA content
             with open(ca_certs) as f:
                 content = f.read()
@@ -475,8 +484,8 @@ class TestTLSHelpers:
 
     def test_materialize_tls_files_normalized_newlines(self):
         """Test that \\n escapes are normalized."""
-        from dependency_track_mcp.config import materialize_tls_files, cleanup_tls_temp_files
-        
+        from dependency_track_mcp.config import cleanup_tls_temp_files, materialize_tls_files
+
         settings = Settings(
             url="https://example.com",
             api_key="test-key",
@@ -484,9 +493,9 @@ class TestTLSHelpers:
             server_tls_cert="-----BEGIN CERTIFICATE-----\\ntest\\n-----END CERTIFICATE-----",
             server_tls_key="-----BEGIN PRIVATE KEY-----\\ntest\\n-----END PRIVATE KEY-----",
         )
-        
+
         certfile, keyfile, ca_certs = materialize_tls_files(settings)
-        
+
         try:
             # Verify newlines were properly normalized
             with open(certfile) as f:
@@ -499,35 +508,35 @@ class TestTLSHelpers:
     def test_materialize_tls_files_missing_cert_fails(self):
         """Test that missing cert fails."""
         from dependency_track_mcp.config import materialize_tls_files
-        
+
         settings = Settings(
             url="https://example.com",
             api_key="test-key",
             oauth_issuer="https://auth.example.com",
             server_tls_key="-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----",
         )
-        
+
         with pytest.raises(ConfigurationError, match="TLS is required"):
             materialize_tls_files(settings)
 
     def test_materialize_tls_files_missing_key_fails(self):
         """Test that missing key fails."""
         from dependency_track_mcp.config import materialize_tls_files
-        
+
         settings = Settings(
             url="https://example.com",
             api_key="test-key",
             oauth_issuer="https://auth.example.com",
             server_tls_cert="-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----",
         )
-        
+
         with pytest.raises(ConfigurationError, match="TLS is required"):
             materialize_tls_files(settings)
 
     def test_cleanup_tls_temp_files(self):
         """Test TLS temp file cleanup."""
-        from dependency_track_mcp.config import materialize_tls_files, cleanup_tls_temp_files
-        
+        from dependency_track_mcp.config import cleanup_tls_temp_files, materialize_tls_files
+
         settings = Settings(
             url="https://example.com",
             api_key="test-key",
@@ -535,16 +544,16 @@ class TestTLSHelpers:
             server_tls_cert="-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----",
             server_tls_key="-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----",
         )
-        
+
         certfile, keyfile, ca_certs = materialize_tls_files(settings)
-        
+
         # Files should exist
         assert os.path.exists(certfile)
         assert os.path.exists(keyfile)
-        
+
         # Cleanup
         cleanup_tls_temp_files()
-        
+
         # Files should be removed
         assert not os.path.exists(certfile)
         assert not os.path.exists(keyfile)
@@ -557,7 +566,6 @@ class TestTLSHelpers:
             oauth_issuer="https://auth.example.com",
             oauth_required_scopes="read:projects write:projects read:vulnerabilities",
         )
-        
+
         scopes = settings.get_required_scopes()
         assert scopes == {"read:projects", "write:projects", "read:vulnerabilities"}
-

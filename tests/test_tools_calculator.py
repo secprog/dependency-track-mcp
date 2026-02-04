@@ -1,7 +1,8 @@
 """Tests for calculator tools."""
 
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from dependency_track_mcp.client import DependencyTrackClient
 from dependency_track_mcp.exceptions import DependencyTrackError
@@ -12,6 +13,7 @@ from tests.utils import find_tool
 def register_tools():
     """Fixture that registers all tools."""
     from dependency_track_mcp.server import mcp
+
     return mcp
 
 
@@ -27,16 +29,16 @@ class TestCalculateCVSSTool:
             "impactSubScore": 5.9,
             "exploitabilitySubScore": 3.9,
         }
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "calculate_cvss")
             assert tool is not None
             result = await tool.fn(vector=vector)
-            
+
             assert "cvss" in result
             assert result["cvss"]["baseScore"] == 9.8
             mock_client.get.assert_called_once_with("/calculator/cvss", params={"vector": vector})
@@ -45,7 +47,7 @@ class TestCalculateCVSSTool:
     async def test_calculate_cvss_error(self, register_tools):
         """Test calculate_cvss error handling."""
         vector = "INVALID"
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(side_effect=DependencyTrackError("Invalid vector"))
@@ -71,16 +73,16 @@ class TestCalculateOwaspRRTool:
             "technicalImpactScore": 10.0,
             "businessImpactScore": 10.0,
         }
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "calculate_owasp_rr")
             assert tool is not None
             result = await tool.fn(vector=vector)
-            
+
             assert "owaspRR" in result
             assert result["owaspRR"]["likelihoodScore"] == 9.0
             mock_client.get.assert_called_once_with("/calculator/owasp", params={"vector": vector})
@@ -89,7 +91,7 @@ class TestCalculateOwaspRRTool:
     async def test_calculate_owasp_rr_error(self, register_tools):
         """Test calculate_owasp_rr error handling."""
         vector = "INVALID"
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(side_effect=DependencyTrackError("Invalid vector"))

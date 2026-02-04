@@ -10,25 +10,23 @@ Tests cover:
 - Error handling and edge cases
 """
 
-import json
-import logging
-from unittest.mock import AsyncMock, MagicMock, patch, call
-import pytest
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import httpx
+import pytest
 from fastapi.testclient import TestClient
 from jose import jwt as jose_jwt
 from jose.exceptions import JWTError
 
+from dependency_track_mcp.config import ConfigurationError, Settings
 from dependency_track_mcp.main import (
+    JWTAuthMiddleware,
     app,
     get_jwks,
+    main,
     refresh_jwks_cache,
     verify_jwt_token,
-    JWTAuthMiddleware,
-    _jwks_cache,
-    main,
 )
-from dependency_track_mcp.config import ConfigurationError, Settings
 
 
 @pytest.fixture
@@ -235,17 +233,18 @@ class TestGetJWKS:
         """Test successful JWKS fetch."""
         with patch("dependency_track_mcp.main.get_settings") as mock_get_settings:
             mock_get_settings.return_value = mock_settings
-            
+
             mock_response = MagicMock()
             mock_response.json.return_value = {"keys": [{"kid": "key1"}]}
 
-            with patch("httpx.AsyncClient") as mock_client_class:
+            with patch("httpx.AsyncClient"):
                 mock_client = AsyncMock()
                 mock_client.get = AsyncMock(return_value=mock_response)
                 mock_client.__aenter__.return_value = mock_client
 
                 with patch("httpx.AsyncClient", return_value=mock_client):
                     import dependency_track_mcp.main
+
                     dependency_track_mcp.main._jwks_cache = None  # Clear cache
 
                     jwks = await get_jwks()
@@ -259,6 +258,7 @@ class TestGetJWKS:
             mock_get_settings.return_value = mock_settings
 
             import dependency_track_mcp.main
+
             dependency_track_mcp.main._jwks_cache = {"keys": [{"cached": True}]}
 
             jwks = await get_jwks()
@@ -271,7 +271,7 @@ class TestGetJWKS:
         with patch("dependency_track_mcp.main.get_settings") as mock_get_settings:
             mock_get_settings.return_value = mock_settings
 
-            with patch("httpx.AsyncClient") as mock_client_class:
+            with patch("httpx.AsyncClient"):
                 mock_client = AsyncMock()
                 mock_response = MagicMock()
                 mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
@@ -282,6 +282,7 @@ class TestGetJWKS:
 
                 with patch("httpx.AsyncClient", return_value=mock_client):
                     import dependency_track_mcp.main
+
                     dependency_track_mcp.main._jwks_cache = None
 
                     with pytest.raises(httpx.HTTPStatusError):
@@ -296,6 +297,7 @@ class TestGetJWKS:
             mock_get_settings.return_value = mock_settings
 
             import dependency_track_mcp.main
+
             dependency_track_mcp.main._jwks_cache = None
 
             with pytest.raises(ValueError, match="JWKS URL not configured"):
@@ -308,6 +310,7 @@ class TestRefreshJWKSCache:
     def test_refresh_jwks_cache_clears(self):
         """Test refresh_jwks_cache clears the cache."""
         import dependency_track_mcp.main
+
         dependency_track_mcp.main._jwks_cache = {"keys": []}
 
         refresh_jwks_cache()
@@ -418,6 +421,7 @@ class TestHealthCheck:
             mock_get_settings.return_value = mock_settings
 
             import dependency_track_mcp.main
+
             dependency_track_mcp.main._jwks_cache = {"keys": []}
 
             try:
@@ -436,6 +440,7 @@ class TestAdminRefreshJWKS:
     def test_admin_refresh_jwks(self, client):
         """Test /admin/refresh-jwks endpoint."""
         import dependency_track_mcp.main
+
         dependency_track_mcp.main._jwks_cache = {"keys": []}
 
         response = client.post("/admin/refresh-jwks")
@@ -454,8 +459,12 @@ class TestMainFunction:
         with patch("dependency_track_mcp.main.get_settings") as mock_get_settings:
             mock_settings = MagicMock(spec=Settings)
             mock_settings.dev_allow_http = False
-            mock_settings.server_tls_cert = "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----"
-            mock_settings.server_tls_key = "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----"
+            mock_settings.server_tls_cert = (
+                "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----"
+            )
+            mock_settings.server_tls_key = (
+                "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----"
+            )
             mock_settings.server_host = "0.0.0.0"
             mock_settings.server_port = 8000
             mock_settings.oauth_jwks_url = "https://auth.example.com/.well-known/jwks.json"
@@ -506,14 +515,20 @@ class TestMainFunction:
             mock_settings.dev_allow_http = False
             mock_settings.server_tls_cert = None
             mock_settings.server_tls_key = None
+            mock_settings.server_host = "0.0.0.0"
+            mock_settings.server_port = 8000
+            mock_settings.oauth_jwks_url = "https://auth.example.com/.well-known/jwks.json"
+            mock_settings.oauth_audience = None
             mock_get_settings.return_value = mock_settings
 
             with patch.object(
-                mock_settings, "validate_configuration_for_web_deployment",
-                side_effect=ConfigurationError("TLS required")
+                mock_settings,
+                "validate_configuration_for_web_deployment",
+                side_effect=ConfigurationError("TLS required"),
             ):
-                with patch("sys.exit") as mock_exit:
-                    main()
+                with patch("sys.exit", side_effect=SystemExit(1)) as mock_exit:
+                    with pytest.raises(SystemExit):
+                        main()
                     mock_exit.assert_called_with(1)
 
     def test_main_oauth_validation_fails(self):
@@ -523,14 +538,20 @@ class TestMainFunction:
             mock_settings.dev_allow_http = True
             mock_settings.server_tls_cert = None
             mock_settings.server_tls_key = None
+            mock_settings.server_host = "0.0.0.0"
+            mock_settings.server_port = 8000
+            mock_settings.oauth_jwks_url = "https://auth.example.com/.well-known/jwks.json"
+            mock_settings.oauth_audience = None
             mock_get_settings.return_value = mock_settings
 
             with patch.object(
-                mock_settings, "validate_oauth_enabled",
-                side_effect=ConfigurationError("OAuth not configured")
+                mock_settings,
+                "validate_oauth_enabled",
+                side_effect=ConfigurationError("OAuth not configured"),
             ):
-                with patch("sys.exit") as mock_exit:
-                    main()
+                with patch("sys.exit", side_effect=SystemExit(1)) as mock_exit:
+                    with pytest.raises(SystemExit):
+                        main()
                     mock_exit.assert_called_with(1)
 
     def test_main_without_tls_non_dev_mode_exits(self):
@@ -547,6 +568,7 @@ class TestMainFunction:
             mock_get_settings.return_value = mock_settings
 
             with patch.object(mock_settings, "validate_configuration_for_web_deployment"):
-                with patch("sys.exit") as mock_exit:
-                    main()
+                with patch("sys.exit", side_effect=SystemExit(1)) as mock_exit:
+                    with pytest.raises(SystemExit):
+                        main()
                     mock_exit.assert_called_with(1)

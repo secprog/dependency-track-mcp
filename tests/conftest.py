@@ -53,8 +53,7 @@ def settings():
 def mcp():
     """Create a real FastMCP instance for testing."""
     return FastMCP(
-        name="dependency-track-test",
-        instructions="Test MCP server for dependency-track"
+        name="dependency-track-test", instructions="Test MCP server for dependency-track"
     )
 
 

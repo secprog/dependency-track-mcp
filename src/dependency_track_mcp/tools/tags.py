@@ -19,9 +19,7 @@ def register_tag_tools(mcp: FastMCP) -> None:
     )
     async def list_tags(
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List all tags defined in Dependency Track.
@@ -77,8 +75,7 @@ def register_tag_tools(mcp: FastMCP) -> None:
         """
         try:
             client = get_client()
-            tag_data = [{"name": name} for name in names]
-            await client.delete("/tag", data=tag_data)
+            await client.delete("/tag", params={"names": ",".join(names)})
             return {"message": f"Deleted {len(names)} tag(s) successfully"}
         except DependencyTrackError as e:
             return {"error": str(e), "details": e.details}
@@ -90,9 +87,7 @@ def register_tag_tools(mcp: FastMCP) -> None:
     async def get_tag_projects(
         tag_name: Annotated[str, Field(description="Tag name")],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         Get all projects that have the specified tag.
@@ -100,9 +95,7 @@ def register_tag_tools(mcp: FastMCP) -> None:
         try:
             client = get_client()
             params = {"pageNumber": page, "pageSize": page_size}
-            data, headers = await client.get_with_headers(
-                f"/tag/{tag_name}/project", params=params
-            )
+            data, headers = await client.get_with_headers(f"/tag/{tag_name}/project", params=params)
             total_count = headers.get("X-Total-Count", len(data))
 
             return {
@@ -160,9 +153,7 @@ def register_tag_tools(mcp: FastMCP) -> None:
     async def get_tag_policies(
         tag_name: Annotated[str, Field(description="Tag name")],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         Get all policies that have the specified tag.
@@ -170,9 +161,7 @@ def register_tag_tools(mcp: FastMCP) -> None:
         try:
             client = get_client()
             params = {"pageNumber": page, "pageSize": page_size}
-            data, headers = await client.get_with_headers(
-                f"/tag/{tag_name}/policy", params=params
-            )
+            data, headers = await client.get_with_headers(f"/tag/{tag_name}/policy", params=params)
             total_count = headers.get("X-Total-Count", len(data))
 
             return {
@@ -227,9 +216,7 @@ def register_tag_tools(mcp: FastMCP) -> None:
     async def get_tag_notification_rules(
         tag_name: Annotated[str, Field(description="Tag name")],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         Get all notification rules that have the specified tag.
@@ -258,9 +245,7 @@ def register_tag_tools(mcp: FastMCP) -> None:
     async def get_policy_tags(
         policy_uuid: Annotated[str, Field(description="Policy UUID")],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         Get all tags associated with a specific policy.
@@ -289,9 +274,7 @@ def register_tag_tools(mcp: FastMCP) -> None:
     async def get_tag_collection_projects(
         tag_name: Annotated[str, Field(description="Tag name")],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         Get all collection projects that use the specified tag for their collection logic.

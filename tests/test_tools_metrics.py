@@ -29,10 +29,8 @@ class TestGetPortfolioMetricsTool:
             "medium": 20,
             "vulnerabilities": 35,
         }
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
@@ -40,7 +38,7 @@ class TestGetPortfolioMetricsTool:
             tool = find_tool(register_tools, "get_portfolio_metrics")
             assert tool is not None
             result = await tool.fn()
-            
+
             assert "metrics" in result
             assert result["metrics"]["critical"] == 5
 
@@ -69,10 +67,8 @@ class TestGetPortfolioMetricsHistoryTool:
             {"date": "2024-01-01", "vulnerabilities": 35},
             {"date": "2024-01-02", "vulnerabilities": 34},
         ]
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
@@ -80,7 +76,7 @@ class TestGetPortfolioMetricsHistoryTool:
             tool = find_tool(register_tools, "get_portfolio_metrics_history")
             assert tool is not None
             result = await tool.fn(days=30)
-            
+
             assert "metrics" in result
 
     @pytest.mark.asyncio
@@ -109,10 +105,8 @@ class TestGetProjectMetricsTool:
             "high": 5,
             "medium": 10,
         }
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
@@ -120,7 +114,7 @@ class TestGetProjectMetricsTool:
             tool = find_tool(register_tools, "get_project_metrics")
             assert tool is not None
             result = await tool.fn(project_uuid="proj-1")
-            
+
             assert "metrics" in result
 
     @pytest.mark.asyncio
@@ -148,10 +142,8 @@ class TestGetProjectMetricsHistoryTool:
             {"date": "2024-01-01", "vulnerabilities": 15},
             {"date": "2024-01-02", "vulnerabilities": 14},
         ]
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
@@ -159,7 +151,7 @@ class TestGetProjectMetricsHistoryTool:
             tool = find_tool(register_tools, "get_project_metrics_history")
             assert tool is not None
             result = await tool.fn(project_uuid="proj-1", days=30)
-            
+
             assert "metrics" in result
 
     @pytest.mark.asyncio
@@ -183,9 +175,7 @@ class TestRefreshPortfolioMetricsTool:
     @pytest.mark.asyncio
     async def test_refresh_portfolio_metrics_success(self, register_tools):
         """Test refreshing portfolio metrics."""
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
@@ -193,7 +183,7 @@ class TestRefreshPortfolioMetricsTool:
             tool = find_tool(register_tools, "refresh_portfolio_metrics")
             assert tool is not None
             result = await tool.fn()
-            
+
             assert "message" in result
 
     @pytest.mark.asyncio
@@ -217,9 +207,7 @@ class TestRefreshProjectMetricsTool:
     @pytest.mark.asyncio
     async def test_refresh_project_metrics_success(self, register_tools):
         """Test refreshing project metrics."""
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
@@ -227,7 +215,7 @@ class TestRefreshProjectMetricsTool:
             tool = find_tool(register_tools, "refresh_project_metrics")
             assert tool is not None
             result = await tool.fn(project_uuid="proj-1")
-            
+
             assert "message" in result
 
     @pytest.mark.asyncio
@@ -252,10 +240,8 @@ class TestGetVulnerabilityMetricsTool:
     async def test_get_vulnerability_metrics_success(self, register_tools):
         """Test getting vulnerability metrics."""
         mock_data = {"total": 100, "bySource": {"NVD": 80, "OSV": 20}}
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
@@ -263,7 +249,7 @@ class TestGetVulnerabilityMetricsTool:
             tool = find_tool(register_tools, "get_vulnerability_metrics")
             assert tool is not None
             result = await tool.fn()
-            
+
             assert "metrics" in result
 
     @pytest.mark.asyncio

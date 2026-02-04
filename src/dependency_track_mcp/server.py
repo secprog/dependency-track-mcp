@@ -17,7 +17,6 @@ See SECURITY.md for detailed security documentation.
 import asyncio
 import logging
 import sys
-from typing import Optional
 
 from fastmcp import FastMCP
 
@@ -29,8 +28,6 @@ from dependency_track_mcp.config import (
     materialize_tls_files,
 )
 from dependency_track_mcp.oauth import (
-    InvalidTokenError,
-    InsufficientScopesError,
     JWTValidator,
     OAuth2AuthorizationMiddleware,
 )
@@ -82,11 +79,11 @@ mcp = FastMCP(
 )
 
 # OAuth 2.1 components - initialized after validation
-_oauth_validator: Optional[JWTValidator] = None
-_oauth_middleware: Optional[OAuth2AuthorizationMiddleware] = None
+_oauth_validator: JWTValidator | None = None
+_oauth_middleware: OAuth2AuthorizationMiddleware | None = None
 
 
-def _initialize_oauth_validator() -> Optional[JWTValidator]:
+def _initialize_oauth_validator() -> JWTValidator | None:
     """Initialize OAuth 2.1 JWT validator with settings.
 
     Returns:
@@ -105,7 +102,7 @@ def _initialize_oauth_validator() -> Optional[JWTValidator]:
 def _initialize_oauth_components() -> None:
     """Initialize OAuth 2.1 validator and middleware after validation."""
     global _oauth_validator, _oauth_middleware
-    
+
     validator = _initialize_oauth_validator()
     if validator:
         settings = get_settings()
@@ -128,13 +125,13 @@ async def cleanup():
 
 def validate_security_configuration(settings) -> None:
     """Validate that security configuration is safe for production/web deployment.
-    
+
     This function performs comprehensive security checks before starting the server.
     The server will not start if security requirements are not met.
-    
+
     Args:
         settings: Server configuration settings
-        
+
     Raises:
         ConfigurationError: If security configuration is invalid
         SystemExit: If validation fails
@@ -142,16 +139,16 @@ def validate_security_configuration(settings) -> None:
     try:
         # Validate OAuth 2.1 is enabled
         settings.validate_oauth_enabled()
-        
+
         # Validate all URLs use HTTPS
         settings.validate_configuration_for_web_deployment()
-        
+
         logger.info("✓ Security configuration validated successfully")
         logger.info("✓ OAuth 2.1 issuer configured")
         logger.info("✓ Required scopes configured")
         logger.info(f"✓ HTTPS enabled: {settings.url.startswith('https://')}")
         logger.info(f"✓ SSL verification: {settings.verify_ssl}")
-        
+
     except ConfigurationError as e:
         logger.error("=" * 80)
         logger.error("SECURITY CONFIGURATION ERROR - SERVER CANNOT START")
@@ -196,13 +193,13 @@ def main():
         logger.error("\nSee .env.example for detailed configuration examples.")
         logger.error("=" * 80)
         sys.exit(1)
-    
+
     # Validate security configuration
     validate_security_configuration(settings)
-    
+
     # Initialize OAuth components after validation
     _initialize_oauth_components()
-    
+
     # Start server
     try:
         logger.info(f"Starting HTTPS server on {settings.server_host}:{settings.server_port}")

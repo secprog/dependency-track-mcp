@@ -2,11 +2,12 @@
 Tests for components tool optional field coverage.
 Targets missing lines in update_component optional field handling.
 """
-import pytest
+
 from unittest.mock import AsyncMock, patch
 
+import pytest
+
 from dependency_track_mcp.client import DependencyTrackClient
-from dependency_track_mcp.exceptions import DependencyTrackError
 from dependency_track_mcp.tools.components import register_component_tools
 from tests.utils import find_tool
 
@@ -37,9 +38,7 @@ class TestComponentsOptionalFields:
             "group": "new-group",
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=existing_data)
             mock_client.post = AsyncMock(return_value=updated_data)
@@ -73,9 +72,7 @@ class TestComponentsOptionalFields:
             "purl": "pkg:npm/new@2.0.0",
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=existing_data)
             mock_client.post = AsyncMock(return_value=updated_data)
@@ -109,9 +106,7 @@ class TestComponentsOptionalFields:
             "cpe": "cpe:2.3:a:vendor:product:new:*:*:*:*:*:*:*",
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=existing_data)
             mock_client.post = AsyncMock(return_value=updated_data)
@@ -119,9 +114,7 @@ class TestComponentsOptionalFields:
 
             tool = find_tool(register_tools, "update_component")
             assert tool is not None
-            result = await tool.fn(
-                uuid="comp-1", cpe="cpe:2.3:a:vendor:product:new:*:*:*:*:*:*:*"
-            )
+            result = await tool.fn(uuid="comp-1", cpe="cpe:2.3:a:vendor:product:new:*:*:*:*:*:*:*")
 
             assert "component" in result
             assert result["component"]["cpe"] == "cpe:2.3:a:vendor:product:new:*:*:*:*:*:*:*"
@@ -147,9 +140,7 @@ class TestComponentsOptionalFields:
             "description": "new description",
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=existing_data)
             mock_client.post = AsyncMock(return_value=updated_data)
@@ -183,9 +174,7 @@ class TestComponentsOptionalFields:
             "license": "Apache-2.0",
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=existing_data)
             mock_client.post = AsyncMock(return_value=updated_data)
@@ -227,9 +216,7 @@ class TestComponentsOptionalFields:
             "license": "Apache-2.0",
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=existing_data)
             mock_client.post = AsyncMock(return_value=updated_data)
@@ -285,9 +272,7 @@ class TestComponentsOptionalFields:
             "license": "MIT",
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=existing_data)
             mock_client.post = AsyncMock(return_value=updated_data)
@@ -322,9 +307,7 @@ class TestComponentsOptionalFields:
             "classifier": "LIBRARY",
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client

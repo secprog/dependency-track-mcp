@@ -1,12 +1,13 @@
 """Test for oauth.py JWKS HTTP error handling (lines 172-183)."""
 
-import pytest
 from unittest.mock import AsyncMock, Mock, patch
+
 import httpx
+import pytest
 
 from dependency_track_mcp.oauth import (
-    JWTValidator,
     InvalidTokenError,
+    JWTValidator,
 )
 
 
@@ -20,15 +21,15 @@ class TestFetchJWKSHTTPErrors:
             expected_issuer="https://auth.example.com",
             expected_audience=None,
         )
-        
+
         with patch("httpx.AsyncClient") as mock_client_cls:
             mock_client = AsyncMock()
             mock_client.__aenter__.return_value = mock_client
             mock_client.__aexit__.return_value = None
             mock_client.get.side_effect = httpx.TimeoutException("Timeout")
-            
+
             mock_client_cls.return_value = mock_client
-            
+
             with pytest.raises(InvalidTokenError, match="Failed to fetch JWKS"):
                 await validator.fetch_jwks()
 
@@ -39,7 +40,7 @@ class TestFetchJWKSHTTPErrors:
             expected_issuer="https://auth.example.com",
             expected_audience=None,
         )
-        
+
         with patch("httpx.AsyncClient") as mock_client_cls:
             mock_response = Mock()
             # raise_for_status is NOT async, it's a regular method
@@ -48,14 +49,14 @@ class TestFetchJWKSHTTPErrors:
                 request=Mock(),
                 response=Mock(),
             )
-            
+
             mock_client = AsyncMock()
             mock_client.__aenter__.return_value = mock_client
             mock_client.__aexit__.return_value = None
             mock_client.get.return_value = mock_response
-            
+
             mock_client_cls.return_value = mock_client
-            
+
             with pytest.raises(InvalidTokenError, match="Failed to fetch JWKS"):
                 await validator.fetch_jwks()
 
@@ -66,15 +67,15 @@ class TestFetchJWKSHTTPErrors:
             expected_issuer="https://auth.example.com",
             expected_audience=None,
         )
-        
+
         with patch("httpx.AsyncClient") as mock_client_cls:
             mock_client = AsyncMock()
             mock_client.__aenter__.return_value = mock_client
             mock_client.__aexit__.return_value = None
             mock_client.get.side_effect = httpx.ConnectError("Connection refused")
-            
+
             mock_client_cls.return_value = mock_client
-            
+
             with pytest.raises(InvalidTokenError, match="Failed to fetch JWKS"):
                 await validator.fetch_jwks()
 
@@ -85,15 +86,15 @@ class TestFetchJWKSHTTPErrors:
             expected_issuer="https://auth.example.com",
             expected_audience=None,
         )
-        
+
         with patch("httpx.AsyncClient") as mock_client_cls:
             mock_client = AsyncMock()
             mock_client.__aenter__.return_value = mock_client
             mock_client.__aexit__.return_value = None
             mock_client.get.side_effect = RuntimeError("Some unexpected error")
-            
+
             mock_client_cls.return_value = mock_client
-            
+
             with pytest.raises(InvalidTokenError, match="Failed to fetch JWKS"):
                 await validator.fetch_jwks()
 
@@ -104,20 +105,20 @@ class TestFetchJWKSHTTPErrors:
             expected_issuer="https://auth.example.com",
             expected_audience=None,
         )
-        
+
         with patch("httpx.AsyncClient") as mock_client_cls:
             mock_response = Mock()
             # raise_for_status is NOT async
             mock_response.raise_for_status.return_value = None
             # json() is NOT async for httpx responses
             mock_response.json.side_effect = ValueError("Invalid JSON")
-            
+
             mock_client = AsyncMock()
             mock_client.__aenter__.return_value = mock_client
             mock_client.__aexit__.return_value = None
             mock_client.get.return_value = mock_response
-            
+
             mock_client_cls.return_value = mock_client
-            
+
             with pytest.raises(InvalidTokenError, match="Failed to fetch JWKS"):
                 await validator.fetch_jwks()

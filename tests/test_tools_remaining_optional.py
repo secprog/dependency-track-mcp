@@ -2,11 +2,12 @@
 Tests for remaining optional field coverage.
 Targets lines in notifications, policies, and projects optional field handling.
 """
-import pytest
+
 from unittest.mock import AsyncMock, patch
 
+import pytest
+
 from dependency_track_mcp.client import DependencyTrackClient
-from dependency_track_mcp.exceptions import DependencyTrackError
 from dependency_track_mcp.tools.notifications import register_notification_tools
 from dependency_track_mcp.tools.policies import register_policy_tools
 from dependency_track_mcp.tools.projects import register_project_tools
@@ -46,9 +47,7 @@ class TestNotificationPublisherOptionalFields:
             "template": "new-template",
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -70,9 +69,7 @@ class TestNotificationPublisherOptionalFields:
             "templateMimeType": "application/json",
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -94,9 +91,7 @@ class TestNotificationPublisherOptionalFields:
             "defaultPublisher": True,
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -121,9 +116,7 @@ class TestNotificationPublisherOptionalFields:
             "defaultPublisher": False,
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -158,9 +151,7 @@ class TestNotificationRuleOptionalFields:
             "notificationLevel": "HIGH",
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -182,9 +173,7 @@ class TestNotificationRuleOptionalFields:
             "enabled": False,
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -208,9 +197,7 @@ class TestNotificationRuleOptionalFields:
             "enabled": True,
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -241,9 +228,7 @@ class TestPolicyOptionalFields:
         existing = {"uuid": "pol-1", "operator": "AND"}
         updated = {"uuid": "pol-1", "operator": "OR"}
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=existing)
             mock_client.post = AsyncMock(return_value=updated)
@@ -264,9 +249,7 @@ class TestPolicyOptionalFields:
         existing = {"uuid": "pol-1", "violationState": "INFO"}
         updated = {"uuid": "pol-1", "violationState": "FAIL"}
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=existing)
             mock_client.post = AsyncMock(return_value=updated)
@@ -287,9 +270,7 @@ class TestPolicyOptionalFields:
         existing = {"uuid": "pol-1", "includeChildren": False}
         updated = {"uuid": "pol-1", "includeChildren": True}
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=existing)
             mock_client.post = AsyncMock(return_value=updated)
@@ -312,9 +293,7 @@ class TestPolicyOptionalFields:
             "subject": "new-subject",
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -336,9 +315,7 @@ class TestPolicyOptionalFields:
             "operator": "MATCHES",
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -360,9 +337,7 @@ class TestPolicyOptionalFields:
             "value": "new-value",
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -388,9 +363,7 @@ class TestProjectOptionalFields:
             "description": "new description",
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.patch = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -412,9 +385,7 @@ class TestProjectOptionalFields:
             "active": False,
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.patch = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -436,9 +407,7 @@ class TestProjectOptionalFields:
             "classifier": "FRAMEWORK",
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.patch = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -460,9 +429,7 @@ class TestProjectOptionalFields:
             "tags": [{"name": "tag1"}, {"name": "tag2"}],
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.patch = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -489,9 +456,7 @@ class TestProjectOptionalFields:
             "tags": [{"name": "prod"}],
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.patch = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client

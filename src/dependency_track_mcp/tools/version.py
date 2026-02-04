@@ -1,9 +1,8 @@
 """Version and system information tools for Dependency Track."""
 
-import httpx
 from fastmcp import FastMCP
 
-from dependency_track_mcp.config import get_settings
+from dependency_track_mcp.client import get_client
 from dependency_track_mcp.exceptions import DependencyTrackError
 from dependency_track_mcp.scopes import Scopes
 
@@ -22,19 +21,11 @@ def register_version_tools(mcp: FastMCP) -> None:
         Returns the application name, version, and build timestamp.
         """
         try:
-            settings = get_settings()
+            client = get_client()
             # Version endpoint is at /api/version, not under /api/v1
-            async with httpx.AsyncClient(
-                headers={
-                    "X-Api-Key": settings.api_key,
-                    "Accept": "application/json",
-                },
-                timeout=httpx.Timeout(settings.timeout),
-                verify=settings.verify_ssl,
-            ) as http_client:
-                response = await http_client.get(f"{settings.url}/api/version")
-                response.raise_for_status()
-                return {"version": response.json()}
+            # Use /../version to go up from /api/v1 to /api/version
+            data = await client.get("/../version")
+            return {"version": data}
         except DependencyTrackError as e:
             return {"error": str(e), "details": e.details}
         except Exception as e:

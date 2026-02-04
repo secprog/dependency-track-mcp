@@ -2,15 +2,15 @@
 
 import base64
 import json
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, patch
 
 import pytest
 
 from dependency_track_mcp.oauth import (
     AuthorizationContext,
-    InvalidTokenError,
     InsufficientScopesError,
+    InvalidTokenError,
     JWTPayload,
     JWTValidator,
     OAuth2AuthorizationMiddleware,
@@ -98,9 +98,7 @@ class TestJWTValidator:
 
         # Encode payload (JWT format without actual signature)
         header = base64.urlsafe_b64encode(b"{}").decode().rstrip("=")
-        body = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip(
-            "="
-        )
+        body = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
         signature = base64.urlsafe_b64encode(b"signature").decode().rstrip("=")
 
         return f"{header}.{body}.{signature}"
@@ -353,18 +351,16 @@ class TestOAuth2AuthorizationMiddleware:
         }
 
         header = base64.urlsafe_b64encode(b"{}").decode().rstrip("=")
-        body = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip(
-            "="
-        )
+        body = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
         signature = base64.urlsafe_b64encode(b"signature").decode().rstrip("=")
 
         token = f"{header}.{body}.{signature}"
         auth_header = f"Bearer {token}"
 
         # Mock the JWKS fetch and JWT decode
-        with patch.object(middleware.validator, 'fetch_jwks', new_callable=AsyncMock) as mock_fetch:
+        with patch.object(middleware.validator, "fetch_jwks", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = mock_jwks
-            with patch('dependency_track_mcp.oauth.jwt.decode') as mock_decode:
+            with patch("dependency_track_mcp.oauth.jwt.decode") as mock_decode:
                 mock_decode.return_value = payload
                 context = await middleware.validate_authorization_header(auth_header)
                 assert context.subject == "user123"
@@ -381,16 +377,12 @@ class TestOAuth2AuthorizationMiddleware:
         with pytest.raises(InvalidTokenError):
             await middleware.validate_authorization_header("InvalidHeader")
 
-    async def test_validate_authorization_header_missing_bearer_prefix(
-        self, middleware
-    ):
+    async def test_validate_authorization_header_missing_bearer_prefix(self, middleware):
         """Test validation fails when Bearer prefix is missing."""
         with pytest.raises(InvalidTokenError):
             await middleware.validate_authorization_header("token12345")
 
-    async def test_validate_authorization_header_insufficient_scopes(
-        self, middleware, mock_jwks
-    ):
+    async def test_validate_authorization_header_insufficient_scopes(self, middleware, mock_jwks):
         """Test validation fails when token has insufficient scopes."""
         now = datetime.now(UTC).replace(tzinfo=None)
         payload = {
@@ -402,18 +394,16 @@ class TestOAuth2AuthorizationMiddleware:
         }
 
         header = base64.urlsafe_b64encode(b"{}").decode().rstrip("=")
-        body = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip(
-            "="
-        )
+        body = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
         signature = base64.urlsafe_b64encode(b"signature").decode().rstrip("=")
 
         token = f"{header}.{body}.{signature}"
         auth_header = f"Bearer {token}"
 
         # Mock the JWKS fetch and JWT decode
-        with patch.object(middleware.validator, 'fetch_jwks', new_callable=AsyncMock) as mock_fetch:
+        with patch.object(middleware.validator, "fetch_jwks", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = mock_jwks
-            with patch('dependency_track_mcp.oauth.jwt.decode') as mock_decode:
+            with patch("dependency_track_mcp.oauth.jwt.decode") as mock_decode:
                 mock_decode.return_value = payload
                 with pytest.raises(InsufficientScopesError):
                     await middleware.validate_authorization_header(auth_header)
@@ -430,18 +420,16 @@ class TestOAuth2AuthorizationMiddleware:
         }
 
         header = base64.urlsafe_b64encode(b"{}").decode().rstrip("=")
-        body = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip(
-            "="
-        )
+        body = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
         signature = base64.urlsafe_b64encode(b"signature").decode().rstrip("=")
 
         token = f"{header}.{body}.{signature}"
         auth_header = f"Bearer {token}"
 
         # Mock the JWKS fetch and JWT decode
-        with patch.object(middleware.validator, 'fetch_jwks', new_callable=AsyncMock) as mock_fetch:
+        with patch.object(middleware.validator, "fetch_jwks", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = mock_jwks
-            with patch('dependency_track_mcp.oauth.jwt.decode') as mock_decode:
+            with patch("dependency_track_mcp.oauth.jwt.decode") as mock_decode:
                 mock_decode.return_value = payload
                 # Should succeed with custom scopes
                 context = await middleware.validate_authorization_header(
@@ -449,4 +437,3 @@ class TestOAuth2AuthorizationMiddleware:
                     required_scopes={"write:analysis"},
                 )
                 assert context.has_scope("write:analysis")
-

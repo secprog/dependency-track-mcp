@@ -24,20 +24,18 @@ class TestListComponentsTool:
     async def test_list_components_success(self, register_tools):
         """Test listing components successfully."""
         mock_data = [{"uuid": "comp-1", "name": "lodash", "version": "4.17.21"}]
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_data, {"X-Total-Count": "1"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_project_components")
             assert tool is not None
             result = await tool.fn(project_uuid="proj-1")
-            
+
             assert "components" in result
             assert result["total"] == 1
 
@@ -63,18 +61,16 @@ class TestGetComponentTool:
     async def test_get_component_success(self, register_tools):
         """Test getting component successfully."""
         mock_data = {"uuid": "comp-1", "name": "lodash", "version": "4.17.21"}
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "get_component")
             assert tool is not None
             result = await tool.fn(uuid="comp-1")
-            
+
             assert result["component"]["uuid"] == "comp-1"
 
     @pytest.mark.asyncio
@@ -99,18 +95,16 @@ class TestFindComponentByPurlTool:
     async def test_find_by_purl_success(self, register_tools):
         """Test finding component by PURL."""
         mock_data = [{"uuid": "comp-1", "purl": "pkg:npm/lodash@4.17.21"}]
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "find_component_by_purl")
             assert tool is not None
             result = await tool.fn(purl="pkg:npm/lodash@4.17.21")
-            
+
             assert "components" in result
 
     @pytest.mark.asyncio
@@ -135,18 +129,16 @@ class TestFindComponentByHashTool:
     async def test_find_by_hash_success(self, register_tools):
         """Test finding component by hash."""
         mock_data = [{"uuid": "comp-1", "sha256": "abc123"}]
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "find_component_by_hash")
             assert tool is not None
             result = await tool.fn(hash_value="abc123")
-            
+
             assert "components" in result
 
     @pytest.mark.asyncio
@@ -171,18 +163,16 @@ class TestGetDependencyGraphTool:
     async def test_get_dependency_graph_success(self, register_tools):
         """Test getting dependency graph."""
         mock_data = {"edges": [], "nodes": []}
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "get_dependency_graph")
             assert tool is not None
             result = await tool.fn(project_uuid="proj-1")
-            
+
             assert "graph" in result
 
     @pytest.mark.asyncio
@@ -207,20 +197,18 @@ class TestGetComponentProjectsTool:
     async def test_get_component_projects_success(self, register_tools):
         """Test getting projects using component."""
         mock_data = [{"uuid": "proj-1", "name": "Project 1"}]
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_data, {"X-Total-Count": "1"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "get_component_projects")
             assert tool is not None
             result = await tool.fn(component_uuid="comp-1")
-            
+
             assert "projects" in result
             assert result["total"] == 1
 
@@ -246,16 +234,16 @@ class TestCreateComponentTool:
     async def test_create_component_minimal(self, register_tools):
         """Test creating a component with minimal data."""
         mock_data = {"uuid": "comp-1", "name": "test-component"}
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "create_component")
             assert tool is not None
             result = await tool.fn(project_uuid="proj-1", name="test-component")
-            
+
             assert "component" in result
             assert result["component"]["uuid"] == "comp-1"
             assert "message" in result
@@ -264,12 +252,12 @@ class TestCreateComponentTool:
     async def test_create_component_full(self, register_tools):
         """Test creating a component with all fields."""
         mock_data = {"uuid": "comp-1", "name": "lodash", "version": "4.17.21"}
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "create_component")
             assert tool is not None
             result = await tool.fn(
@@ -280,9 +268,9 @@ class TestCreateComponentTool:
                 purl="pkg:npm/lodash@4.17.21",
                 description="A modern JavaScript utility library",
                 license_name="MIT",
-                classifier="LIBRARY"
+                classifier="LIBRARY",
             )
-            
+
             assert "component" in result
             assert result["component"]["uuid"] == "comp-1"
 
@@ -309,17 +297,17 @@ class TestUpdateComponentTool:
         """Test updating a component."""
         existing_data = {"uuid": "comp-1", "name": "old-name", "version": "1.0.0"}
         updated_data = {"uuid": "comp-1", "name": "new-name", "version": "2.0.0"}
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=existing_data)
             mock_client.post = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "update_component")
             assert tool is not None
             result = await tool.fn(uuid="comp-1", name="new-name", version="2.0.0")
-            
+
             assert "component" in result
             assert result["component"]["name"] == "new-name"
 
@@ -348,11 +336,11 @@ class TestDeleteComponentTool:
             mock_client = AsyncMock()
             mock_client.delete = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "delete_component")
             assert tool is not None
             result = await tool.fn(uuid="comp-1")
-            
+
             assert "message" in result
             assert "comp-1" in result["message"]
 
@@ -378,16 +366,16 @@ class TestGetComponentDependencyGraphTool:
     async def test_get_component_dependency_graph_success(self, register_tools):
         """Test getting component dependency graph."""
         mock_data = {"dependencies": []}
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "get_component_dependency_graph")
             assert tool is not None
             result = await tool.fn(project_uuid="proj-1", component_uuids=["comp-1", "comp-2"])
-            
+
             assert "graph" in result
 
     @pytest.mark.asyncio
@@ -415,11 +403,11 @@ class TestIdentifyInternalComponentsTool:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "identify_internal_components")
             assert tool is not None
             result = await tool.fn()
-            
+
             assert "message" in result
 
     @pytest.mark.asyncio
@@ -444,16 +432,16 @@ class TestGetComponentDirectDependenciesTool:
     async def test_get_component_direct_dependencies_success(self, register_tools):
         """Test getting component direct dependencies."""
         mock_data = [{"uuid": "dep-1", "name": "dependency"}]
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "get_component_direct_dependencies")
             assert tool is not None
             result = await tool.fn(component_uuid="comp-1")
-            
+
             assert "dependencies" in result
 
     @pytest.mark.asyncio
@@ -469,4 +457,3 @@ class TestGetComponentDirectDependenciesTool:
             result = await tool.fn(component_uuid="comp-1")
 
             assert "error" in result
-

@@ -39,9 +39,7 @@ def register_metrics_tools(mcp: FastMCP) -> None:
         tags=[Scopes.READ_METRICS],
     )
     async def get_portfolio_metrics_history(
-        days: Annotated[
-            int, Field(ge=1, le=365, description="Number of days of history")
-        ] = 30,
+        days: Annotated[int, Field(ge=1, le=365, description="Number of days of history")] = 30,
     ) -> dict:
         """
         Get historical security metrics for the portfolio.
@@ -61,9 +59,7 @@ def register_metrics_tools(mcp: FastMCP) -> None:
         tags=[Scopes.READ_METRICS],
     )
     async def get_portfolio_metrics_since(
-        date: Annotated[
-            str, Field(description="Start date in ISO format (YYYY-MM-DD)")
-        ],
+        date: Annotated[str, Field(description="Start date in ISO format (YYYY-MM-DD)")],
     ) -> dict:
         """
         Get historical security metrics for the portfolio since a specific date.
@@ -106,9 +102,7 @@ def register_metrics_tools(mcp: FastMCP) -> None:
     )
     async def get_project_metrics_history(
         project_uuid: Annotated[str, Field(description="Project UUID")],
-        days: Annotated[
-            int, Field(ge=1, le=365, description="Number of days of history")
-        ] = 30,
+        days: Annotated[int, Field(ge=1, le=365, description="Number of days of history")] = 30,
     ) -> dict:
         """
         Get historical security metrics for a specific project.
@@ -129,9 +123,7 @@ def register_metrics_tools(mcp: FastMCP) -> None:
     )
     async def get_project_metrics_since(
         project_uuid: Annotated[str, Field(description="Project UUID")],
-        date: Annotated[
-            str, Field(description="Start date in ISO format (YYYY-MM-DD)")
-        ],
+        date: Annotated[str, Field(description="Start date in ISO format (YYYY-MM-DD)")],
     ) -> dict:
         """
         Get historical security metrics for a project since a specific date.
@@ -225,9 +217,7 @@ def register_metrics_tools(mcp: FastMCP) -> None:
     )
     async def get_component_metrics_history(
         component_uuid: Annotated[str, Field(description="Component UUID")],
-        days: Annotated[
-            int, Field(ge=1, le=365, description="Number of days of history")
-        ] = 30,
+        days: Annotated[int, Field(ge=1, le=365, description="Number of days of history")] = 30,
     ) -> dict:
         """
         Get historical security metrics for a specific component.
@@ -247,9 +237,7 @@ def register_metrics_tools(mcp: FastMCP) -> None:
     )
     async def get_component_metrics_since(
         component_uuid: Annotated[str, Field(description="Component UUID")],
-        date: Annotated[
-            str, Field(description="Start date in ISO format (YYYY-MM-DD)")
-        ],
+        date: Annotated[str, Field(description="Start date in ISO format (YYYY-MM-DD)")],
     ) -> dict:
         """
         Get historical security metrics for a component since a specific date.

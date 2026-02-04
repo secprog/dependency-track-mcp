@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Iterable, Any
+from typing import Any
 
 
 def _normalize_tools(tools: Any) -> list[Any]:

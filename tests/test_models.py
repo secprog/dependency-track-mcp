@@ -1,7 +1,5 @@
 """Tests for Pydantic models."""
 
-from datetime import datetime
-
 import pytest
 from pydantic import ValidationError
 
@@ -15,15 +13,14 @@ from dependency_track_mcp.models import (
     Component,
     Finding,
     License,
-    PortfolioMetrics,
     PolicyViolationType,
+    PortfolioMetrics,
     Project,
-    ProjectCreate,
     ProjectMetrics,
     Severity,
     Tag,
-    Vulnerability,
     ViolationState,
+    Vulnerability,
 )
 
 
@@ -205,9 +202,7 @@ class TestFinding:
     def test_finding_creation(self):
         """Test creating a Finding."""
         component = Component(uuid="comp-123", name="lodash")
-        vuln = Vulnerability(
-            uuid="vuln-123", vulnId="CVE-2021-44228", source="NVD"
-        )
+        vuln = Vulnerability(uuid="vuln-123", vulnId="CVE-2021-44228", source="NVD")
         finding = Finding(component=component, vulnerability=vuln)
         assert finding.component.uuid == "comp-123"
         assert finding.vulnerability.vulnId == "CVE-2021-44228"

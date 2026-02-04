@@ -2,8 +2,10 @@
 Tests for metrics tool error handling.
 Targets missing exception handling lines.
 """
-import pytest
+
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from dependency_track_mcp.client import DependencyTrackClient
 from dependency_track_mcp.exceptions import DependencyTrackError
@@ -24,9 +26,7 @@ class TestMetricsErrorHandling:
     @pytest.mark.asyncio
     async def test_refresh_component_metrics_error(self, register_tools):
         """Test refresh_component_metrics error handling."""
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             error = DependencyTrackError("Component not found")
             error.details = {"status": 404}
@@ -44,9 +44,7 @@ class TestMetricsErrorHandling:
     @pytest.mark.asyncio
     async def test_refresh_project_metrics_error(self, register_tools):
         """Test refresh_project_metrics error handling."""
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             error = DependencyTrackError("Project not found")
             error.details = {"status": 404}

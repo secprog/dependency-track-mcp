@@ -87,9 +87,7 @@ def register_badge_tools(mcp: FastMCP) -> None:
         """
         try:
             client = get_client()
-            data = await client.get(
-                f"/badge/violations/project/{project_name}/{project_version}"
-            )
+            data = await client.get(f"/badge/violations/project/{project_name}/{project_version}")
             return {"badge": data}
         except DependencyTrackError as e:
             return {"error": str(e), "details": e.details}

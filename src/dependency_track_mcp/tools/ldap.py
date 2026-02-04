@@ -15,13 +15,11 @@ def register_ldap_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="List all accessible LDAP groups",
-        tags=[Scopes.ADMIN_LDAP],
+        tags=[Scopes.WRITE_LDAP],
     )
     async def list_ldap_groups(
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List the DNs of all accessible groups within the LDAP directory.
@@ -43,7 +41,7 @@ def register_ldap_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Get LDAP groups mapped to a team",
-        tags=[Scopes.ADMIN_LDAP],
+        tags=[Scopes.READ_LDAP],
     )
     async def get_team_ldap_groups(
         team_uuid: Annotated[str, Field(description="Team UUID")],
@@ -60,7 +58,7 @@ def register_ldap_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Add an LDAP group mapping to a team",
-        tags=[Scopes.ADMIN_LDAP],
+        tags=[Scopes.READ_LDAP],
     )
     async def add_ldap_mapping(
         team_uuid: Annotated[str, Field(description="Team UUID")],
@@ -85,7 +83,7 @@ def register_ldap_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Remove an LDAP group mapping",
-        tags=[Scopes.ADMIN_LDAP],
+        tags=[Scopes.WRITE_LDAP],
     )
     async def remove_ldap_mapping(
         mapping_uuid: Annotated[str, Field(description="Mapping UUID")],

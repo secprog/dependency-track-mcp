@@ -1,6 +1,5 @@
 """Tests for scopes module."""
 
-import pytest
 from dependency_track_mcp.scopes import Scopes
 
 

@@ -1,13 +1,11 @@
 """Tests for custom exceptions."""
 
-import pytest
-
 from dependency_track_mcp.exceptions import (
     AuthenticationError,
     AuthorizationError,
+    ConfigurationError,
     ConflictError,
     ConnectionError,
-    ConfigurationError,
     DependencyTrackError,
     NotFoundError,
     RateLimitError,

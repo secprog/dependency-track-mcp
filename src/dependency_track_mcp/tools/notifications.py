@@ -15,13 +15,11 @@ def register_notification_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="List all notification publishers",
-        tags=[Scopes.ADMIN_NOTIFICATIONS],
+        tags=[Scopes.READ_NOTIFICATIONS],
     )
     async def list_notification_publishers(
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List all notification publishers.
@@ -31,9 +29,7 @@ def register_notification_tools(mcp: FastMCP) -> None:
         try:
             client = get_client()
             params = {"pageNumber": page, "pageSize": page_size}
-            data, headers = await client.get_with_headers(
-                "/notification/publisher", params=params
-            )
+            data, headers = await client.get_with_headers("/notification/publisher", params=params)
             total_count = headers.get("X-Total-Count", len(data))
 
             return {
@@ -47,23 +43,22 @@ def register_notification_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Create a notification publisher",
-        tags=[Scopes.ADMIN_NOTIFICATIONS],
+        tags=[Scopes.WRITE_NOTIFICATION_PUBLISHERS],
     )
     async def create_notification_publisher(
         name: Annotated[str, Field(description="Publisher name")],
         publisher_class: Annotated[
             str,
             Field(
-                description="Publisher class: SLACK, MS_TEAMS, "                "MATTERMOST, EMAIL, CONSOLE, WEBHOOK, JIRA"
+                description="Publisher class: SLACK, MS_TEAMS, "
+                "MATTERMOST, EMAIL, CONSOLE, WEBHOOK, JIRA"
             ),
         ],
         template: Annotated[str, Field(description="Notification template content")],
         template_mime_type: Annotated[
             str, Field(description="Template MIME type (e.g., application/json)")
         ] = "application/json",
-        default_publisher: Annotated[
-            bool, Field(description="Set as default publisher")
-        ] = False,
+        default_publisher: Annotated[bool, Field(description="Set as default publisher")] = False,
     ) -> dict:
         """
         Create a new notification publisher.
@@ -85,18 +80,14 @@ def register_notification_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Update a notification publisher",
-        tags=[Scopes.ADMIN_NOTIFICATIONS],
+        tags=[Scopes.WRITE_NOTIFICATION_PUBLISHERS],
     )
     async def update_notification_publisher(
         uuid: Annotated[str, Field(description="Publisher UUID")],
         name: Annotated[str | None, Field(description="New name")] = None,
         template: Annotated[str | None, Field(description="New template")] = None,
-        template_mime_type: Annotated[
-            str | None, Field(description="New MIME type")
-        ] = None,
-        default_publisher: Annotated[
-            bool | None, Field(description="Set as default")
-        ] = None,
+        template_mime_type: Annotated[str | None, Field(description="New MIME type")] = None,
+        default_publisher: Annotated[bool | None, Field(description="Set as default")] = None,
     ) -> dict:
         """
         Update a notification publisher.
@@ -121,7 +112,7 @@ def register_notification_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Delete a notification publisher",
-        tags=[Scopes.ADMIN_NOTIFICATIONS],
+        tags=[Scopes.WRITE_NOTIFICATION_PUBLISHERS],
     )
     async def delete_notification_publisher(
         uuid: Annotated[str, Field(description="Publisher UUID")],
@@ -138,7 +129,7 @@ def register_notification_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Restore default notification publisher templates",
-        tags=[Scopes.ADMIN_NOTIFICATIONS],
+        tags=[Scopes.WRITE_NOTIFICATION_PUBLISHERS],
     )
     async def restore_default_templates() -> dict:
         """
@@ -155,7 +146,7 @@ def register_notification_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Test SMTP notification",
-        tags=[Scopes.ADMIN_NOTIFICATIONS],
+        tags=[Scopes.TEST_NOTIFICATIONS],
     )
     async def test_smtp_notification(
         destination: Annotated[str, Field(description="Email address to send test to")],
@@ -175,7 +166,7 @@ def register_notification_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Test a notification publisher",
-        tags=[Scopes.ADMIN_NOTIFICATIONS],
+        tags=[Scopes.TEST_NOTIFICATIONS],
     )
     async def test_notification_publisher(
         publisher_uuid: Annotated[str, Field(description="Publisher UUID to test")],
@@ -192,13 +183,11 @@ def register_notification_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="List all notification rules",
-        tags=[Scopes.ADMIN_NOTIFICATIONS],
+        tags=[Scopes.READ_NOTIFICATIONS],
     )
     async def list_notification_rules(
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List all notification rules.
@@ -208,9 +197,7 @@ def register_notification_tools(mcp: FastMCP) -> None:
         try:
             client = get_client()
             params = {"pageNumber": page, "pageSize": page_size}
-            data, headers = await client.get_with_headers(
-                "/notification/rule", params=params
-            )
+            data, headers = await client.get_with_headers("/notification/rule", params=params)
             total_count = headers.get("X-Total-Count", len(data))
 
             return {
@@ -224,16 +211,14 @@ def register_notification_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Create a notification rule",
-        tags=[Scopes.ADMIN_NOTIFICATIONS],
+        tags=[Scopes.WRITE_NOTIFICATION_RULES],
     )
     async def create_notification_rule(
         name: Annotated[str, Field(description="Rule name")],
         publisher_uuid: Annotated[str, Field(description="Publisher UUID")],
         scope: Annotated[
             str,
-            Field(
-                description="Notification scope: PORTFOLIO, SYSTEM"
-            ),
+            Field(description="Notification scope: PORTFOLIO, SYSTEM"),
         ],
         notification_level: Annotated[
             str, Field(description="Notification level: INFORMATIONAL, WARNING, ERROR")
@@ -260,7 +245,7 @@ def register_notification_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Create a scheduled notification rule",
-        tags=[Scopes.ADMIN_NOTIFICATIONS],
+        tags=[Scopes.WRITE_NOTIFICATION_RULES],
     )
     async def create_scheduled_notification_rule(
         name: Annotated[str, Field(description="Rule name")],
@@ -294,7 +279,7 @@ def register_notification_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Update a notification rule",
-        tags=[Scopes.ADMIN_NOTIFICATIONS],
+        tags=[Scopes.WRITE_NOTIFICATION_RULES],
     )
     async def update_notification_rule(
         uuid: Annotated[str, Field(description="Rule UUID")],
@@ -325,7 +310,7 @@ def register_notification_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Delete a notification rule",
-        tags=[Scopes.ADMIN_NOTIFICATIONS],
+        tags=[Scopes.WRITE_NOTIFICATION_RULES],
     )
     async def delete_notification_rule(
         uuid: Annotated[str, Field(description="Rule UUID")],
@@ -342,7 +327,7 @@ def register_notification_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Add a project to a notification rule",
-        tags=[Scopes.ADMIN_NOTIFICATIONS],
+        tags=[Scopes.WRITE_NOTIFICATION_RULES],
     )
     async def add_project_to_notification_rule(
         rule_uuid: Annotated[str, Field(description="Rule UUID")],
@@ -362,7 +347,7 @@ def register_notification_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Remove a project from a notification rule",
-        tags=[Scopes.ADMIN_NOTIFICATIONS],
+        tags=[Scopes.WRITE_NOTIFICATION_RULES],
     )
     async def remove_project_from_notification_rule(
         rule_uuid: Annotated[str, Field(description="Rule UUID")],
@@ -380,7 +365,7 @@ def register_notification_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Add a team to a notification rule",
-        tags=[Scopes.ADMIN_NOTIFICATIONS],
+        tags=[Scopes.WRITE_NOTIFICATION_RULES],
     )
     async def add_team_to_notification_rule(
         rule_uuid: Annotated[str, Field(description="Rule UUID")],
@@ -400,7 +385,7 @@ def register_notification_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Remove a team from a notification rule",
-        tags=[Scopes.ADMIN_NOTIFICATIONS],
+        tags=[Scopes.WRITE_NOTIFICATION_RULES],
     )
     async def remove_team_from_notification_rule(
         rule_uuid: Annotated[str, Field(description="Rule UUID")],

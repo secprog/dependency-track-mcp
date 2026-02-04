@@ -20,9 +20,7 @@ def register_service_tools(mcp: FastMCP) -> None:
     async def list_project_services(
         project_uuid: Annotated[str, Field(description="Project UUID")],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List all services in a project.
@@ -73,21 +71,15 @@ def register_service_tools(mcp: FastMCP) -> None:
         version: Annotated[str | None, Field(description="Service version")] = None,
         group: Annotated[str | None, Field(description="Service group/namespace")] = None,
         description: Annotated[str | None, Field(description="Service description")] = None,
-        endpoints: Annotated[
-            list[str] | None, Field(description="List of endpoint URLs")
-        ] = None,
+        endpoints: Annotated[list[str] | None, Field(description="List of endpoint URLs")] = None,
         authenticated: Annotated[
             bool | None, Field(description="Whether authentication is required")
         ] = None,
         x_trust_boundary: Annotated[
             bool | None, Field(description="Whether service crosses trust boundary")
         ] = None,
-        provider_name: Annotated[
-            str | None, Field(description="Service provider name")
-        ] = None,
-        provider_url: Annotated[
-            str | None, Field(description="Service provider URL")
-        ] = None,
+        provider_name: Annotated[str | None, Field(description="Service provider name")] = None,
+        provider_url: Annotated[str | None, Field(description="Service provider URL")] = None,
     ) -> dict:
         """
         Create a new service in a project.

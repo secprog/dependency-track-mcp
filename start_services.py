@@ -17,7 +17,7 @@ def main():
         print("Error: .env file not found!")
         print("Copy .env.example to .env and configure it.")
         sys.exit(1)
-    
+
     # Run the server
     subprocess.run([sys.executable, "-m", "dependency_track_mcp.main"])
 

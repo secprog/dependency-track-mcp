@@ -1,7 +1,8 @@
 """Tests for badge tools."""
 
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from dependency_track_mcp.client import DependencyTrackClient
 from dependency_track_mcp.exceptions import DependencyTrackError
@@ -12,6 +13,7 @@ from tests.utils import find_tool
 def register_tools():
     """Fixture that registers all tools."""
     from dependency_track_mcp.server import mcp
+
     return mcp
 
 
@@ -21,17 +23,17 @@ class TestGetVulnerabilityBadgeByUuidTool:
     @pytest.mark.asyncio
     async def test_get_vulnerability_badge_by_uuid_success(self, register_tools):
         """Test getting vulnerability badge by UUID."""
-        mock_badge = '<svg>...</svg>'
-        
+        mock_badge = "<svg>...</svg>"
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_badge)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "get_vulnerability_badge_by_uuid")
             assert tool is not None
             result = await tool.fn(project_uuid="test-uuid")
-            
+
             assert "badge" in result
             assert result["badge"] == mock_badge
             mock_client.get.assert_called_once_with("/badge/vulns/project/test-uuid")
@@ -57,17 +59,17 @@ class TestGetVulnerabilityBadgeByNameTool:
     @pytest.mark.asyncio
     async def test_get_vulnerability_badge_by_name_success(self, register_tools):
         """Test getting vulnerability badge by name and version."""
-        mock_badge = '<svg>...</svg>'
-        
+        mock_badge = "<svg>...</svg>"
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_badge)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "get_vulnerability_badge_by_name")
             assert tool is not None
             result = await tool.fn(project_name="my-project", project_version="1.0.0")
-            
+
             assert "badge" in result
             assert result["badge"] == mock_badge
             mock_client.get.assert_called_once_with("/badge/vulns/project/my-project/1.0.0")
@@ -93,17 +95,17 @@ class TestGetViolationsBadgeByUuidTool:
     @pytest.mark.asyncio
     async def test_get_violations_badge_by_uuid_success(self, register_tools):
         """Test getting violations badge by UUID."""
-        mock_badge = '<svg>...</svg>'
-        
+        mock_badge = "<svg>...</svg>"
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_badge)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "get_violations_badge_by_uuid")
             assert tool is not None
             result = await tool.fn(project_uuid="test-uuid")
-            
+
             assert "badge" in result
             assert result["badge"] == mock_badge
             mock_client.get.assert_called_once_with("/badge/violations/project/test-uuid")
@@ -129,17 +131,17 @@ class TestGetViolationsBadgeByNameTool:
     @pytest.mark.asyncio
     async def test_get_violations_badge_by_name_success(self, register_tools):
         """Test getting violations badge by name and version."""
-        mock_badge = '<svg>...</svg>'
-        
+        mock_badge = "<svg>...</svg>"
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_badge)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "get_violations_badge_by_name")
             assert tool is not None
             result = await tool.fn(project_name="my-project", project_version="1.0.0")
-            
+
             assert "badge" in result
             assert result["badge"] == mock_badge
             mock_client.get.assert_called_once_with("/badge/violations/project/my-project/1.0.0")

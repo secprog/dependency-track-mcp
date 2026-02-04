@@ -19,10 +19,9 @@ Key Features:
 
 import logging
 import sys
-from typing import Optional
 
 import httpx
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from jose import jwt
@@ -55,7 +54,7 @@ app.add_middleware(
 )
 
 # Global JWKS cache (refreshed on demand)
-_jwks_cache: Optional[dict] = None
+_jwks_cache: dict | None = None
 
 
 # Custom middleware to validate JWT tokens
@@ -180,7 +179,7 @@ def refresh_jwks_cache():
     logger.info("JWKS cache cleared")
 
 
-async def verify_jwt_token(token: str) -> Optional[dict]:
+async def verify_jwt_token(token: str) -> dict | None:
     """Verify JWT token using JWKS.
 
     Args:
@@ -333,7 +332,7 @@ def main():
         logger.info("Required Audience: configured (value not logged)")
     else:
         logger.info("Required Audience: (not enforced)")
-    logger.info(f"MCP Integration: Direct (no separate FastMCP HTTP server)")
+    logger.info("MCP Integration: Direct (no separate FastMCP HTTP server)")
     logger.info("=" * 80)
 
     if use_https:

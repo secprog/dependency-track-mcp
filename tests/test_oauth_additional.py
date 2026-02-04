@@ -1,18 +1,15 @@
 """Additional tests for oauth.py - missing coverage."""
 
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
-import httpx
-import json
 import base64
-from datetime import datetime, UTC
+import json
+from datetime import datetime
+
+import pytest
 
 from dependency_track_mcp.oauth import (
-    JWTValidator,
     InvalidTokenError,
-    InsufficientScopesError,
     JWTPayload,
-    AuthorizationContext,
+    JWTValidator,
 )
 
 
@@ -24,15 +21,15 @@ def create_valid_jwt_token(
     exp_offset: int = 3600,
 ) -> str:
     """Create a valid-looking JWT token for testing.
-    
+
     Note: This is NOT cryptographically signed, only for structure testing.
     """
-    from datetime import datetime, timezone, timedelta
-    
+    from datetime import timedelta, timezone
+
     now = datetime.now(timezone.utc)
     iat = int(now.timestamp())
     exp = int((now + timedelta(seconds=exp_offset)).timestamp())
-    
+
     header = {"alg": "RS256", "typ": "JWT"}
     payload = {
         "sub": sub,
@@ -43,12 +40,12 @@ def create_valid_jwt_token(
     }
     if aud:
         payload["aud"] = aud
-    
+
     # Encode (not signed, just base64)
     header_b64 = base64.urlsafe_b64encode(json.dumps(header).encode()).rstrip(b"=").decode()
     payload_b64 = base64.urlsafe_b64encode(json.dumps(payload).encode()).rstrip(b"=").decode()
     signature_b64 = base64.urlsafe_b64encode(b"fake-signature").rstrip(b"=").decode()
-    
+
     return f"{header_b64}.{payload_b64}.{signature_b64}"
 
 
@@ -79,7 +76,10 @@ class TestJWTValidatorInit:
             expected_issuer="https://keycloak.example.com/realms/myrealm",
             expected_audience=None,
         )
-        assert validator.jwks_url == "https://keycloak.example.com/realms/myrealm/protocol/openid-connect/certs"
+        assert (
+            validator.jwks_url
+            == "https://keycloak.example.com/realms/myrealm/protocol/openid-connect/certs"
+        )
 
     def test_jwks_url_auto_derived_generic_oidc(self):
         """Test JWKS URL auto-derivation for generic OIDC."""
@@ -97,15 +97,15 @@ class TestJWTValidatorFetchJWKS:
     async def test_fetch_jwks_cached(self):
         """Test that cached JWKS is returned without fetching."""
         jwks_data = {"keys": []}
-        
+
         validator = JWTValidator(
             expected_issuer="https://auth.example.com",
             expected_audience=None,
         )
-        
+
         # Manually set cache
         validator._jwks_cache = jwks_data
-        
+
         # Should return cached value without making request
         result = await validator.fetch_jwks()
         assert result == jwks_data
@@ -118,7 +118,7 @@ class TestJWTValidatorFetchJWKS:
             expected_audience=None,
             jwks_url=None,
         )
-        
+
         with pytest.raises(InvalidTokenError, match="JWKS URL not configured"):
             await validator.fetch_jwks()
 
@@ -132,11 +132,11 @@ class TestJWTValidatorClearCache:
             expected_issuer="https://auth.example.com",
             expected_audience=None,
         )
-        
+
         # Set cache
         validator._jwks_cache = {"keys": []}
         assert validator._jwks_cache is not None
-        
+
         # Clear cache
         validator.clear_jwks_cache()
         assert validator._jwks_cache is None
@@ -151,7 +151,7 @@ class TestJWTValidatorDecodedPayload:
             expected_issuer="https://auth.example.com",
             expected_audience=None,
         )
-        
+
         with pytest.raises(InvalidTokenError, match="Token must have 3 parts"):
             validator._decode_jwt_payload("invalid")
 
@@ -161,7 +161,7 @@ class TestJWTValidatorDecodedPayload:
             expected_issuer="https://auth.example.com",
             expected_audience=None,
         )
-        
+
         # Valid JWT format but invalid base64 in payload
         token = "header.!!!invalid!!!.signature"
         with pytest.raises(InvalidTokenError, match="Failed to decode JWT payload"):
@@ -173,10 +173,10 @@ class TestJWTValidatorDecodedPayload:
             expected_issuer="https://auth.example.com",
             expected_audience=None,
         )
-        
+
         token = create_valid_jwt_token()
         payload = validator._decode_jwt_payload(token)
-        
+
         assert payload["sub"] == "user123"
         assert payload["iss"] == "https://auth.example.com"
         assert payload["scope"] == "read:projects"
@@ -191,14 +191,14 @@ class TestValidateIssuer:
             expected_issuer="https://expected.example.com",
             expected_audience=None,
         )
-        
+
         payload = JWTPayload(
             sub="user123",
             iat=1000000000,
             exp=2000000000,
             iss="https://different.example.com",
         )
-        
+
         with pytest.raises(InvalidTokenError, match="does not match"):
             validator.validate_issuer(payload)
 
@@ -208,13 +208,13 @@ class TestValidateIssuer:
             expected_issuer="https://expected.example.com",
             expected_audience=None,
         )
-        
+
         payload = JWTPayload(
             sub="user123",
             iat=1000000000,
             exp=2000000000,
         )
-        
+
         with pytest.raises(InvalidTokenError, match="missing 'iss' claim"):
             validator.validate_issuer(payload)
 
@@ -224,14 +224,14 @@ class TestValidateIssuer:
             expected_issuer=None,
             expected_audience=None,
         )
-        
+
         payload = JWTPayload(
             sub="user123",
             iat=1000000000,
             exp=2000000000,
             iss="https://any.example.com",
         )
-        
+
         # Should not raise
         validator.validate_issuer(payload)
 
@@ -245,14 +245,14 @@ class TestValidateAudience:
             expected_issuer="https://auth.example.com",
             expected_audience=None,
         )
-        
+
         payload = JWTPayload(
             sub="user123",
             iat=1000000000,
             exp=2000000000,
             aud="any-client",
         )
-        
+
         # Should not raise
         validator.validate_audience(payload)
 
@@ -262,14 +262,14 @@ class TestValidateAudience:
             expected_issuer="https://auth.example.com",
             expected_audience="my-client",
         )
-        
+
         payload = JWTPayload(
             sub="user123",
             iat=1000000000,
             exp=2000000000,
             aud="my-client",
         )
-        
+
         # Should not raise
         validator.validate_audience(payload)
 
@@ -279,14 +279,14 @@ class TestValidateAudience:
             expected_issuer="https://auth.example.com",
             expected_audience="my-client",
         )
-        
+
         payload = JWTPayload(
             sub="user123",
             iat=1000000000,
             exp=2000000000,
             aud=["other-client", "my-client"],
         )
-        
+
         # Should not raise
         validator.validate_audience(payload)
 
@@ -296,13 +296,13 @@ class TestValidateAudience:
             expected_issuer="https://auth.example.com",
             expected_audience=None,
         )
-        
+
         payload = JWTPayload(
             sub="user123",
             iat=1000000000,
             exp=2000000000,
         )
-        
+
         # Should not raise since no expected_audience is configured
         validator.validate_audience(payload)
 
@@ -312,13 +312,13 @@ class TestValidateAudience:
             expected_issuer="https://auth.example.com",
             expected_audience="my-client",
         )
-        
+
         payload = JWTPayload(
             sub="user123",
             iat=1000000000,
             exp=2000000000,
         )
-        
+
         with pytest.raises(InvalidTokenError, match="missing 'aud' claim"):
             validator.validate_audience(payload, expected_audience="my-client")
 
@@ -332,10 +332,10 @@ class TestValidateTokenStructure:
             expected_issuer="https://auth.example.com",
             expected_audience=None,
         )
-        
+
         token = create_valid_jwt_token()
         payload = validator.validate_token_structure(token)
-        
+
         assert payload.sub == "user123"
         assert payload.iss == "https://auth.example.com"
 
@@ -345,16 +345,16 @@ class TestValidateTokenStructure:
             expected_issuer="https://auth.example.com",
             expected_audience=None,
         )
-        
+
         # Create a token with missing required claims
         header = {"alg": "RS256", "typ": "JWT"}
         payload = {"iss": "https://auth.example.com"}  # Missing sub, iat, exp
-        
+
         header_b64 = base64.urlsafe_b64encode(json.dumps(header).encode()).rstrip(b"=").decode()
         payload_b64 = base64.urlsafe_b64encode(json.dumps(payload).encode()).rstrip(b"=").decode()
         signature_b64 = base64.urlsafe_b64encode(b"fake-signature").rstrip(b"=").decode()
-        
+
         token = f"{header_b64}.{payload_b64}.{signature_b64}"
-        
+
         with pytest.raises(InvalidTokenError, match="Missing required JWT claims"):
             validator.validate_token_structure(token)

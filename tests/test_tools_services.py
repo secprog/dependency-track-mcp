@@ -1,7 +1,8 @@
 """Tests for service component tools."""
 
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from dependency_track_mcp.client import DependencyTrackClient
 from dependency_track_mcp.exceptions import DependencyTrackError
@@ -12,6 +13,7 @@ from tests.utils import find_tool
 def register_tools():
     """Fixture that registers all tools."""
     from dependency_track_mcp.server import mcp
+
     return mcp
 
 
@@ -25,18 +27,18 @@ class TestListProjectServicesTool:
             {"uuid": "svc-1", "name": "API Gateway"},
             {"uuid": "svc-2", "name": "Database"},
         ]
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_services, {"X-Total-Count": "2"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_project_services")
             assert tool is not None
             result = await tool.fn(project_uuid="proj-uuid")
-            
+
             assert "services" in result
             assert result["services"] == mock_services
             assert result["total"] == 2
@@ -49,15 +51,13 @@ class TestListProjectServicesTool:
         """Test list_project_services with pagination."""
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
-            mock_client.get_with_headers = AsyncMock(
-                return_value=([], {"X-Total-Count": "50"})
-            )
+            mock_client.get_with_headers = AsyncMock(return_value=([], {"X-Total-Count": "50"}))
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_project_services")
             assert tool is not None
             result = await tool.fn(project_uuid="proj-uuid", page=2, page_size=25)
-            
+
             assert result["page"] == 2
             assert result["page_size"] == 25
             call_args = mock_client.get_with_headers.call_args
@@ -93,16 +93,16 @@ class TestGetServiceTool:
             "version": "1.0.0",
             "endpoints": ["https://api.example.com"],
         }
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_service)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "get_service")
             assert tool is not None
             result = await tool.fn(uuid="svc-1")
-            
+
             assert "service" in result
             assert result["service"] == mock_service
             mock_client.get.assert_called_once_with("/service/svc-1")
@@ -132,16 +132,16 @@ class TestCreateServiceTool:
     async def test_create_service_success(self, register_tools):
         """Test creating a service in a project."""
         mock_service = {"uuid": "svc-new", "name": "New Service"}
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value=mock_service)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "create_service")
             assert tool is not None
             result = await tool.fn(project_uuid="proj-uuid", name="New Service")
-            
+
             assert "service" in result
             assert "message" in result
             assert "successfully" in result["message"].lower()
@@ -155,7 +155,7 @@ class TestCreateServiceTool:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value={"uuid": "svc-new"})
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "create_service")
             assert tool is not None
             await tool.fn(
@@ -170,7 +170,7 @@ class TestCreateServiceTool:
                 provider_name="MySQL",
                 provider_url="https://mysql.com",
             )
-            
+
             call_args = mock_client.put.call_args
             payload = call_args[1]["data"]
             assert payload["name"] == "Database"
@@ -188,11 +188,11 @@ class TestCreateServiceTool:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value={"uuid": "svc-new"})
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "create_service")
             assert tool is not None
             await tool.fn(project_uuid="proj-uuid", name="Simple Service")
-            
+
             call_args = mock_client.put.call_args
             payload = call_args[1]["data"]
             assert payload["name"] == "Simple Service"
@@ -224,17 +224,17 @@ class TestUpdateServiceTool:
         """Test updating a service."""
         existing = {"uuid": "svc-1", "name": "Old Name", "version": "1.0"}
         updated = {"uuid": "svc-1", "name": "New Name", "version": "2.0"}
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=existing)
             mock_client.post = AsyncMock(return_value=updated)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "update_service")
             assert tool is not None
             result = await tool.fn(uuid="svc-1", name="New Name", version="2.0")
-            
+
             assert "service" in result
             assert "message" in result
             assert "successfully" in result["message"].lower()
@@ -243,17 +243,17 @@ class TestUpdateServiceTool:
     async def test_update_service_partial(self, register_tools):
         """Test update_service with partial updates."""
         existing = {"uuid": "svc-1", "name": "Old Name", "version": "1.0"}
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=existing)
             mock_client.post = AsyncMock(return_value=existing)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "update_service")
             assert tool is not None
             await tool.fn(uuid="svc-1", name="New Name")
-            
+
             call_args = mock_client.get.call_args
             assert "svc-1" in call_args[0][0]
 
@@ -261,17 +261,17 @@ class TestUpdateServiceTool:
     async def test_update_service_with_endpoints(self, register_tools):
         """Test update_service with endpoints."""
         existing = {"uuid": "svc-1", "endpoints": ["old-url"]}
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=existing)
             mock_client.post = AsyncMock(return_value=existing)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "update_service")
             assert tool is not None
             await tool.fn(uuid="svc-1", endpoints=["new-url1", "new-url2"])
-            
+
             call_args = mock_client.post.call_args
             assert call_args[1]["data"]["endpoints"] == ["new-url1", "new-url2"]
 
@@ -302,11 +302,11 @@ class TestDeleteServiceTool:
             mock_client = AsyncMock()
             mock_client.delete = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "delete_service")
             assert tool is not None
             result = await tool.fn(uuid="svc-1")
-            
+
             assert "message" in result
             assert "deleted" in result["message"].lower()
             mock_client.delete.assert_called_once_with("/service/svc-1")

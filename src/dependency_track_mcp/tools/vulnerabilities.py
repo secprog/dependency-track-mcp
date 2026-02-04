@@ -19,9 +19,7 @@ def register_vulnerability_tools(mcp: FastMCP) -> None:
     )
     async def list_vulnerabilities(
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List all vulnerabilities in the database.
@@ -51,13 +49,9 @@ def register_vulnerability_tools(mcp: FastMCP) -> None:
     async def get_vulnerability(
         source: Annotated[
             str,
-            Field(
-                description="Vulnerability source (NVD, GITHUB, OSV, OSSINDEX, VULNDB, SNYK)"
-            ),
+            Field(description="Vulnerability source (NVD, GITHUB, OSV, OSSINDEX, VULNDB, SNYK)"),
         ],
-        vuln_id: Annotated[
-            str, Field(description="Vulnerability ID (e.g., CVE-2021-44228)")
-        ],
+        vuln_id: Annotated[str, Field(description="Vulnerability ID (e.g., CVE-2021-44228)")],
     ) -> dict:
         """
         Get detailed information about a specific vulnerability.
@@ -96,17 +90,11 @@ def register_vulnerability_tools(mcp: FastMCP) -> None:
     async def get_affected_projects(
         source: Annotated[
             str,
-            Field(
-                description="Vulnerability source (NVD, GITHUB, OSV, OSSINDEX, VULNDB, SNYK)"
-            ),
+            Field(description="Vulnerability source (NVD, GITHUB, OSV, OSSINDEX, VULNDB, SNYK)"),
         ],
-        vuln_id: Annotated[
-            str, Field(description="Vulnerability ID (e.g., CVE-2021-44228)")
-        ],
+        vuln_id: Annotated[str, Field(description="Vulnerability ID (e.g., CVE-2021-44228)")],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         Get all projects affected by a specific vulnerability.
@@ -139,9 +127,7 @@ def register_vulnerability_tools(mcp: FastMCP) -> None:
     async def list_component_vulnerabilities(
         component_uuid: Annotated[str, Field(description="Component UUID")],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List all vulnerabilities affecting a specific component.
@@ -172,9 +158,7 @@ def register_vulnerability_tools(mcp: FastMCP) -> None:
     async def list_project_vulnerabilities(
         project_uuid: Annotated[str, Field(description="Project UUID")],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List all vulnerabilities affecting components in a specific project.
@@ -212,12 +196,8 @@ def register_vulnerability_tools(mcp: FastMCP) -> None:
             str | None,
             Field(description="Severity: CRITICAL, HIGH, MEDIUM, LOW, INFO, UNASSIGNED"),
         ] = None,
-        cvss_v3_vector: Annotated[
-            str | None, Field(description="CVSS v3 vector string")
-        ] = None,
-        cwe_ids: Annotated[
-            list[int] | None, Field(description="List of CWE IDs")
-        ] = None,
+        cvss_v3_vector: Annotated[str | None, Field(description="CVSS v3 vector string")] = None,
+        cwe_ids: Annotated[list[int] | None, Field(description="List of CWE IDs")] = None,
         recommendation: Annotated[
             str | None, Field(description="Remediation recommendation")
         ] = None,
@@ -403,9 +383,7 @@ def register_vulnerability_tools(mcp: FastMCP) -> None:
         """
         try:
             client = get_client()
-            await client.post(
-                f"/vulnerability/{vulnerability_uuid}/component/{component_uuid}"
-            )
+            await client.post(f"/vulnerability/{vulnerability_uuid}/component/{component_uuid}")
             return {"message": "Vulnerability assigned to component successfully"}
         except DependencyTrackError as e:
             return {"error": str(e), "details": e.details}
@@ -425,9 +403,7 @@ def register_vulnerability_tools(mcp: FastMCP) -> None:
         """
         try:
             client = get_client()
-            await client.delete(
-                f"/vulnerability/{vulnerability_uuid}/component/{component_uuid}"
-            )
+            await client.delete(f"/vulnerability/{vulnerability_uuid}/component/{component_uuid}")
             return {"message": "Vulnerability unassigned from component successfully"}
         except DependencyTrackError as e:
             return {"error": str(e), "details": e.details}

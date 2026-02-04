@@ -15,7 +15,7 @@ def register_oidc_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Check if OpenID Connect is available",
-        tags=[Scopes.ADMIN_OIDC],
+        tags=[Scopes.READ_OIDC],
     )
     async def oidc_available() -> dict:
         """
@@ -30,13 +30,11 @@ def register_oidc_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="List all OIDC groups",
-        tags=[Scopes.ADMIN_OIDC],
+        tags=[Scopes.READ_OIDC],
     )
     async def list_oidc_groups(
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List all OIDC groups configured in Dependency Track.
@@ -58,7 +56,7 @@ def register_oidc_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Create an OIDC group",
-        tags=[Scopes.ADMIN_OIDC],
+        tags=[Scopes.WRITE_OIDC],
     )
     async def create_oidc_group(
         name: Annotated[str, Field(description="OIDC group name (must match claim value)")],
@@ -79,7 +77,7 @@ def register_oidc_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Update an OIDC group",
-        tags=[Scopes.ADMIN_OIDC],
+        tags=[Scopes.WRITE_OIDC],
     )
     async def update_oidc_group(
         uuid: Annotated[str, Field(description="Group UUID")],
@@ -99,7 +97,7 @@ def register_oidc_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Delete an OIDC group",
-        tags=[Scopes.ADMIN_OIDC],
+        tags=[Scopes.WRITE_OIDC],
     )
     async def delete_oidc_group(
         uuid: Annotated[str, Field(description="Group UUID")],
@@ -116,7 +114,7 @@ def register_oidc_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Get teams associated with an OIDC group",
-        tags=[Scopes.ADMIN_OIDC],
+        tags=[Scopes.READ_OIDC],
     )
     async def get_oidc_group_teams(
         group_uuid: Annotated[str, Field(description="OIDC group UUID")],
@@ -133,7 +131,7 @@ def register_oidc_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Map an OIDC group to a team",
-        tags=[Scopes.ADMIN_OIDC],
+        tags=[Scopes.WRITE_OIDC],
     )
     async def add_oidc_mapping(
         group_uuid: Annotated[str, Field(description="OIDC group UUID")],
@@ -158,7 +156,7 @@ def register_oidc_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Remove an OIDC group-to-team mapping",
-        tags=[Scopes.ADMIN_OIDC],
+        tags=[Scopes.WRITE_OIDC],
     )
     async def remove_oidc_mapping(
         mapping_uuid: Annotated[str, Field(description="Mapping UUID")],
@@ -175,7 +173,7 @@ def register_oidc_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Remove an OIDC group-to-team mapping by group and team",
-        tags=[Scopes.ADMIN_OIDC],
+        tags=[Scopes.WRITE_OIDC],
     )
     async def remove_oidc_group_team_mapping(
         group_uuid: Annotated[str, Field(description="OIDC group UUID")],

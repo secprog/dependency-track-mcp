@@ -30,20 +30,18 @@ class TestListPolicyViolationsTool:
                 "component": {"name": "lodash"},
             }
         ]
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_data, {"X-Total-Count": "1"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_policy_violations")
             assert tool is not None
             result = await tool.fn(suppressed=True)
-            
+
             assert "violations" in result
             assert result["total"] == 1
 
@@ -75,20 +73,18 @@ class TestListProjectPolicyViolationsTool:
                 "component": {"name": "lodash"},
             }
         ]
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_data, {"X-Total-Count": "1"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_project_policy_violations")
             assert tool is not None
             result = await tool.fn(project_uuid="proj-1")
-            
+
             assert "violations" in result
 
     @pytest.mark.asyncio
@@ -113,20 +109,18 @@ class TestListComponentPolicyViolationsTool:
     async def test_list_component_violations_success(self, register_tools):
         """Test listing component policy violations."""
         mock_data = [{"uuid": "viol-1", "type": "OPERATIONAL"}]
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_data, {"X-Total-Count": "1"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_component_policy_violations")
             assert tool is not None
             result = await tool.fn(component_uuid="comp-1")
-            
+
             assert "violations" in result
 
     @pytest.mark.asyncio
@@ -151,20 +145,18 @@ class TestListPoliciesTool:
     async def test_list_policies_success(self, register_tools):
         """Test listing policies."""
         mock_data = [{"uuid": "policy-1", "name": "Security Policy"}]
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_data, {"X-Total-Count": "1"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_policies")
             assert tool is not None
             result = await tool.fn()
-            
+
             assert "policies" in result
             assert result["total"] == 1
 
@@ -337,10 +329,7 @@ class TestPolicyConditionTools:
             tool = find_tool(register_tools, "create_policy_condition")
             assert tool is not None
             result = await tool.fn(
-                policy_uuid="policy-1",
-                subject="SEVERITY",
-                operator="IS",
-                value="CRITICAL"
+                policy_uuid="policy-1", subject="SEVERITY", operator="IS", value="CRITICAL"
             )
 
             assert "condition" in result
@@ -357,10 +346,7 @@ class TestPolicyConditionTools:
             tool = find_tool(register_tools, "create_policy_condition")
             assert tool is not None
             result = await tool.fn(
-                policy_uuid="policy-1",
-                subject="SEVERITY",
-                operator="IS",
-                value="CRITICAL"
+                policy_uuid="policy-1", subject="SEVERITY", operator="IS", value="CRITICAL"
             )
 
             assert "error" in result
@@ -595,7 +581,7 @@ class TestViolationAnalysisTools:
                 policy_violation_uuid="viol-1",
                 state="REJECTED",
                 comment="False positive",
-                suppressed=True
+                suppressed=True,
             )
 
             assert "analysis" in result

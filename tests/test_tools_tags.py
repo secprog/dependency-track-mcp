@@ -1,7 +1,8 @@
 """Tests for tag management tools."""
 
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from dependency_track_mcp.client import DependencyTrackClient
 from dependency_track_mcp.exceptions import DependencyTrackError
@@ -12,6 +13,7 @@ from tests.utils import find_tool
 def register_tools():
     """Fixture that registers all tools."""
     from dependency_track_mcp.server import mcp
+
     return mcp
 
 
@@ -25,18 +27,18 @@ class TestListTagsTool:
             {"uuid": "tag-1", "name": "production"},
             {"uuid": "tag-2", "name": "critical"},
         ]
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_tags, {"X-Total-Count": "2"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_tags")
             assert tool is not None
             result = await tool.fn()
-            
+
             assert "tags" in result
             assert result["tags"] == mock_tags
             assert result["total"] == 2
@@ -46,15 +48,13 @@ class TestListTagsTool:
         """Test list_tags with pagination."""
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
-            mock_client.get_with_headers = AsyncMock(
-                return_value=([], {"X-Total-Count": "50"})
-            )
+            mock_client.get_with_headers = AsyncMock(return_value=([], {"X-Total-Count": "50"}))
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_tags")
             assert tool is not None
             result = await tool.fn(page=2, page_size=25)
-            
+
             assert result["page"] == 2
             assert result["page_size"] == 25
 
@@ -86,16 +86,16 @@ class TestCreateTagsTool:
             {"uuid": "tag-1", "name": "new-tag"},
             {"uuid": "tag-2", "name": "another-tag"},
         ]
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value=mock_tags)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "create_tags")
             assert tool is not None
             result = await tool.fn(names=["new-tag", "another-tag"])
-            
+
             assert "tags" in result
             assert "message" in result
             assert "successfully" in result["message"].lower()
@@ -107,11 +107,11 @@ class TestCreateTagsTool:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value=[])
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "create_tags")
             assert tool is not None
             await tool.fn(names=["tag1", "tag2", "tag3"])
-            
+
             call_args = mock_client.put.call_args
             payload = call_args[1]["data"]
             assert len(payload) == 3
@@ -124,11 +124,11 @@ class TestCreateTagsTool:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value=[{"uuid": "tag-1", "name": "single"}])
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "create_tags")
             assert tool is not None
             result = await tool.fn(names=["single"])
-            
+
             assert "Created 1 tag" in result["message"]
 
     @pytest.mark.asyncio
@@ -158,11 +158,11 @@ class TestDeleteTagsTool:
             mock_client = AsyncMock()
             mock_client.delete = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "delete_tags")
             assert tool is not None
             result = await tool.fn(names=["tag1", "tag2"])
-            
+
             assert "message" in result
             assert "Deleted 2 tag" in result["message"]
 
@@ -173,11 +173,11 @@ class TestDeleteTagsTool:
             mock_client = AsyncMock()
             mock_client.delete = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "delete_tags")
             assert tool is not None
             await tool.fn(names=["tag-a", "tag-b"])
-            
+
             call_args = mock_client.delete.call_args
             assert "tag-a,tag-b" in call_args[1]["params"]["names"]
 
@@ -207,18 +207,18 @@ class TestGetTagProjectsTool:
         mock_projects = [
             {"uuid": "proj-1", "name": "Project 1"},
         ]
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_projects, {"X-Total-Count": "1"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "get_tag_projects")
             assert tool is not None
             result = await tool.fn(tag_name="production")
-            
+
             assert "projects" in result
             assert result["projects"] == mock_projects
 
@@ -227,15 +227,13 @@ class TestGetTagProjectsTool:
         """Test get_tag_projects with pagination."""
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
-            mock_client.get_with_headers = AsyncMock(
-                return_value=([], {"X-Total-Count": "150"})
-            )
+            mock_client.get_with_headers = AsyncMock(return_value=([], {"X-Total-Count": "150"}))
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "get_tag_projects")
             assert tool is not None
             result = await tool.fn(tag_name="critical", page=3, page_size=50)
-            
+
             assert result["page"] == 3
             assert result["total"] == 150
 
@@ -266,11 +264,11 @@ class TestTagProjectsTool:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "tag_projects")
             assert tool is not None
             result = await tool.fn(tag_name="production", project_uuids=["proj-1", "proj-2"])
-            
+
             assert "message" in result
             assert "Tagged 2 project" in result["message"]
 
@@ -281,11 +279,11 @@ class TestTagProjectsTool:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "tag_projects")
             assert tool is not None
             await tool.fn(tag_name="test", project_uuids=["proj-a", "proj-b"])
-            
+
             call_args = mock_client.post.call_args
             assert call_args[1]["data"] == ["proj-a", "proj-b"]
 
@@ -316,11 +314,11 @@ class TestUntagProjectsTool:
             mock_client = AsyncMock()
             mock_client.delete = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "untag_projects")
             assert tool is not None
             result = await tool.fn(tag_name="production", project_uuids=["proj-1"])
-            
+
             assert "message" in result
             assert "Untagged" in result["message"]
 
@@ -348,18 +346,18 @@ class TestGetTagPoliciesTool:
     async def test_get_tag_policies_success(self, register_tools):
         """Test getting policies with a tag."""
         mock_policies = [{"uuid": "policy-1", "name": "Policy 1"}]
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_policies, {"X-Total-Count": "1"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "get_tag_policies")
             assert tool is not None
             result = await tool.fn(tag_name="security")
-            
+
             assert "policies" in result
             assert result["policies"] == mock_policies
 
@@ -390,11 +388,11 @@ class TestTagPoliciesTool:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "tag_policies")
             assert tool is not None
             result = await tool.fn(tag_name="security", policy_uuids=["policy-1"])
-            
+
             assert "message" in result
 
 
@@ -408,11 +406,11 @@ class TestUntagPoliciesTool:
             mock_client = AsyncMock()
             mock_client.delete = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "untag_policies")
             assert tool is not None
             result = await tool.fn(tag_name="test", policy_uuids=["policy-1"])
-            
+
             assert "message" in result
 
 
@@ -423,18 +421,18 @@ class TestGetTagNotificationRulesTool:
     async def test_get_tag_notification_rules_success(self, register_tools):
         """Test getting notification rules with a tag."""
         mock_rules = [{"uuid": "rule-1", "name": "Rule 1"}]
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_rules, {"X-Total-Count": "1"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "get_tag_notification_rules")
             assert tool is not None
             result = await tool.fn(tag_name="alerts")
-            
+
             assert "notificationRules" in result
 
 
@@ -445,18 +443,18 @@ class TestGetPolicyTagsTool:
     async def test_get_policy_tags_success(self, register_tools):
         """Test getting tags for a policy."""
         mock_tags = [{"name": "security"}, {"name": "critical"}]
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_tags, {"X-Total-Count": "2"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "get_policy_tags")
             assert tool is not None
             result = await tool.fn(policy_uuid="policy-1")
-            
+
             assert "tags" in result
             assert result["tags"] == mock_tags
 
@@ -484,17 +482,17 @@ class TestGetTagCollectionProjectsTool:
     async def test_get_tag_collection_projects_success(self, register_tools):
         """Test getting collection projects for a tag."""
         mock_projects = [{"uuid": "proj-1", "name": "Collection Project"}]
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_projects, {"X-Total-Count": "1"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "get_tag_collection_projects")
             assert tool is not None
             result = await tool.fn(tag_name="collection-tag")
-            
+
             assert "projects" in result
             assert result["projects"] == mock_projects

@@ -20,9 +20,7 @@ def register_search_tools(mcp: FastMCP) -> None:
     async def search(
         query: Annotated[str, Field(description="Search query string")],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         Search across all entity types in Dependency Track.
@@ -49,9 +47,7 @@ def register_search_tools(mcp: FastMCP) -> None:
     async def search_projects(
         query: Annotated[str, Field(description="Project name search query")],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         Search for projects by name.
@@ -65,9 +61,7 @@ def register_search_tools(mcp: FastMCP) -> None:
                 "pageNumber": page,
                 "pageSize": page_size,
             }
-            data, headers = await client.get_with_headers(
-                "/search/project", params=params
-            )
+            data, headers = await client.get_with_headers("/search/project", params=params)
             total_count = headers.get("X-Total-Count", len(data))
 
             return {
@@ -85,13 +79,9 @@ def register_search_tools(mcp: FastMCP) -> None:
         tags=[Scopes.SEARCH],
     )
     async def search_components(
-        query: Annotated[
-            str, Field(description="Component name, group, or PURL search query")
-        ],
+        query: Annotated[str, Field(description="Component name, group, or PURL search query")],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         Search for components by name, group, or Package URL.
@@ -106,9 +96,7 @@ def register_search_tools(mcp: FastMCP) -> None:
                 "pageNumber": page,
                 "pageSize": page_size,
             }
-            data, headers = await client.get_with_headers(
-                "/search/component", params=params
-            )
+            data, headers = await client.get_with_headers("/search/component", params=params)
             total_count = headers.get("X-Total-Count", len(data))
 
             return {
@@ -130,9 +118,7 @@ def register_search_tools(mcp: FastMCP) -> None:
             str, Field(description="CVE ID or vulnerability description search query")
         ],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         Search for vulnerabilities by CVE ID or description.
@@ -147,9 +133,7 @@ def register_search_tools(mcp: FastMCP) -> None:
                 "pageNumber": page,
                 "pageSize": page_size,
             }
-            data, headers = await client.get_with_headers(
-                "/search/vulnerability", params=params
-            )
+            data, headers = await client.get_with_headers("/search/vulnerability", params=params)
             total_count = headers.get("X-Total-Count", len(data))
 
             return {
@@ -167,13 +151,9 @@ def register_search_tools(mcp: FastMCP) -> None:
         tags=[Scopes.SEARCH],
     )
     async def search_licenses(
-        query: Annotated[
-            str, Field(description="License name or SPDX ID search query")
-        ],
+        query: Annotated[str, Field(description="License name or SPDX ID search query")],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         Search for licenses by name or SPDX identifier.
@@ -188,9 +168,7 @@ def register_search_tools(mcp: FastMCP) -> None:
                 "pageNumber": page,
                 "pageSize": page_size,
             }
-            data, headers = await client.get_with_headers(
-                "/search/license", params=params
-            )
+            data, headers = await client.get_with_headers("/search/license", params=params)
             total_count = headers.get("X-Total-Count", len(data))
 
             return {
@@ -210,9 +188,7 @@ def register_search_tools(mcp: FastMCP) -> None:
     async def search_services(
         query: Annotated[str, Field(description="Service name search query")],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         Search for services by name.
@@ -226,9 +202,7 @@ def register_search_tools(mcp: FastMCP) -> None:
                 "pageNumber": page,
                 "pageSize": page_size,
             }
-            data, headers = await client.get_with_headers(
-                "/search/service", params=params
-            )
+            data, headers = await client.get_with_headers("/search/service", params=params)
             total_count = headers.get("X-Total-Count", len(data))
 
             return {
@@ -246,13 +220,9 @@ def register_search_tools(mcp: FastMCP) -> None:
         tags=[Scopes.SEARCH],
     )
     async def search_vulnerable_software(
-        query: Annotated[
-            str, Field(description="CPE or software name search query")
-        ],
+        query: Annotated[str, Field(description="CPE or software name search query")],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         Search for vulnerable software by CPE identifier or name.

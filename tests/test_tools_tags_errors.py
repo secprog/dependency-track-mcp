@@ -2,8 +2,10 @@
 Tests for tags tool error handling and edge cases.
 Targets missing lines in tag_policies, untag_policies, and exception handling.
 """
-import pytest
+
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from dependency_track_mcp.client import DependencyTrackClient
 from dependency_track_mcp.exceptions import DependencyTrackError
@@ -24,9 +26,7 @@ class TestTagsErrorHandling:
     @pytest.mark.asyncio
     async def test_tag_policies_error(self, register_tools):
         """Test tag_policies error handling."""
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             error = DependencyTrackError("Tag not found")
             error.details = {"status": 404}
@@ -44,9 +44,7 @@ class TestTagsErrorHandling:
     @pytest.mark.asyncio
     async def test_untag_policies_error(self, register_tools):
         """Test untag_policies error handling."""
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             error = DependencyTrackError("Policy not found")
             error.details = {"status": 404}
@@ -64,9 +62,7 @@ class TestTagsErrorHandling:
     @pytest.mark.asyncio
     async def test_tag_policies_multiple_policies(self, register_tools):
         """Test tagging multiple policies."""
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
@@ -87,9 +83,7 @@ class TestTagsErrorHandling:
     @pytest.mark.asyncio
     async def test_untag_policies_multiple_policies(self, register_tools):
         """Test untagging multiple policies."""
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.delete = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
@@ -108,9 +102,7 @@ class TestTagsErrorHandling:
     @pytest.mark.asyncio
     async def test_get_tag_notification_rules_error(self, register_tools):
         """Test get_tag_notification_rules error handling."""
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             error = DependencyTrackError("Unauthorized")
             error.details = {"status": 401}
@@ -128,9 +120,7 @@ class TestTagsErrorHandling:
     @pytest.mark.asyncio
     async def test_get_tag_collection_projects_error(self, register_tools):
         """Test get_tag_collection_projects error handling."""
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             error = DependencyTrackError("Not found")
             error.details = {"status": 404}

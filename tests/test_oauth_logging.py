@@ -2,11 +2,13 @@
 Tests for oauth.py logging and logger coverage.
 Targets logger.info statements in JWKS fetching.
 """
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
-import httpx
 
-from dependency_track_mcp.oauth import JWTValidator, InvalidTokenError
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import httpx
+import pytest
+
+from dependency_track_mcp.oauth import JWTValidator
 
 
 class TestJWTValidatorLogging:
@@ -40,9 +42,7 @@ class TestJWTValidatorLogging:
         with patch("httpx.AsyncClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_response)
-            mock_client_class.return_value.__aenter__ = AsyncMock(
-                return_value=mock_client
-            )
+            mock_client_class.return_value.__aenter__ = AsyncMock(return_value=mock_client)
             mock_client_class.return_value.__aexit__ = AsyncMock()
 
             with patch("dependency_track_mcp.oauth.logger") as mock_logger:
@@ -57,7 +57,9 @@ class TestJWTValidatorLogging:
                 assert mock_logger.info.call_count >= 1
                 calls = [str(call) for call in mock_logger.info.call_args_list]
                 # Check that at least one info log mentions "Fetching JWKS"
-                info_logs = [call for call in calls if "Fetching" in call or "fetched" in call.lower()]
+                info_logs = [
+                    call for call in calls if "Fetching" in call or "fetched" in call.lower()
+                ]
                 assert len(info_logs) > 0, f"Expected info log about JWKS, got: {calls}"
 
     @pytest.mark.asyncio
@@ -87,9 +89,7 @@ class TestJWTValidatorLogging:
         with patch("httpx.AsyncClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_response)
-            mock_client_class.return_value.__aenter__ = AsyncMock(
-                return_value=mock_client
-            )
+            mock_client_class.return_value.__aenter__ = AsyncMock(return_value=mock_client)
             mock_client_class.return_value.__aexit__ = AsyncMock()
 
             # First call - should fetch

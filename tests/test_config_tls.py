@@ -1,13 +1,14 @@
 """Additional tests for config TLS functions."""
 
 import os
+
 import pytest
 
 from dependency_track_mcp.config import (
     ConfigurationError,
     Settings,
-    materialize_tls_files,
     cleanup_tls_temp_files,
+    materialize_tls_files,
 )
 
 
@@ -23,14 +24,14 @@ class TestTLSHelpers:
             server_tls_cert="-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----",
             server_tls_key="-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----",
         )
-        
+
         certfile, keyfile, ca_certs = materialize_tls_files(settings)
-        
+
         try:
             assert os.path.exists(certfile)
             assert os.path.exists(keyfile)
             assert ca_certs is None
-            
+
             # Verify content
             with open(certfile) as f:
                 content = f.read()
@@ -48,15 +49,15 @@ class TestTLSHelpers:
             server_tls_key="-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----",
             server_tls_ca_certs="-----BEGIN CERTIFICATE-----\nca\n-----END CERTIFICATE-----",
         )
-        
+
         certfile, keyfile, ca_certs = materialize_tls_files(settings)
-        
+
         try:
             assert os.path.exists(certfile)
             assert os.path.exists(keyfile)
             assert ca_certs is not None
             assert os.path.exists(ca_certs)
-            
+
             # Verify CA content
             with open(ca_certs) as f:
                 content = f.read()
@@ -73,9 +74,9 @@ class TestTLSHelpers:
             server_tls_cert="-----BEGIN CERTIFICATE-----\\ntest\\n-----END CERTIFICATE-----",
             server_tls_key="-----BEGIN PRIVATE KEY-----\\ntest\\n-----END PRIVATE KEY-----",
         )
-        
+
         certfile, keyfile, ca_certs = materialize_tls_files(settings)
-        
+
         try:
             # Verify newlines were properly normalized
             with open(certfile) as f:
@@ -93,7 +94,7 @@ class TestTLSHelpers:
             oauth_issuer="https://auth.example.com",
             server_tls_key="-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----",
         )
-        
+
         with pytest.raises(ConfigurationError, match="TLS is required"):
             materialize_tls_files(settings)
 
@@ -105,7 +106,7 @@ class TestTLSHelpers:
             oauth_issuer="https://auth.example.com",
             server_tls_cert="-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----",
         )
-        
+
         with pytest.raises(ConfigurationError, match="TLS is required"):
             materialize_tls_files(settings)
 
@@ -118,16 +119,16 @@ class TestTLSHelpers:
             server_tls_cert="-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----",
             server_tls_key="-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----",
         )
-        
+
         certfile, keyfile, ca_certs = materialize_tls_files(settings)
-        
+
         # Files should exist
         assert os.path.exists(certfile)
         assert os.path.exists(keyfile)
-        
+
         # Cleanup
         cleanup_tls_temp_files()
-        
+
         # Files should be removed
         assert not os.path.exists(certfile)
         assert not os.path.exists(keyfile)
@@ -140,7 +141,7 @@ class TestTLSHelpers:
             oauth_issuer="https://auth.example.com",
             oauth_required_scopes="read:projects write:projects read:vulnerabilities",
         )
-        
+
         scopes = settings.get_required_scopes()
         assert scopes == {"read:projects", "write:projects", "read:vulnerabilities"}
 
@@ -151,6 +152,6 @@ class TestTLSHelpers:
             api_key="test-key",
             oauth_issuer="https://auth.example.com",
         )
-        
+
         metadata_url = settings.oauth_resource_metadata_url
         assert metadata_url == "https://mcp.example.com/.well-known/oauth-protected-resource"

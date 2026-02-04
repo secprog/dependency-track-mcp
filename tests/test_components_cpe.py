@@ -1,7 +1,9 @@
 """Tests for components.py create_component cpe field coverage."""
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
-from unittest.mock import patch, AsyncMock
+
 from dependency_track_mcp.client import DependencyTrackClient
 from dependency_track_mcp.tools.components import register_component_tools
 from tests.utils import find_tool
@@ -26,9 +28,7 @@ class TestComponentsCreateComponentCPE:
             "cpe": "cpe:2.3:a:vendor:product:1.0:*:*:*:*:*:*:*",
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client

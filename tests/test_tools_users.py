@@ -1,7 +1,8 @@
 """Tests for user management tools."""
 
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from dependency_track_mcp.client import DependencyTrackClient
 from dependency_track_mcp.exceptions import DependencyTrackError
@@ -12,6 +13,7 @@ from tests.utils import find_tool
 def register_tools():
     """Fixture that registers all tools."""
     from dependency_track_mcp.server import mcp
+
     return mcp
 
 
@@ -25,18 +27,18 @@ class TestListManagedUsersTool:
             {"username": "admin", "email": "admin@example.com"},
             {"username": "user1", "email": "user1@example.com"},
         ]
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_users, {"X-Total-Count": "2"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_managed_users")
             assert tool is not None
             result = await tool.fn()
-            
+
             assert "users" in result
             assert result["users"] == mock_users
             assert result["total"] == 2
@@ -48,15 +50,13 @@ class TestListManagedUsersTool:
         """Test list_managed_users with pagination."""
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
-            mock_client.get_with_headers = AsyncMock(
-                return_value=([], {"X-Total-Count": "50"})
-            )
+            mock_client.get_with_headers = AsyncMock(return_value=([], {"X-Total-Count": "50"}))
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_managed_users")
             assert tool is not None
             result = await tool.fn(page=2, page_size=25)
-            
+
             assert result["page"] == 2
             assert result["page_size"] == 25
 
@@ -84,18 +84,18 @@ class TestListLdapUsersTool:
     async def test_list_ldap_users_success(self, register_tools):
         """Test listing LDAP users."""
         mock_users = [{"username": "ldap-user@domain.com"}]
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_users, {"X-Total-Count": "1"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_ldap_users")
             assert tool is not None
             result = await tool.fn()
-            
+
             assert "users" in result
             call_args = mock_client.get_with_headers.call_args
             assert "/user/ldap" in call_args[0][0]
@@ -124,18 +124,18 @@ class TestListOidcUsersTool:
     async def test_list_oidc_users_success(self, register_tools):
         """Test listing OIDC users."""
         mock_users = [{"username": "user-123@provider.com"}]
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_users, {"X-Total-Count": "1"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_oidc_users")
             assert tool is not None
             result = await tool.fn()
-            
+
             assert "users" in result
             call_args = mock_client.get_with_headers.call_args
             assert "/user/oidc" in call_args[0][0]
@@ -164,16 +164,16 @@ class TestGetCurrentUserTool:
     async def test_get_current_user_success(self, register_tools):
         """Test getting current user information."""
         mock_user = {"username": "current-user", "email": "user@example.com"}
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_user)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "get_current_user")
             assert tool is not None
             result = await tool.fn()
-            
+
             assert "user" in result
             assert result["user"] == mock_user
             mock_client.get.assert_called_once_with("/user/self")
@@ -202,16 +202,16 @@ class TestCreateManagedUserTool:
     async def test_create_managed_user_success(self, register_tools):
         """Test creating a managed user."""
         mock_user = {"username": "newuser", "email": "newuser@example.com"}
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value=mock_user)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "create_managed_user")
             assert tool is not None
             result = await tool.fn(username="newuser", password="secure-password")
-            
+
             assert "user" in result
             assert "message" in result
             assert "successfully" in result["message"].lower()
@@ -223,7 +223,7 @@ class TestCreateManagedUserTool:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value={"username": "user"})
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "create_managed_user")
             assert tool is not None
             await tool.fn(
@@ -235,7 +235,7 @@ class TestCreateManagedUserTool:
                 non_expiry_password=False,
                 suspended=False,
             )
-            
+
             call_args = mock_client.put.call_args
             payload = call_args[1]["data"]
             assert payload["username"] == "user"
@@ -271,11 +271,11 @@ class TestUpdateManagedUserTool:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value={"username": "user"})
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "update_managed_user")
             assert tool is not None
             result = await tool.fn(username="user", email="newemail@example.com")
-            
+
             assert "user" in result
             assert "message" in result
 
@@ -286,11 +286,11 @@ class TestUpdateManagedUserTool:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value={})
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "update_managed_user")
             assert tool is not None
             await tool.fn(username="user", fullname="New Full Name")
-            
+
             call_args = mock_client.post.call_args
             payload = call_args[1]["data"]
             assert payload["username"] == "user"
@@ -324,11 +324,11 @@ class TestDeleteManagedUserTool:
             mock_client = AsyncMock()
             mock_client.delete = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "delete_managed_user")
             assert tool is not None
             result = await tool.fn(username="user-to-delete")
-            
+
             assert "message" in result
             assert "deleted" in result["message"].lower()
             call_args = mock_client.delete.call_args
@@ -358,16 +358,16 @@ class TestCreateLdapUserTool:
     async def test_create_ldap_user_success(self, register_tools):
         """Test creating an LDAP user reference."""
         mock_user = {"username": "ldap-user@domain.com"}
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value=mock_user)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "create_ldap_user")
             assert tool is not None
             result = await tool.fn(username="ldap-user@domain.com")
-            
+
             assert "user" in result
             assert "successfully" in result["message"].lower()
 
@@ -398,11 +398,11 @@ class TestDeleteLdapUserTool:
             mock_client = AsyncMock()
             mock_client.delete = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "delete_ldap_user")
             assert tool is not None
             result = await tool.fn(username="ldap-user@domain.com")
-            
+
             assert "message" in result
             assert "deleted" in result["message"].lower()
 
@@ -430,16 +430,16 @@ class TestCreateOidcUserTool:
     async def test_create_oidc_user_success(self, register_tools):
         """Test creating an OIDC user reference."""
         mock_user = {"username": "oidc-subject-id"}
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value=mock_user)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "create_oidc_user")
             assert tool is not None
             result = await tool.fn(username="oidc-subject-id")
-            
+
             assert "user" in result
             assert "successfully" in result["message"].lower()
 
@@ -470,11 +470,11 @@ class TestDeleteOidcUserTool:
             mock_client = AsyncMock()
             mock_client.delete = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "delete_oidc_user")
             assert tool is not None
             result = await tool.fn(username="oidc-id")
-            
+
             assert "message" in result
             assert "deleted" in result["message"].lower()
 
@@ -505,11 +505,11 @@ class TestAddUserToTeamTool:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "add_user_to_team")
             assert tool is not None
             result = await tool.fn(username="user1", team_uuid="team-1")
-            
+
             assert "message" in result
             assert "successfully" in result["message"].lower()
             call_args = mock_client.post.call_args
@@ -542,11 +542,11 @@ class TestRemoveUserFromTeamTool:
             mock_client = AsyncMock()
             mock_client.delete = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "remove_user_from_team")
             assert tool is not None
             result = await tool.fn(username="user1", team_uuid="team-1")
-            
+
             assert "message" in result
             assert "removed" in result["message"].lower()
 

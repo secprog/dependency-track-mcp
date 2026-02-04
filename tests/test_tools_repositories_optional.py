@@ -2,8 +2,10 @@
 Tests for repositories tool optional field coverage.
 Targets missing lines in update_repository optional field handling.
 """
-import pytest
+
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from dependency_track_mcp.client import DependencyTrackClient
 from dependency_track_mcp.exceptions import DependencyTrackError
@@ -30,18 +32,14 @@ class TestRepositoriesOptionalFields:
             "url": "https://repo.maven.apache.org/maven2/",
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
 
             tool = find_tool(register_tools, "update_repository")
             assert tool is not None
-            result = await tool.fn(
-                uuid="repo-1", url="https://repo.maven.apache.org/maven2/"
-            )
+            result = await tool.fn(uuid="repo-1", url="https://repo.maven.apache.org/maven2/")
 
             assert "repository" in result
             # Verify that url was included in the post call
@@ -58,9 +56,7 @@ class TestRepositoriesOptionalFields:
             "enabled": True,
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -84,9 +80,7 @@ class TestRepositoriesOptionalFields:
             "internal": False,
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -110,9 +104,7 @@ class TestRepositoriesOptionalFields:
             "username": "admin",
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -135,9 +127,7 @@ class TestRepositoriesOptionalFields:
             "uuid": "repo-1",
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -166,9 +156,7 @@ class TestRepositoriesOptionalFields:
             "username": "admin",
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -202,9 +190,7 @@ class TestRepositoriesOptionalFields:
     @pytest.mark.asyncio
     async def test_update_repository_error(self, register_tools):
         """Test update_repository error handling."""
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             error = DependencyTrackError("Repository not found")
             error.details = {"status": 404}

@@ -19,9 +19,7 @@ def register_license_group_tools(mcp: FastMCP) -> None:
     )
     async def list_license_groups(
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List all license groups.

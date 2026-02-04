@@ -20,13 +20,9 @@ def register_finding_tools(mcp: FastMCP) -> None:
     )
     async def list_project_findings(
         project_uuid: Annotated[str, Field(description="Project UUID")],
-        suppressed: Annotated[
-            bool, Field(description="Include suppressed findings")
-        ] = False,
+        suppressed: Annotated[bool, Field(description="Include suppressed findings")] = False,
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List all security findings for a project.
@@ -94,30 +90,36 @@ def register_finding_tools(mcp: FastMCP) -> None:
         state: Annotated[
             str | None,
             Field(
-                description="Analysis state: NOT_SET, "                "EXPLOITABLE, IN_TRIAGE, RESOLVED, "                "FALSE_POSITIVE, NOT_AFFECTED"
+                description="Analysis state: NOT_SET, "
+                "EXPLOITABLE, IN_TRIAGE, RESOLVED, "
+                "FALSE_POSITIVE, NOT_AFFECTED"
             ),
         ] = None,
         justification: Annotated[
             str | None,
             Field(
-                description="Justification: CODE_NOT_PRESENT, "                "CODE_NOT_REACHABLE, REQUIRES_CONFIGURATION, "                "REQUIRES_DEPENDENCY, REQUIRES_ENVIRONMENT, "                "PROTECTED_BY_COMPILER, PROTECTED_AT_RUNTIME, "                "PROTECTED_AT_PERIMETER, "                "PROTECTED_BY_MITIGATING_CONTROL"
+                description="Justification: CODE_NOT_PRESENT, "
+                "CODE_NOT_REACHABLE, REQUIRES_CONFIGURATION, "
+                "REQUIRES_DEPENDENCY, REQUIRES_ENVIRONMENT, "
+                "PROTECTED_BY_COMPILER, PROTECTED_AT_RUNTIME, "
+                "PROTECTED_AT_PERIMETER, "
+                "PROTECTED_BY_MITIGATING_CONTROL"
             ),
         ] = None,
         response: Annotated[
             str | None,
             Field(
-                description="Response: CAN_NOT_FIX, WILL_NOT_FIX, UPDATE, ROLLBACK, WORKAROUND_AVAILABLE"
+                description=(
+                    "Response: CAN_NOT_FIX, WILL_NOT_FIX, UPDATE, "
+                    "ROLLBACK, WORKAROUND_AVAILABLE"
+                )
             ),
         ] = None,
-        details: Annotated[
-            str | None, Field(description="Additional analysis details")
-        ] = None,
+        details: Annotated[str | None, Field(description="Additional analysis details")] = None,
         comment: Annotated[
             str | None, Field(description="Comment to add to the analysis trail")
         ] = None,
-        suppressed: Annotated[
-            bool | None, Field(description="Suppress this finding")
-        ] = None,
+        suppressed: Annotated[bool | None, Field(description="Suppress this finding")] = None,
     ) -> dict:
         """
         Record an analysis decision for a security finding.
@@ -186,9 +188,7 @@ def register_finding_tools(mcp: FastMCP) -> None:
     )
     async def list_all_findings(
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List all findings across the entire portfolio.
@@ -216,9 +216,7 @@ def register_finding_tools(mcp: FastMCP) -> None:
     )
     async def list_findings_grouped(
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         Get findings grouped by vulnerability across all projects.

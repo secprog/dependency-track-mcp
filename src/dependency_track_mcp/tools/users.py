@@ -15,13 +15,11 @@ def register_user_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="List all managed users",
-        tags=[Scopes.ADMIN_USERS],
+        tags=[Scopes.READ_USERS],
     )
     async def list_managed_users(
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List all managed (local) users.
@@ -45,13 +43,11 @@ def register_user_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="List all LDAP users",
-        tags=[Scopes.ADMIN_USERS],
+        tags=[Scopes.READ_USERS],
     )
     async def list_ldap_users(
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List all LDAP users.
@@ -75,13 +71,11 @@ def register_user_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="List all OIDC users",
-        tags=[Scopes.ADMIN_USERS],
+        tags=[Scopes.READ_USERS],
     )
     async def list_oidc_users(
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List all OpenID Connect users.
@@ -105,7 +99,7 @@ def register_user_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Get information about the current logged-in user",
-        tags=[Scopes.ADMIN_USERS],
+        tags=[Scopes.READ_USERS],
     )
     async def get_current_user() -> dict:
         """
@@ -120,7 +114,7 @@ def register_user_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Create a new managed user",
-        tags=[Scopes.ADMIN_USERS],
+        tags=[Scopes.READ_USERS],
     )
     async def create_managed_user(
         username: Annotated[str, Field(description="Username")],
@@ -130,9 +124,7 @@ def register_user_tools(mcp: FastMCP) -> None:
         force_password_change: Annotated[
             bool, Field(description="Force password change on first login")
         ] = False,
-        non_expiry_password: Annotated[
-            bool, Field(description="Password never expires")
-        ] = False,
+        non_expiry_password: Annotated[bool, Field(description="Password never expires")] = False,
         suspended: Annotated[bool, Field(description="Account is suspended")] = False,
     ) -> dict:
         """
@@ -161,7 +153,7 @@ def register_user_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Update a managed user",
-        tags=[Scopes.ADMIN_USERS],
+        tags=[Scopes.WRITE_USERS],
     )
     async def update_managed_user(
         username: Annotated[str, Field(description="Username to update")],
@@ -204,7 +196,7 @@ def register_user_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Delete a managed user",
-        tags=[Scopes.ADMIN_USERS],
+        tags=[Scopes.WRITE_USERS],
     )
     async def delete_managed_user(
         username: Annotated[str, Field(description="Username to delete")],
@@ -221,7 +213,7 @@ def register_user_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Create a reference to an existing LDAP user",
-        tags=[Scopes.ADMIN_USERS],
+        tags=[Scopes.WRITE_USERS],
     )
     async def create_ldap_user(
         username: Annotated[str, Field(description="LDAP username (DN or sAMAccountName)")],
@@ -242,7 +234,7 @@ def register_user_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Delete an LDAP user reference",
-        tags=[Scopes.ADMIN_USERS],
+        tags=[Scopes.WRITE_USERS],
     )
     async def delete_ldap_user(
         username: Annotated[str, Field(description="LDAP username to delete")],
@@ -259,7 +251,7 @@ def register_user_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Create a reference to an existing OIDC user",
-        tags=[Scopes.ADMIN_USERS],
+        tags=[Scopes.WRITE_USERS],
     )
     async def create_oidc_user(
         username: Annotated[str, Field(description="OIDC username (subject claim)")],
@@ -280,7 +272,7 @@ def register_user_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Delete an OIDC user reference",
-        tags=[Scopes.ADMIN_USERS],
+        tags=[Scopes.WRITE_USERS],
     )
     async def delete_oidc_user(
         username: Annotated[str, Field(description="OIDC username to delete")],
@@ -297,7 +289,7 @@ def register_user_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Add a user to a team",
-        tags=[Scopes.ADMIN_USERS],
+        tags=[Scopes.WRITE_USERS],
     )
     async def add_user_to_team(
         username: Annotated[str, Field(description="Username")],
@@ -308,16 +300,14 @@ def register_user_tools(mcp: FastMCP) -> None:
         """
         try:
             client = get_client()
-            await client.post(
-                f"/user/{username}/membership", data={"uuid": team_uuid}
-            )
+            await client.post(f"/user/{username}/membership", data={"uuid": team_uuid})
             return {"message": f"User {username} added to team successfully"}
         except DependencyTrackError as e:
             return {"error": str(e), "details": e.details}
 
     @mcp.tool(
         description="Remove a user from a team",
-        tags=[Scopes.ADMIN_USERS],
+        tags=[Scopes.MANAGE_USER_TEAMS],
     )
     async def remove_user_from_team(
         username: Annotated[str, Field(description="Username")],
@@ -328,9 +318,7 @@ def register_user_tools(mcp: FastMCP) -> None:
         """
         try:
             client = get_client()
-            await client.delete(
-                f"/user/{username}/membership", params={"uuid": team_uuid}
-            )
+            await client.delete(f"/user/{username}/membership", params={"uuid": team_uuid})
             return {"message": f"User {username} removed from team successfully"}
         except DependencyTrackError as e:
             return {"error": str(e), "details": e.details}

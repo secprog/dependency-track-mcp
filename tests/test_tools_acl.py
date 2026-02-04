@@ -1,7 +1,8 @@
 """Tests for ACL tools."""
 
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from dependency_track_mcp.client import DependencyTrackClient
 from dependency_track_mcp.exceptions import DependencyTrackError
@@ -12,6 +13,7 @@ from tests.utils import find_tool
 def register_tools():
     """Fixture that registers all tools."""
     from dependency_track_mcp.server import mcp
+
     return mcp
 
 
@@ -25,18 +27,18 @@ class TestGetTeamAclProjectsTool:
             {"uuid": "proj-1", "name": "Project 1"},
             {"uuid": "proj-2", "name": "Project 2"},
         ]
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_projects, {"X-Total-Count": "2"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "get_team_acl_projects")
             assert tool is not None
             result = await tool.fn(team_uuid="team-uuid")
-            
+
             assert "projects" in result
             assert result["projects"] == mock_projects
             assert result["total"] == 2
@@ -48,18 +50,18 @@ class TestGetTeamAclProjectsTool:
     async def test_get_team_acl_projects_with_pagination(self, register_tools):
         """Test get_team_acl_projects with pagination parameters."""
         mock_projects = [{"uuid": "proj-3", "name": "Project 3"}]
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_projects, {"X-Total-Count": "150"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "get_team_acl_projects")
             assert tool is not None
             result = await tool.fn(team_uuid="team-uuid", page=2, page_size=50)
-            
+
             assert result["page"] == 2
             assert result["page_size"] == 50
             assert result["total"] == 150
@@ -88,15 +90,13 @@ class TestGetTeamAclProjectsTool:
         """Test get_team_acl_projects with empty results."""
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
-            mock_client.get_with_headers = AsyncMock(
-                return_value=([], {"X-Total-Count": "0"})
-            )
+            mock_client.get_with_headers = AsyncMock(return_value=([], {"X-Total-Count": "0"}))
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "get_team_acl_projects")
             assert tool is not None
             result = await tool.fn(team_uuid="team-uuid")
-            
+
             assert result["projects"] == []
             assert result["total"] == 0
 
@@ -111,11 +111,11 @@ class TestAddAclMappingTool:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "add_acl_mapping")
             assert tool is not None
             result = await tool.fn(team_uuid="team-uuid", project_uuid="proj-uuid")
-            
+
             assert "message" in result
             assert "successfully" in result["message"].lower()
             mock_client.put.assert_called_once()
@@ -127,11 +127,11 @@ class TestAddAclMappingTool:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "add_acl_mapping")
             assert tool is not None
             await tool.fn(team_uuid="team-123", project_uuid="proj-456")
-            
+
             call_args = mock_client.put.call_args
             assert call_args[0][0] == "/acl/mapping"
             assert call_args[1]["data"]["team"] == "team-123"
@@ -165,11 +165,11 @@ class TestRemoveAclMappingTool:
             mock_client = AsyncMock()
             mock_client.delete = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "remove_acl_mapping")
             assert tool is not None
             result = await tool.fn(team_uuid="team-uuid", project_uuid="proj-uuid")
-            
+
             assert "message" in result
             assert "removed" in result["message"].lower()
             mock_client.delete.assert_called_once()
@@ -181,11 +181,11 @@ class TestRemoveAclMappingTool:
             mock_client = AsyncMock()
             mock_client.delete = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "remove_acl_mapping")
             assert tool is not None
             await tool.fn(team_uuid="team-123", project_uuid="proj-456")
-            
+
             call_args = mock_client.delete.call_args
             assert "team-123" in call_args[0][0]
             assert "proj-456" in call_args[0][0]

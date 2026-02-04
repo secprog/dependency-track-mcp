@@ -15,7 +15,7 @@ def register_config_property_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="List all configuration properties",
-        tags=[Scopes.ADMIN_CONFIG],
+        tags=[Scopes.READ_CONFIG],
     )
     async def list_config_properties() -> dict:
         """
@@ -32,7 +32,7 @@ def register_config_property_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Get a public configuration property",
-        tags=[Scopes.ADMIN_CONFIG],
+        tags=[Scopes.READ_CONFIG],
     )
     async def get_public_config_property(
         group_name: Annotated[str, Field(description="Property group name")],
@@ -45,16 +45,14 @@ def register_config_property_tools(mcp: FastMCP) -> None:
         """
         try:
             client = get_client()
-            data = await client.get(
-                f"/configProperty/public/{group_name}/{property_name}"
-            )
+            data = await client.get(f"/configProperty/public/{group_name}/{property_name}")
             return {"property": data}
         except DependencyTrackError as e:
             return {"error": str(e), "details": e.details}
 
     @mcp.tool(
         description="Update a configuration property",
-        tags=[Scopes.ADMIN_CONFIG],
+        tags=[Scopes.WRITE_CONFIG],
     )
     async def update_config_property(
         group_name: Annotated[str, Field(description="Property group name")],
@@ -81,13 +79,14 @@ def register_config_property_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Update multiple configuration properties at once",
-        tags=[Scopes.ADMIN_CONFIG],
+        tags=[Scopes.WRITE_CONFIG],
     )
     async def update_config_properties_batch(
         properties: Annotated[
             list[dict],
             Field(
-                description="List of properties to update. "                "Each needs groupName, propertyName, propertyValue."
+                description="List of properties to update. "
+                "Each needs groupName, propertyName, propertyValue."
             ),
         ],
     ) -> dict:

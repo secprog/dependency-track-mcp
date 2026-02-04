@@ -25,21 +25,19 @@ class TestUploadBomTool:
         """Test uploading BOM with existing project."""
         mock_data = {"token": "token-123"}
         bom_content = '{"bomFormat": "CycloneDX"}'
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "upload_bom")
             assert tool is not None
             result = await tool.fn(
                 project_uuid="proj-1",
                 bom=bom_content,
             )
-            
+
             assert result["token"] == "token-123"
 
     @pytest.mark.asyncio
@@ -47,14 +45,12 @@ class TestUploadBomTool:
         """Test uploading BOM with auto-create."""
         mock_data = {"token": "token-123"}
         bom_content = '{"bomFormat": "CycloneDX"}'
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "upload_bom")
             assert tool is not None
             result = await tool.fn(
@@ -63,7 +59,7 @@ class TestUploadBomTool:
                 bom=bom_content,
                 auto_create=True,
             )
-            
+
             assert result["token"] == "token-123"
 
     @pytest.mark.asyncio
@@ -88,7 +84,7 @@ class TestUploadBomTool:
         tool = find_tool(register_tools, "upload_bom")
         assert tool is not None
         result = await tool.fn()
-        
+
         assert "error" in result
 
     @pytest.mark.asyncio
@@ -108,18 +104,16 @@ class TestCheckBomProcessingTool:
     async def test_check_bom_processing_complete(self, register_tools):
         """Test checking BOM processing status."""
         mock_data = {"processing": False}
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "check_bom_processing")
             assert tool is not None
             result = await tool.fn(token="token-123")
-            
+
             assert result["processing"] is False
 
     @pytest.mark.asyncio
@@ -127,9 +121,7 @@ class TestCheckBomProcessingTool:
         """Test BOM processing in progress message."""
         mock_data = {"processing": True}
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
@@ -162,14 +154,12 @@ class TestExportProjectBomTool:
     async def test_export_project_bom_success(self, register_tools):
         """Test exporting project BOM."""
         mock_data = {"bomFormat": "CycloneDX", "version": 1}
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "export_project_bom")
             assert tool is not None
             result = await tool.fn(
@@ -177,7 +167,7 @@ class TestExportProjectBomTool:
                 format="json",
                 variant="withVulnerabilities",
             )
-            
+
             assert "bom" in result
 
     @pytest.mark.asyncio
@@ -202,18 +192,16 @@ class TestExportComponentBomTool:
     async def test_export_component_bom_success(self, register_tools):
         """Test exporting component BOM."""
         mock_data = {"bomFormat": "CycloneDX", "component": {"name": "lodash"}}
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "export_component_bom")
             assert tool is not None
             result = await tool.fn(component_uuid="comp-1")
-            
+
             assert "bom" in result
 
     @pytest.mark.asyncio
@@ -268,21 +256,29 @@ class TestUploadBomPostTool:
             assert "error" in result
 
     @pytest.mark.asyncio
-    async def test_upload_bom_post_missing_project_uuid_and_auto_create_params(self, register_tools):
-        """Test upload_bom_post fails when neither project_uuid nor (auto_create + project_name) is provided."""
+    async def test_upload_bom_post_missing_project_uuid_and_auto_create_params(
+        self, register_tools
+    ):
+        """Test upload_bom_post fails when neither project_uuid nor params provided.
+
+        Checks that both project_uuid and (auto_create + project_name) are missing.
+        """
         bom_content = '{"bomFormat": "CycloneDX", "specVersion": "1.3", "components": []}'
-    
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_get_instance.return_value = mock_client
-        
+
             tool = find_tool(register_tools, "upload_bom_post")
             assert tool is not None
             # Missing both project_uuid and (auto_create + project_name)
             result = await tool.fn(bom=bom_content)
-        
+
             assert "error" in result
-            assert "Either project_uuid or (auto_create with project_name) is required" in result["error"]
+            assert (
+                "Either project_uuid or (auto_create with project_name) is required"
+                in result["error"]
+            )
             # Ensure no API call was made
             mock_client.post.assert_not_called()
 
@@ -292,12 +288,12 @@ class TestUploadBomPostTool:
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_get_instance.return_value = mock_client
-        
+
             tool = find_tool(register_tools, "upload_bom_post")
             assert tool is not None
             # Missing BOM content
             result = await tool.fn(project_uuid="proj-1", bom="")
-        
+
             assert "error" in result
             assert "BOM content is required" in result["error"]
             # Ensure no API call was made
@@ -310,23 +306,23 @@ class TestUploadBomPostTool:
         mock_response = {
             "token": "upload-token-123",
         }
-    
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=mock_response)
             mock_get_instance.return_value = mock_client
-        
+
             tool = find_tool(register_tools, "upload_bom_post")
             assert tool is not None
             result = await tool.fn(
                 bom=bom_content,
                 auto_create=True,
                 project_name="NewProject",
-                project_version="1.0.0"
+                project_version="1.0.0",
             )
-        
+
             assert "token" in result
-        
+
             # Verify payload was constructed correctly
             call_args = mock_client.post.call_args
             payload = call_args[1]["data"]
@@ -334,6 +330,8 @@ class TestUploadBomPostTool:
             assert payload["autoCreate"] is True
             assert payload["projectName"] == "NewProject"
             assert payload["projectVersion"] == "1.0.0"
+
+
 class TestValidateBomTool:
     """Tests for validate_bom tool."""
 
@@ -342,18 +340,16 @@ class TestValidateBomTool:
         """Test validating valid BOM."""
         mock_data = {"valid": True, "validationErrors": []}
         bom_content = '{"bomFormat": "CycloneDX"}'
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "validate_bom")
             assert tool is not None
             result = await tool.fn(bom=bom_content)
-            
+
             assert result["valid"] is True
             assert result["validationErrors"] == []
 
@@ -365,18 +361,16 @@ class TestValidateBomTool:
             "validationErrors": ["Missing required field: components"],
         }
         bom_content = "{}"
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "validate_bom")
             assert tool is not None
             result = await tool.fn(bom=bom_content)
-            
+
             assert result["valid"] is False
 
     @pytest.mark.asyncio

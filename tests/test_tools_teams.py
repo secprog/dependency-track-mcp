@@ -1,7 +1,8 @@
 """Tests for team management tools."""
 
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from dependency_track_mcp.client import DependencyTrackClient
 from dependency_track_mcp.exceptions import DependencyTrackError
@@ -12,6 +13,7 @@ from tests.utils import find_tool
 def register_tools():
     """Fixture that registers all tools."""
     from dependency_track_mcp.server import mcp
+
     return mcp
 
 
@@ -25,18 +27,18 @@ class TestListTeamsTool:
             {"uuid": "team-1", "name": "Backend Team"},
             {"uuid": "team-2", "name": "Security Team"},
         ]
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_teams, {"X-Total-Count": "2"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_teams")
             assert tool is not None
             result = await tool.fn()
-            
+
             assert "teams" in result
             assert result["teams"] == mock_teams
             assert result["total"] == 2
@@ -46,15 +48,13 @@ class TestListTeamsTool:
         """Test list_teams with pagination."""
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
-            mock_client.get_with_headers = AsyncMock(
-                return_value=([], {"X-Total-Count": "100"})
-            )
+            mock_client.get_with_headers = AsyncMock(return_value=([], {"X-Total-Count": "100"}))
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_teams")
             assert tool is not None
             result = await tool.fn(page=2, page_size=50)
-            
+
             assert result["page"] == 2
             assert result["page_size"] == 50
 
@@ -82,18 +82,18 @@ class TestListVisibleTeamsTool:
     async def test_list_visible_teams_success(self, register_tools):
         """Test listing visible teams."""
         mock_teams = [{"uuid": "team-1", "name": "Visible Team"}]
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_teams, {"X-Total-Count": "1"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_visible_teams")
             assert tool is not None
             result = await tool.fn()
-            
+
             assert "teams" in result
             call_args = mock_client.get_with_headers.call_args
             assert "/team/visible" in call_args[0][0]
@@ -122,16 +122,16 @@ class TestGetTeamTool:
     async def test_get_team_success(self, register_tools):
         """Test getting a specific team."""
         mock_team = {"uuid": "team-1", "name": "Backend Team", "members": []}
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_team)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "get_team")
             assert tool is not None
             result = await tool.fn(uuid="team-1")
-            
+
             assert "team" in result
             assert result["team"] == mock_team
             mock_client.get.assert_called_once_with("/team/team-1")
@@ -160,16 +160,16 @@ class TestGetCurrentTeamTool:
     async def test_get_current_team_success(self, register_tools):
         """Test getting current team."""
         mock_team = {"uuid": "team-self", "name": "Current Team"}
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_team)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "get_current_team")
             assert tool is not None
             result = await tool.fn()
-            
+
             assert "team" in result
             mock_client.get.assert_called_once_with("/team/self")
 
@@ -197,16 +197,16 @@ class TestCreateTeamTool:
     async def test_create_team_success(self, register_tools):
         """Test creating a team."""
         mock_team = {"uuid": "new-team", "name": "New Team"}
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value=mock_team)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "create_team")
             assert tool is not None
             result = await tool.fn(name="New Team")
-            
+
             assert "team" in result
             assert "message" in result
             assert "successfully" in result["message"].lower()
@@ -218,11 +218,11 @@ class TestCreateTeamTool:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value={"uuid": "team-1"})
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "create_team")
             assert tool is not None
             await tool.fn(name="Security Team")
-            
+
             call_args = mock_client.put.call_args
             assert call_args[1]["data"]["name"] == "Security Team"
 
@@ -251,17 +251,17 @@ class TestUpdateTeamTool:
         """Test updating a team."""
         existing = {"uuid": "team-1", "name": "Old Name"}
         updated = {"uuid": "team-1", "name": "New Name"}
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=existing)
             mock_client.post = AsyncMock(return_value=updated)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "update_team")
             assert tool is not None
             result = await tool.fn(uuid="team-1", name="New Name")
-            
+
             assert "team" in result
             assert "message" in result
 
@@ -292,11 +292,11 @@ class TestDeleteTeamTool:
             mock_client = AsyncMock()
             mock_client.delete = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "delete_team")
             assert tool is not None
             result = await tool.fn(uuid="team-1")
-            
+
             assert "message" in result
             assert "deleted" in result["message"].lower()
 
@@ -324,16 +324,16 @@ class TestGenerateApiKeyTool:
     async def test_generate_api_key_success(self, register_tools):
         """Test generating an API key."""
         mock_key = "generated-api-key-value"
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value=mock_key)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "generate_api_key")
             assert tool is not None
             result = await tool.fn(team_uuid="team-1")
-            
+
             assert "apiKey" in result
             assert result["apiKey"] == mock_key
             assert "message" in result
@@ -364,16 +364,16 @@ class TestRegenerateApiKeyTool:
     async def test_regenerate_api_key_success(self, register_tools):
         """Test regenerating an API key."""
         new_key = "new-api-key-value"
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=new_key)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "regenerate_api_key")
             assert tool is not None
             result = await tool.fn(key="old-key-id")
-            
+
             assert "apiKey" in result
             assert result["apiKey"] == new_key
             assert "regenerated" in result["message"].lower()
@@ -405,11 +405,11 @@ class TestDeleteApiKeyTool:
             mock_client = AsyncMock()
             mock_client.delete = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "delete_api_key")
             assert tool is not None
             result = await tool.fn(key="key-to-delete")
-            
+
             assert "message" in result
             assert "deleted" in result["message"].lower()
             call_args = mock_client.delete.call_args
@@ -439,16 +439,16 @@ class TestUpdateApiKeyCommentTool:
     async def test_update_api_key_comment_success(self, register_tools):
         """Test updating API key comment."""
         mock_key = {"uuid": "key-1", "comment": "Updated comment"}
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=mock_key)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "update_api_key_comment")
             assert tool is not None
             result = await tool.fn(key="key-id", comment="My API Key")
-            
+
             assert "apiKey" in result
             assert "message" in result
 
@@ -459,11 +459,11 @@ class TestUpdateApiKeyCommentTool:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value={})
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "update_api_key_comment")
             assert tool is not None
             await tool.fn(key="key-id", comment="Test comment")
-            
+
             call_args = mock_client.post.call_args
             assert call_args[1]["data"]["comment"] == "Test comment"
 

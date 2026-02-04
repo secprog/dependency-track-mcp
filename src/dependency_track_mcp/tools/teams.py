@@ -15,13 +15,11 @@ def register_team_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="List all teams",
-        tags=[Scopes.ADMIN_TEAMS],
+        tags=[Scopes.READ_TEAMS],
     )
     async def list_teams(
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List all teams in Dependency Track.
@@ -45,13 +43,11 @@ def register_team_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="List visible teams",
-        tags=[Scopes.ADMIN_TEAMS],
+        tags=[Scopes.READ_TEAMS],
     )
     async def list_visible_teams(
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List teams that are visible to the current user.
@@ -73,7 +69,7 @@ def register_team_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Get a specific team by UUID",
-        tags=[Scopes.ADMIN_TEAMS],
+        tags=[Scopes.READ_TEAMS],
     )
     async def get_team(
         uuid: Annotated[str, Field(description="Team UUID")],
@@ -90,7 +86,7 @@ def register_team_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Get information about the current team",
-        tags=[Scopes.ADMIN_TEAMS],
+        tags=[Scopes.READ_TEAMS],
     )
     async def get_current_team() -> dict:
         """
@@ -105,7 +101,7 @@ def register_team_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Create a new team",
-        tags=[Scopes.ADMIN_TEAMS],
+        tags=[Scopes.WRITE_TEAMS],
     )
     async def create_team(
         name: Annotated[str, Field(description="Team name")],
@@ -126,7 +122,7 @@ def register_team_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Update a team",
-        tags=[Scopes.ADMIN_TEAMS],
+        tags=[Scopes.WRITE_TEAMS],
     )
     async def update_team(
         uuid: Annotated[str, Field(description="Team UUID")],
@@ -152,7 +148,7 @@ def register_team_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Delete a team",
-        tags=[Scopes.ADMIN_TEAMS],
+        tags=[Scopes.WRITE_TEAMS],
     )
     async def delete_team(
         uuid: Annotated[str, Field(description="Team UUID")],
@@ -171,7 +167,7 @@ def register_team_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Generate an API key for a team",
-        tags=[Scopes.ADMIN_TEAMS],
+        tags=[Scopes.MANAGE_API_KEYS],
     )
     async def generate_api_key(
         team_uuid: Annotated[str, Field(description="Team UUID")],
@@ -190,12 +186,10 @@ def register_team_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Regenerate an API key",
-        tags=[Scopes.ADMIN_TEAMS],
+        tags=[Scopes.MANAGE_API_KEYS],
     )
     async def regenerate_api_key(
-        key: Annotated[
-            str, Field(description="API key public ID or key value to regenerate")
-        ],
+        key: Annotated[str, Field(description="API key public ID or key value to regenerate")],
     ) -> dict:
         """
         Regenerate an existing API key.
@@ -212,12 +206,10 @@ def register_team_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Delete an API key",
-        tags=[Scopes.ADMIN_TEAMS],
+        tags=[Scopes.MANAGE_API_KEYS],
     )
     async def delete_api_key(
-        key: Annotated[
-            str, Field(description="API key public ID or key value to delete")
-        ],
+        key: Annotated[str, Field(description="API key public ID or key value to delete")],
     ) -> dict:
         """
         Delete an API key.
@@ -231,7 +223,7 @@ def register_team_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Update an API key's comment",
-        tags=[Scopes.ADMIN_TEAMS],
+        tags=[Scopes.MANAGE_API_KEYS],
     )
     async def update_api_key_comment(
         key: Annotated[str, Field(description="API key public ID or key value")],
@@ -242,9 +234,7 @@ def register_team_tools(mcp: FastMCP) -> None:
         """
         try:
             client = get_client()
-            data = await client.post(
-                f"/team/key/{key}/comment", data={"comment": comment}
-            )
+            data = await client.post(f"/team/key/{key}/comment", data={"comment": comment})
             return {"apiKey": data, "message": "API key comment updated successfully"}
         except DependencyTrackError as e:
             return {"error": str(e), "details": e.details}

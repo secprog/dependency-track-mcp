@@ -1,7 +1,8 @@
 """Tests for repository management tools."""
 
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from dependency_track_mcp.client import DependencyTrackClient
 from dependency_track_mcp.exceptions import DependencyTrackError
@@ -12,6 +13,7 @@ from tests.utils import find_tool
 def register_tools():
     """Fixture that registers all tools."""
     from dependency_track_mcp.server import mcp
+
     return mcp
 
 
@@ -25,18 +27,18 @@ class TestListRepositoriesTool:
             {"uuid": "repo-1", "type": "NPM", "identifier": "npmjs"},
             {"uuid": "repo-2", "type": "MAVEN", "identifier": "maven-central"},
         ]
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_repos, {"X-Total-Count": "2"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_repositories")
             assert tool is not None
             result = await tool.fn()
-            
+
             assert "repositories" in result
             assert result["repositories"] == mock_repos
             assert result["total"] == 2
@@ -47,15 +49,13 @@ class TestListRepositoriesTool:
         """Test list_repositories with pagination."""
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
-            mock_client.get_with_headers = AsyncMock(
-                return_value=([], {"X-Total-Count": "50"})
-            )
+            mock_client.get_with_headers = AsyncMock(return_value=([], {"X-Total-Count": "50"}))
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_repositories")
             assert tool is not None
             result = await tool.fn(page=3, page_size=20)
-            
+
             assert result["page"] == 3
             assert result["page_size"] == 20
             call_args = mock_client.get_with_headers.call_args
@@ -87,18 +87,18 @@ class TestListRepositoriesByTypeTool:
     async def test_list_repositories_by_type_success(self, register_tools):
         """Test listing repositories by type."""
         mock_repos = [{"uuid": "repo-1", "type": "NPM", "identifier": "npmjs"}]
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_repos, {"X-Total-Count": "1"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_repositories_by_type")
             assert tool is not None
             result = await tool.fn(repo_type="NPM")
-            
+
             assert "repositories" in result
             assert result["repositories"] == mock_repos
             call_args = mock_client.get_with_headers.call_args
@@ -109,15 +109,13 @@ class TestListRepositoriesByTypeTool:
         """Test list_repositories_by_type with pagination."""
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
-            mock_client.get_with_headers = AsyncMock(
-                return_value=([], {"X-Total-Count": "30"})
-            )
+            mock_client.get_with_headers = AsyncMock(return_value=([], {"X-Total-Count": "30"}))
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_repositories_by_type")
             assert tool is not None
             result = await tool.fn(repo_type="MAVEN", page=2, page_size=15)
-            
+
             assert result["page"] == 2
             assert result["page_size"] == 15
             call_args = mock_client.get_with_headers.call_args
@@ -152,12 +150,12 @@ class TestCreateRepositoryTool:
             "identifier": "custom-npm",
             "url": "https://registry.npmjs.org",
         }
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value=mock_repo)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "create_repository")
             assert tool is not None
             result = await tool.fn(
@@ -165,7 +163,7 @@ class TestCreateRepositoryTool:
                 identifier="custom-npm",
                 url="https://registry.npmjs.org",
             )
-            
+
             assert "repository" in result
             assert "message" in result
 
@@ -176,7 +174,7 @@ class TestCreateRepositoryTool:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value={"uuid": "new-repo"})
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "create_repository")
             assert tool is not None
             await tool.fn(
@@ -186,7 +184,7 @@ class TestCreateRepositoryTool:
                 username="user",
                 password="pass",
             )
-            
+
             call_args = mock_client.put.call_args
             assert call_args[1]["data"]["username"] == "user"
             assert call_args[1]["data"]["password"] == "pass"
@@ -198,7 +196,7 @@ class TestCreateRepositoryTool:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value={"uuid": "new-repo"})
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "create_repository")
             assert tool is not None
             await tool.fn(
@@ -211,7 +209,7 @@ class TestCreateRepositoryTool:
                 username="user",
                 password="pass",
             )
-            
+
             call_args = mock_client.put.call_args
             payload = call_args[1]["data"]
             assert payload["enabled"] is True
@@ -249,14 +247,14 @@ class TestUpdateRepositoryTool:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value={"uuid": "repo-1"})
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "update_repository")
             assert tool is not None
             result = await tool.fn(
                 uuid="repo-1",
                 enabled=False,
             )
-            
+
             assert "repository" in result
             assert "message" in result
 
@@ -267,11 +265,11 @@ class TestUpdateRepositoryTool:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value={"uuid": "repo-1"})
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "update_repository")
             assert tool is not None
             await tool.fn(uuid="repo-1", url="https://new-url.com")
-            
+
             call_args = mock_client.post.call_args
             assert call_args[1]["data"]["uuid"] == "repo-1"
             assert call_args[1]["data"]["url"] == "https://new-url.com"
@@ -304,11 +302,11 @@ class TestDeleteRepositoryTool:
             mock_client = AsyncMock()
             mock_client.delete = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "delete_repository")
             assert tool is not None
             result = await tool.fn(uuid="repo-1")
-            
+
             assert "message" in result
             assert "deleted" in result["message"].lower()
             mock_client.delete.assert_called_once_with("/repository/repo-1")
@@ -337,16 +335,16 @@ class TestResolveLatestVersionTool:
     async def test_resolve_latest_version_success(self, register_tools):
         """Test resolving latest version."""
         mock_version = {"version": "1.2.3", "published": "2024-01-15"}
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_version)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "resolve_latest_version")
             assert tool is not None
             result = await tool.fn(purl="pkg:npm/lodash")
-            
+
             assert "latestVersion" in result
             assert result["latestVersion"] == mock_version
             call_args = mock_client.get.call_args

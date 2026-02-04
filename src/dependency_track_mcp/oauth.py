@@ -15,14 +15,14 @@ import asyncio
 import json
 import logging
 from dataclasses import dataclass
-from datetime import datetime, UTC
-from typing import Any, Optional, Set
-from urllib.parse import urljoin
+from datetime import UTC, datetime
+from typing import Any
 
 import httpx
 from jose import jwt
 from jose.exceptions import JWTError
-from pydantic import BaseModel, Field, ValidationError as PydanticValidationError
+from pydantic import BaseModel, Field
+from pydantic import ValidationError as PydanticValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -51,24 +51,24 @@ class JWTPayload(BaseModel):
     sub: str = Field(..., description="Subject (user/client identifier)")
     iat: int = Field(..., description="Issued at (Unix timestamp)")
     exp: int = Field(..., description="Expiration time (Unix timestamp)")
-    scopes: Optional[str] = Field(
+    scopes: str | None = Field(
         default=None,
         description='Space-separated list of scopes, or "scope" field',
     )
-    scope: Optional[str] = Field(
+    scope: str | None = Field(
         default=None,
         description="Space-separated list of scopes (alternative field)",
     )
-    aud: Optional[str | list[str]] = Field(
+    aud: str | list[str] | None = Field(
         default=None,
         description="Audience",
     )
-    iss: Optional[str] = Field(
+    iss: str | None = Field(
         default=None,
         description="Issuer",
     )
 
-    def get_scopes(self) -> Set[str]:
+    def get_scopes(self) -> set[str]:
         """Extract scopes from token payload."""
         scopes_str = self.scopes or self.scope or ""
         return set(scope.strip() for scope in scopes_str.split() if scope.strip())
@@ -80,11 +80,11 @@ class AuthorizationContext:
 
     token: str
     subject: str  # User/client identifier
-    scopes: Set[str]  # Granted scopes
+    scopes: set[str]  # Granted scopes
     issued_at: datetime
     expires_at: datetime
-    issuer: Optional[str] = None
-    audience: Optional[str | list[str]] = None
+    issuer: str | None = None
+    audience: str | list[str] | None = None
 
     def is_expired(self) -> bool:
         """Check if token is expired."""
@@ -94,11 +94,11 @@ class AuthorizationContext:
         """Check if token has the required scope."""
         return required_scope in self.scopes
 
-    def has_any_scope(self, required_scopes: Set[str]) -> bool:
+    def has_any_scope(self, required_scopes: set[str]) -> bool:
         """Check if token has any of the required scopes."""
         return bool(required_scopes & self.scopes)
 
-    def has_all_scopes(self, required_scopes: Set[str]) -> bool:
+    def has_all_scopes(self, required_scopes: set[str]) -> bool:
         """Check if token has all required scopes."""
         return required_scopes.issubset(self.scopes)
 
@@ -111,15 +111,15 @@ class JWTValidator:
     - Performs cryptographic signature verification using python-jose
     - Validates token claims (exp, iss, aud, etc.)
     - Caches JWKS for performance (with refresh capability)
-    
+
     Supports Keycloak and other OIDC-compliant authorization servers.
     """
 
     def __init__(
         self,
-        expected_issuer: Optional[str] = None,
-        jwks_url: Optional[str] = None,
-        expected_audience: Optional[str] = None,
+        expected_issuer: str | None = None,
+        jwks_url: str | None = None,
+        expected_audience: str | None = None,
     ):
         """Initialize JWT validator.
 
@@ -131,8 +131,8 @@ class JWTValidator:
         self.expected_issuer = expected_issuer
         self.expected_audience = expected_audience
         self._cache_lock = asyncio.Lock()
-        self._jwks_cache: Optional[dict[str, Any]] = None
-        
+        self._jwks_cache: dict[str, Any] | None = None
+
         # Derive JWKS URL if not provided
         if jwks_url:
             self.jwks_url = jwks_url
@@ -149,26 +149,26 @@ class JWTValidator:
 
     async def fetch_jwks(self, refresh: bool = False) -> dict[str, Any]:
         """Fetch JWKS from authorization server.
-        
+
         Implements caching to avoid excessive network requests.
         In production, consider TTL-based refresh (e.g., cache for 1 hour).
-        
+
         Args:
             refresh: Force refresh the cache
-            
+
         Returns:
             JWKS dictionary
-            
+
         Raises:
             InvalidTokenError: If JWKS cannot be fetched
         """
         async with self._cache_lock:
             if self._jwks_cache is not None and not refresh:
                 return self._jwks_cache
-            
+
             if not self.jwks_url:
                 raise InvalidTokenError("JWKS URL not configured")
-            
+
             try:
                 async with httpx.AsyncClient(timeout=10.0) as client:
                     logger.info(f"Fetching JWKS from {self.jwks_url}")
@@ -184,7 +184,7 @@ class JWTValidator:
 
     def clear_jwks_cache(self):
         """Clear JWKS cache to force refresh on next validation.
-        
+
         Call this after key rotation or if validation fails unexpectedly.
         """
         self._jwks_cache = None
@@ -272,14 +272,13 @@ class JWTValidator:
 
         if payload.iss != self.expected_issuer:
             raise InvalidTokenError(
-                f"Token issuer {payload.iss} does not match expected issuer "
-                f"{self.expected_issuer}",
+                f"Token issuer {payload.iss} does not match expected issuer {self.expected_issuer}",
             )
 
     def validate_audience(
         self,
         payload: JWTPayload,
-        expected_audience: Optional[str] = None,
+        expected_audience: str | None = None,
     ) -> None:
         """Validate token audience if specified.
 
@@ -296,9 +295,7 @@ class JWTValidator:
         if not payload.aud:
             raise InvalidTokenError("Token missing 'aud' claim")
 
-        audiences = (
-            payload.aud if isinstance(payload.aud, list) else [payload.aud]
-        )
+        audiences = payload.aud if isinstance(payload.aud, list) else [payload.aud]
 
         if expected_audience not in audiences:
             raise InvalidTokenError(
@@ -309,8 +306,8 @@ class JWTValidator:
     async def validate_token(
         self,
         token: str,
-        required_scopes: Optional[Set[str]] = None,
-        expected_audience: Optional[str] = None,
+        required_scopes: set[str] | None = None,
+        expected_audience: str | None = None,
     ) -> AuthorizationContext:
         """Validate OAuth 2.1 token with JWKS-based signature verification.
 
@@ -328,13 +325,13 @@ class JWTValidator:
         """
         # Use instance default audience if not provided
         aud_to_validate = expected_audience or self.expected_audience
-        
+
         # Fetch JWKS for signature verification
         try:
             jwks = await self.fetch_jwks()
         except InvalidTokenError:
             raise
-        
+
         # Verify JWT signature and claims using python-jose
         try:
             claims = jwt.decode(
@@ -378,13 +375,13 @@ class JWTValidator:
                 )
             except JWTError as retry_error:
                 raise InvalidTokenError(f"JWT validation failed: {retry_error}")
-        
+
         # Parse claims into JWTPayload for scope extraction
         try:
             payload = JWTPayload(**claims)
         except PydanticValidationError as e:
             raise InvalidTokenError(f"Invalid JWT claims: {e}")
-        
+
         # Extract scopes
         token_scopes = payload.get_scopes()
 
@@ -405,7 +402,7 @@ class JWTValidator:
             issuer=payload.iss,
             audience=payload.aud,
         )
-        
+
         logger.info(f"Token validated successfully for subject: {context.subject}")
 
         return context
@@ -421,8 +418,8 @@ class OAuth2AuthorizationMiddleware:
     def __init__(
         self,
         validator: JWTValidator,
-        required_scopes: Optional[Set[str]] = None,
-        exclude_paths: Optional[Set[str]] = None,
+        required_scopes: set[str] | None = None,
+        exclude_paths: set[str] | None = None,
     ):
         """Initialize authorization middleware.
 
@@ -437,8 +434,8 @@ class OAuth2AuthorizationMiddleware:
 
     async def validate_authorization_header(
         self,
-        authorization_header: Optional[str],
-        required_scopes: Optional[Set[str]] = None,
+        authorization_header: str | None,
+        required_scopes: set[str] | None = None,
     ) -> AuthorizationContext:
         """Validate Authorization header and extract context.
 

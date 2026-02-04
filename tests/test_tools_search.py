@@ -27,18 +27,16 @@ class TestSearchTool:
             "projects": [{"uuid": "proj-1", "name": "Project 1"}],
             "components": [{"uuid": "comp-1", "name": "lodash"}],
         }
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_data)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "search")
             assert tool is not None
             result = await tool.fn(query="lodash")
-            
+
             assert "results" in result
             assert result["query"] == "lodash"
 
@@ -64,20 +62,18 @@ class TestSearchProjectsTool:
     async def test_search_projects_success(self, register_tools):
         """Test searching for projects."""
         mock_data = [{"uuid": "proj-1", "name": "Test Project"}]
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_data, {"X-Total-Count": "1"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "search_projects")
             assert tool is not None
             result = await tool.fn(query="Test")
-            
+
             assert "projects" in result
             assert result["query"] == "Test"
 
@@ -103,20 +99,18 @@ class TestSearchComponentsTool:
     async def test_search_components_success(self, register_tools):
         """Test searching for components."""
         mock_data = [{"uuid": "comp-1", "name": "lodash", "version": "4.17.21"}]
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_data, {"X-Total-Count": "1"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "search_components")
             assert tool is not None
             result = await tool.fn(query="lodash")
-            
+
             assert "components" in result
             assert result["query"] == "lodash"
 
@@ -142,20 +136,18 @@ class TestSearchVulnerabilitiesTool:
     async def test_search_vulnerabilities_success(self, register_tools):
         """Test searching for vulnerabilities."""
         mock_data = [{"uuid": "vuln-1", "vulnId": "CVE-2021-44228"}]
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_data, {"X-Total-Count": "1"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "search_vulnerabilities")
             assert tool is not None
             result = await tool.fn(query="CVE-2021-44228")
-            
+
             assert "vulnerabilities" in result
 
     @pytest.mark.asyncio
@@ -180,20 +172,18 @@ class TestSearchLicensesTool:
     async def test_search_licenses_success(self, register_tools):
         """Test searching for licenses."""
         mock_data = [{"uuid": "lic-1", "name": "MIT License", "spdxLicenseId": "MIT"}]
-        
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_data, {"X-Total-Count": "1"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "search_licenses")
             assert tool is not None
             result = await tool.fn(query="MIT")
-            
+
             assert "licenses" in result
             assert result["query"] == "MIT"
 
@@ -222,7 +212,9 @@ class TestSearchServicesTool:
 
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
-            mock_client.get_with_headers = AsyncMock(return_value=(mock_data, {"X-Total-Count": "1"}))
+            mock_client.get_with_headers = AsyncMock(
+                return_value=(mock_data, {"X-Total-Count": "1"})
+            )
             mock_get_instance.return_value = mock_client
 
             tool = find_tool(register_tools, "search_services")
@@ -257,7 +249,9 @@ class TestSearchVulnerableSoftwareTool:
 
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
-            mock_client.get_with_headers = AsyncMock(return_value=(mock_data, {"X-Total-Count": "1"}))
+            mock_client.get_with_headers = AsyncMock(
+                return_value=(mock_data, {"X-Total-Count": "1"})
+            )
             mock_get_instance.return_value = mock_client
 
             tool = find_tool(register_tools, "search_vulnerable_software")

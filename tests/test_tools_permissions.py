@@ -1,7 +1,8 @@
 """Tests for permission management tools."""
 
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from dependency_track_mcp.client import DependencyTrackClient
 from dependency_track_mcp.exceptions import DependencyTrackError
@@ -12,6 +13,7 @@ from tests.utils import find_tool
 def register_tools():
     """Fixture that registers all tools."""
     from dependency_track_mcp.server import mcp
+
     return mcp
 
 
@@ -26,16 +28,16 @@ class TestListPermissionsTool:
             {"name": "VULNERABILITY_ANALYSIS"},
             {"name": "PROJECT_CREATION_UPLOAD"},
         ]
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=mock_permissions)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_permissions")
             assert tool is not None
             result = await tool.fn()
-            
+
             assert "permissions" in result
             assert result["permissions"] == mock_permissions
             assert len(result["permissions"]) == 3
@@ -48,11 +50,11 @@ class TestListPermissionsTool:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=[])
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_permissions")
             assert tool is not None
             result = await tool.fn()
-            
+
             assert result["permissions"] == []
 
     @pytest.mark.asyncio
@@ -83,11 +85,11 @@ class TestAddPermissionToTeamTool:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "add_permission_to_team")
             assert tool is not None
             result = await tool.fn(permission="BOM_UPLOAD", team_uuid="team-uuid")
-            
+
             assert "message" in result
             assert "successfully" in result["message"].lower()
             mock_client.post.assert_called_once()
@@ -99,11 +101,11 @@ class TestAddPermissionToTeamTool:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "add_permission_to_team")
             assert tool is not None
             await tool.fn(permission="VULNERABILITY_ANALYSIS", team_uuid="team-123")
-            
+
             call_args = mock_client.post.call_args
             assert "team-123" in call_args[0][0]
             assert "VULNERABILITY_ANALYSIS" in call_args[0][0]
@@ -136,11 +138,11 @@ class TestRemovePermissionFromTeamTool:
             mock_client = AsyncMock()
             mock_client.delete = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "remove_permission_from_team")
             assert tool is not None
             result = await tool.fn(permission="BOM_UPLOAD", team_uuid="team-uuid")
-            
+
             assert "message" in result
             assert "successfully" in result["message"].lower()
             mock_client.delete.assert_called_once()
@@ -152,11 +154,11 @@ class TestRemovePermissionFromTeamTool:
             mock_client = AsyncMock()
             mock_client.delete = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "remove_permission_from_team")
             assert tool is not None
             await tool.fn(permission="PROJECT_CREATION_UPLOAD", team_uuid="team-456")
-            
+
             call_args = mock_client.delete.call_args
             assert "team-456" in call_args[0][0]
             assert "PROJECT_CREATION_UPLOAD" in call_args[0][0]
@@ -189,11 +191,11 @@ class TestAddPermissionToUserTool:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "add_permission_to_user")
             assert tool is not None
             result = await tool.fn(permission="BOM_UPLOAD", username="testuser")
-            
+
             assert "message" in result
             assert "successfully" in result["message"].lower()
             mock_client.post.assert_called_once()
@@ -205,11 +207,11 @@ class TestAddPermissionToUserTool:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "add_permission_to_user")
             assert tool is not None
             await tool.fn(permission="VULNERABILITY_ANALYSIS", username="john.doe")
-            
+
             call_args = mock_client.post.call_args
             assert "john.doe" in call_args[0][0]
             assert "VULNERABILITY_ANALYSIS" in call_args[0][0]
@@ -242,11 +244,11 @@ class TestRemovePermissionFromUserTool:
             mock_client = AsyncMock()
             mock_client.delete = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "remove_permission_from_user")
             assert tool is not None
             result = await tool.fn(permission="BOM_UPLOAD", username="testuser")
-            
+
             assert "message" in result
             assert "successfully" in result["message"].lower()
             mock_client.delete.assert_called_once()
@@ -258,11 +260,11 @@ class TestRemovePermissionFromUserTool:
             mock_client = AsyncMock()
             mock_client.delete = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "remove_permission_from_user")
             assert tool is not None
             await tool.fn(permission="PROJECT_CREATION_UPLOAD", username="jane.doe")
-            
+
             call_args = mock_client.delete.call_args
             assert "jane.doe" in call_args[0][0]
             assert "PROJECT_CREATION_UPLOAD" in call_args[0][0]

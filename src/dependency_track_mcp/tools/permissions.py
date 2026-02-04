@@ -15,7 +15,7 @@ def register_permission_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="List all available permissions",
-        tags=[Scopes.ADMIN_PERMISSIONS],
+        tags=[Scopes.WRITE_PERMISSIONS],
     )
     async def list_permissions() -> dict:
         """
@@ -32,13 +32,14 @@ def register_permission_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Add a permission to a team",
-        tags=[Scopes.ADMIN_PERMISSIONS],
+        tags=[Scopes.READ_PERMISSIONS],
     )
     async def add_permission_to_team(
         permission: Annotated[
             str,
             Field(
-                description="Permission name (e.g., BOM_UPLOAD, "                "VULNERABILITY_ANALYSIS, PROJECT_CREATION_UPLOAD)"
+                description="Permission name (e.g., BOM_UPLOAD, "
+                "VULNERABILITY_ANALYSIS, PROJECT_CREATION_UPLOAD)"
             ),
         ],
         team_uuid: Annotated[str, Field(description="Team UUID")],
@@ -57,7 +58,7 @@ def register_permission_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Remove a permission from a team",
-        tags=[Scopes.ADMIN_PERMISSIONS],
+        tags=[Scopes.WRITE_PERMISSIONS],
     )
     async def remove_permission_from_team(
         permission: Annotated[str, Field(description="Permission name")],
@@ -75,7 +76,7 @@ def register_permission_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Add a permission to a user",
-        tags=[Scopes.ADMIN_PERMISSIONS],
+        tags=[Scopes.WRITE_PERMISSIONS],
     )
     async def add_permission_to_user(
         permission: Annotated[str, Field(description="Permission name")],
@@ -95,7 +96,7 @@ def register_permission_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Remove a permission from a user",
-        tags=[Scopes.ADMIN_PERMISSIONS],
+        tags=[Scopes.WRITE_PERMISSIONS],
     )
     async def remove_permission_from_user(
         permission: Annotated[str, Field(description="Permission name")],

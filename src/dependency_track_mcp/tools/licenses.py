@@ -19,9 +19,7 @@ def register_license_tools(mcp: FastMCP) -> None:
     )
     async def list_licenses(
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List all licenses with complete metadata.
@@ -50,9 +48,7 @@ def register_license_tools(mcp: FastMCP) -> None:
     )
     async def list_licenses_concise(
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         List all licenses in a concise format.
@@ -106,12 +102,8 @@ def register_license_tools(mcp: FastMCP) -> None:
         template: Annotated[str | None, Field(description="License template")] = None,
         comment: Annotated[str | None, Field(description="License comment")] = None,
         see_also: Annotated[list[str] | None, Field(description="Related URLs")] = None,
-        is_osi_approved: Annotated[
-            bool, Field(description="OSI approved status")
-        ] = False,
-        is_fsf_libre: Annotated[
-            bool, Field(description="FSF libre status")
-        ] = False,
+        is_osi_approved: Annotated[bool, Field(description="OSI approved status")] = False,
+        is_fsf_libre: Annotated[bool, Field(description="FSF libre status")] = False,
         is_deprecated_license_id: Annotated[
             bool, Field(description="Deprecated license ID status")
         ] = False,

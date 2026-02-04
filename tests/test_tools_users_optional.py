@@ -2,11 +2,12 @@
 Tests for users tool optional field coverage.
 Targets missing lines in update_managed_user optional field handling.
 """
-import pytest
+
 from unittest.mock import AsyncMock, patch
 
+import pytest
+
 from dependency_track_mcp.client import DependencyTrackClient
-from dependency_track_mcp.exceptions import DependencyTrackError
 from dependency_track_mcp.tools.users import register_user_tools
 from tests.utils import find_tool
 
@@ -29,9 +30,7 @@ class TestUsersOptionalFields:
             "fullname": "New Full Name",
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -56,9 +55,7 @@ class TestUsersOptionalFields:
             "email": "newemail@example.com",
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -82,9 +79,7 @@ class TestUsersOptionalFields:
             "username": "testuser",
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -109,9 +104,7 @@ class TestUsersOptionalFields:
             "forcePasswordChange": True,
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -135,9 +128,7 @@ class TestUsersOptionalFields:
             "nonExpiryPassword": True,
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -161,9 +152,7 @@ class TestUsersOptionalFields:
             "suspended": True,
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -191,9 +180,7 @@ class TestUsersOptionalFields:
             "suspended": False,
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client
@@ -232,9 +219,7 @@ class TestUsersOptionalFields:
             "suspended": True,
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=updated_data)
             mock_get_instance.return_value = mock_client

@@ -2,11 +2,12 @@
 Tests for services tool optional field coverage.
 Targets missing lines in update_service optional field handling.
 """
-import pytest
+
 from unittest.mock import AsyncMock, patch
 
+import pytest
+
 from dependency_track_mcp.client import DependencyTrackClient
-from dependency_track_mcp.exceptions import DependencyTrackError
 from dependency_track_mcp.tools.services import register_service_tools
 from tests.utils import find_tool
 
@@ -35,9 +36,7 @@ class TestServicesOptionalFields:
             "endpoints": ["http://new.example.com"],
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=existing_data)
             mock_client.post = AsyncMock(return_value=updated_data)
@@ -45,9 +44,7 @@ class TestServicesOptionalFields:
 
             tool = find_tool(register_tools, "update_service")
             assert tool is not None
-            result = await tool.fn(
-                uuid="svc-1", endpoints=["http://new.example.com"]
-            )
+            result = await tool.fn(uuid="svc-1", endpoints=["http://new.example.com"])
 
             assert "service" in result
             # Verify that endpoints was included in the post call
@@ -70,9 +67,7 @@ class TestServicesOptionalFields:
             "authenticated": True,
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=existing_data)
             mock_client.post = AsyncMock(return_value=updated_data)
@@ -103,9 +98,7 @@ class TestServicesOptionalFields:
             "xTrustBoundary": True,
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=existing_data)
             mock_client.post = AsyncMock(return_value=updated_data)
@@ -146,9 +139,7 @@ class TestServicesOptionalFields:
             "xTrustBoundary": True,
         }
 
-        with patch.object(
-            DependencyTrackClient, "get_instance"
-        ) as mock_get_instance:
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get = AsyncMock(return_value=existing_data)
             mock_client.post = AsyncMock(return_value=updated_data)

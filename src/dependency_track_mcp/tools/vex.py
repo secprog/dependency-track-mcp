@@ -20,9 +20,7 @@ def register_vex_tools(mcp: FastMCP) -> None:
     )
     async def upload_vex(
         project_uuid: Annotated[str, Field(description="Target project UUID")],
-        vex: Annotated[
-            str, Field(description="VEX document content (CycloneDX VEX format)")
-        ],
+        vex: Annotated[str, Field(description="VEX document content (CycloneDX VEX format)")],
     ) -> dict:
         """
         Upload a VEX (Vulnerability Exploitability eXchange) document.
@@ -55,9 +53,7 @@ def register_vex_tools(mcp: FastMCP) -> None:
     )
     async def upload_vex_post(
         project_uuid: Annotated[str, Field(description="Target project UUID")],
-        vex: Annotated[
-            str, Field(description="VEX document content (CycloneDX VEX format)")
-        ],
+        vex: Annotated[str, Field(description="VEX document content (CycloneDX VEX format)")],
     ) -> dict:
         """
         Upload a VEX document using POST method.

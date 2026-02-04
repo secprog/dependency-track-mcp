@@ -1,17 +1,21 @@
-"""Tests for oauth.py token validation methods - covering lines 172-183, 335-336, 357-380, 385-386."""
+"""Tests for oauth.py token validation methods.
+
+Covers lines 172-183, 335-336, 357-380, 385-386.
+"""
+
+import base64
+import json
+from datetime import datetime, timedelta, timezone
+from unittest.mock import AsyncMock, patch
 
 import pytest
-from unittest.mock import AsyncMock, patch
-import json
-import base64
-from datetime import datetime, timezone, timedelta
 
 from dependency_track_mcp.oauth import (
-    JWTValidator,
-    InvalidTokenError,
-    InsufficientScopesError,
-    JWTPayload,
     AuthorizationContext,
+    InsufficientScopesError,
+    InvalidTokenError,
+    JWTPayload,
+    JWTValidator,
 )
 
 
@@ -27,7 +31,7 @@ def create_jwt_token(
     now = datetime.now(timezone.utc)
     iat = int(now.timestamp())
     exp = int((now + timedelta(seconds=exp_offset)).timestamp())
-    
+
     header = {"alg": "RS256", "typ": "JWT"}
     payload = {
         "sub": sub,
@@ -39,11 +43,11 @@ def create_jwt_token(
     if aud:
         payload["aud"] = aud
     payload.update(extra_claims)
-    
+
     header_b64 = base64.urlsafe_b64encode(json.dumps(header).encode()).rstrip(b"=").decode()
     payload_b64 = base64.urlsafe_b64encode(json.dumps(payload).encode()).rstrip(b"=").decode()
     signature_b64 = base64.urlsafe_b64encode(b"fake-signature").rstrip(b"=").decode()
-    
+
     return f"{header_b64}.{payload_b64}.{signature_b64}"
 
 
@@ -56,13 +60,13 @@ class TestValidateTokenExpiration:
             expected_issuer="https://auth.example.com",
             expected_audience=None,
         )
-        
+
         payload = JWTPayload(
             sub="user123",
             iat=int(datetime.now(timezone.utc).timestamp()),
             exp=int((datetime.now(timezone.utc) + timedelta(hours=1)).timestamp()),
         )
-        
+
         # Should not raise
         validator.validate_token_expiration(payload)
 
@@ -72,7 +76,7 @@ class TestValidateTokenExpiration:
             expected_issuer="https://auth.example.com",
             expected_audience=None,
         )
-        
+
         # Token expired 1 hour ago
         exp_time = datetime.now(timezone.utc) - timedelta(hours=1)
         payload = JWTPayload(
@@ -80,7 +84,7 @@ class TestValidateTokenExpiration:
             iat=int((exp_time - timedelta(hours=2)).timestamp()),
             exp=int(exp_time.timestamp()),
         )
-        
+
         with pytest.raises(InvalidTokenError, match="Token expired"):
             validator.validate_token_expiration(payload)
 
@@ -90,7 +94,7 @@ class TestValidateTokenExpiration:
             expected_issuer="https://auth.example.com",
             expected_audience=None,
         )
-        
+
         # Token expiring right now
         now = datetime.now(timezone.utc).replace(microsecond=0)
         payload = JWTPayload(
@@ -98,7 +102,7 @@ class TestValidateTokenExpiration:
             iat=int((now - timedelta(hours=1)).timestamp()),
             exp=int(now.timestamp()),
         )
-        
+
         with pytest.raises(InvalidTokenError, match="Token expired"):
             validator.validate_token_expiration(payload)
 
@@ -114,9 +118,9 @@ class TestValidateTokenMethod:
             expected_audience=None,
             jwks_url=None,
         )
-        
+
         token = create_jwt_token()
-        
+
         with pytest.raises(InvalidTokenError, match="JWKS URL not configured"):
             await validator.validate_token(token)
 
@@ -124,24 +128,25 @@ class TestValidateTokenMethod:
     async def test_validate_token_jwt_decode_error_with_retry(self):
         """Test token validation handles JWT decode errors and retries with refresh."""
         from jose.exceptions import JWTError
-        
+
         validator = JWTValidator(
             expected_issuer="https://auth.example.com",
             expected_audience=None,
         )
-        
+
         # Mock JWKS fetching
         jwks_data = {"keys": []}
-        
-        with patch.object(validator, 'fetch_jwks', new_callable=AsyncMock) as mock_fetch:
+
+        with patch.object(validator, "fetch_jwks", new_callable=AsyncMock) as mock_fetch:
             # First call returns old JWKS, second call (with refresh=True) returns new JWKS
             mock_fetch.side_effect = [jwks_data, jwks_data]
-            
+
             with patch("dependency_track_mcp.oauth.jwt.decode") as mock_decode:
                 # First call fails, second call succeeds
                 from datetime import datetime, timezone
+
                 now = datetime.now(timezone.utc)
-                
+
                 successful_claims = {
                     "sub": "user123",
                     "iss": "https://auth.example.com",
@@ -149,15 +154,15 @@ class TestValidateTokenMethod:
                     "exp": int((now + timedelta(hours=1)).timestamp()),
                     "scope": "read:projects",
                 }
-                
+
                 mock_decode.side_effect = [
                     JWTError("Key not found"),
                     successful_claims,
                 ]
-                
+
                 token = create_jwt_token()
                 result = await validator.validate_token(token)
-                
+
                 assert result.subject == "user123"
                 assert "read:projects" in result.scopes
                 # Verify fetch_jwks was called twice (once normal, once with refresh)
@@ -168,22 +173,22 @@ class TestValidateTokenMethod:
     async def test_validate_token_jwt_decode_error_both_fail(self):
         """Test token validation when both JWT decode attempts fail."""
         from jose.exceptions import JWTError
-        
+
         validator = JWTValidator(
             expected_issuer="https://auth.example.com",
             expected_audience=None,
         )
-        
+
         jwks_data = {"keys": []}
-        
-        with patch.object(validator, 'fetch_jwks', new_callable=AsyncMock) as mock_fetch:
+
+        with patch.object(validator, "fetch_jwks", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = jwks_data
-            
+
             with patch("dependency_track_mcp.oauth.jwt.decode") as mock_decode:
                 mock_decode.side_effect = JWTError("Invalid signature")
-                
+
                 token = create_jwt_token()
-                
+
                 with pytest.raises(InvalidTokenError, match="JWT validation failed"):
                     await validator.validate_token(token)
 
@@ -194,18 +199,18 @@ class TestValidateTokenMethod:
             expected_issuer="https://auth.example.com",
             expected_audience=None,
         )
-        
+
         jwks_data = {"keys": []}
-        
-        with patch.object(validator, 'fetch_jwks', new_callable=AsyncMock) as mock_fetch:
+
+        with patch.object(validator, "fetch_jwks", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = jwks_data
-            
+
             with patch("dependency_track_mcp.oauth.jwt.decode") as mock_decode:
                 # Return claims that can't be parsed into JWTPayload
                 mock_decode.return_value = {"iss": "example.com"}  # Missing required sub, iat, exp
-                
+
                 token = create_jwt_token()
-                
+
                 with pytest.raises(InvalidTokenError, match="Invalid JWT claims"):
                     await validator.validate_token(token)
 
@@ -216,7 +221,7 @@ class TestValidateTokenMethod:
             expected_issuer="https://auth.example.com",
             expected_audience=None,
         )
-        
+
         jwks_data = {"keys": []}
         now = datetime.now(timezone.utc)
         claims = {
@@ -226,15 +231,15 @@ class TestValidateTokenMethod:
             "exp": int((now + timedelta(hours=1)).timestamp()),
             "scope": "read:projects",  # Only has read scope
         }
-        
-        with patch.object(validator, 'fetch_jwks', new_callable=AsyncMock) as mock_fetch:
+
+        with patch.object(validator, "fetch_jwks", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = jwks_data
-            
+
             with patch("dependency_track_mcp.oauth.jwt.decode") as mock_decode:
                 mock_decode.return_value = claims
-                
+
                 token = create_jwt_token()
-                
+
                 with pytest.raises(InsufficientScopesError, match="missing required scopes"):
                     await validator.validate_token(
                         token,
@@ -248,7 +253,7 @@ class TestValidateTokenMethod:
             expected_issuer="https://auth.example.com",
             expected_audience=None,
         )
-        
+
         jwks_data = {"keys": []}
         now = datetime.now(timezone.utc)
         claims = {
@@ -258,19 +263,19 @@ class TestValidateTokenMethod:
             "exp": int((now + timedelta(hours=1)).timestamp()),
             "scope": "read:projects write:projects admin:config",
         }
-        
-        with patch.object(validator, 'fetch_jwks', new_callable=AsyncMock) as mock_fetch:
+
+        with patch.object(validator, "fetch_jwks", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = jwks_data
-            
+
             with patch("dependency_track_mcp.oauth.jwt.decode") as mock_decode:
                 mock_decode.return_value = claims
-                
+
                 token = create_jwt_token()
                 result = await validator.validate_token(
                     token,
                     required_scopes={"read:projects", "write:projects"},
                 )
-                
+
                 assert result.subject == "user123"
                 assert "read:projects" in result.scopes
                 assert "write:projects" in result.scopes
@@ -282,7 +287,7 @@ class TestValidateTokenMethod:
             expected_issuer="https://auth.example.com",
             expected_audience="default-client",
         )
-        
+
         jwks_data = {"keys": []}
         now = datetime.now(timezone.utc)
         claims = {
@@ -293,19 +298,19 @@ class TestValidateTokenMethod:
             "exp": int((now + timedelta(hours=1)).timestamp()),
             "scope": "read:projects",
         }
-        
-        with patch.object(validator, 'fetch_jwks', new_callable=AsyncMock) as mock_fetch:
+
+        with patch.object(validator, "fetch_jwks", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = jwks_data
-            
+
             with patch("dependency_track_mcp.oauth.jwt.decode") as mock_decode:
                 mock_decode.return_value = claims
-                
+
                 token = create_jwt_token()
                 result = await validator.validate_token(
                     token,
                     expected_audience="custom-client",
                 )
-                
+
                 assert result.subject == "user123"
                 assert result.audience == "custom-client"
 
@@ -316,12 +321,12 @@ class TestValidateTokenMethod:
             expected_issuer="https://auth.example.com",
             expected_audience="my-client",
         )
-        
+
         jwks_data = {"keys": []}
         now = datetime.now(timezone.utc)
         iat_ts = int(now.timestamp())
         exp_ts = int((now + timedelta(hours=1)).timestamp())
-        
+
         claims = {
             "sub": "user123",
             "iss": "https://auth.example.com",
@@ -330,16 +335,16 @@ class TestValidateTokenMethod:
             "exp": exp_ts,
             "scope": "read:projects write:projects",
         }
-        
-        with patch.object(validator, 'fetch_jwks', new_callable=AsyncMock) as mock_fetch:
+
+        with patch.object(validator, "fetch_jwks", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = jwks_data
-            
+
             with patch("dependency_track_mcp.oauth.jwt.decode") as mock_decode:
                 mock_decode.return_value = claims
-                
+
                 token = "test.token.value"
                 result = await validator.validate_token(token)
-                
+
                 assert isinstance(result, AuthorizationContext)
                 assert result.token == token
                 assert result.subject == "user123"
@@ -357,7 +362,7 @@ class TestValidateTokenMethod:
             expected_issuer="https://auth.example.com",
             expected_audience=None,
         )
-        
+
         jwks_data = {"keys": []}
         now = datetime.now(timezone.utc)
         claims = {
@@ -367,16 +372,16 @@ class TestValidateTokenMethod:
             "exp": int((now + timedelta(hours=1)).timestamp()),
             "scopes": "read:projects write:projects",  # Using 'scopes' instead of 'scope'
         }
-        
-        with patch.object(validator, 'fetch_jwks', new_callable=AsyncMock) as mock_fetch:
+
+        with patch.object(validator, "fetch_jwks", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = jwks_data
-            
+
             with patch("dependency_track_mcp.oauth.jwt.decode") as mock_decode:
                 mock_decode.return_value = claims
-                
+
                 token = create_jwt_token()
                 result = await validator.validate_token(token)
-                
+
                 assert result.scopes == {"read:projects", "write:projects"}
 
     @pytest.mark.asyncio
@@ -386,7 +391,7 @@ class TestValidateTokenMethod:
             expected_issuer="https://auth.example.com",
             expected_audience=None,
         )
-        
+
         jwks_data = {"keys": []}
         now = datetime.now(timezone.utc)
         claims = {
@@ -396,14 +401,14 @@ class TestValidateTokenMethod:
             "exp": int((now + timedelta(hours=1)).timestamp()),
             # No scope or scopes field
         }
-        
-        with patch.object(validator, 'fetch_jwks', new_callable=AsyncMock) as mock_fetch:
+
+        with patch.object(validator, "fetch_jwks", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = jwks_data
-            
+
             with patch("dependency_track_mcp.oauth.jwt.decode") as mock_decode:
                 mock_decode.return_value = claims
-                
+
                 token = create_jwt_token()
                 result = await validator.validate_token(token)
-                
+
                 assert result.scopes == set()

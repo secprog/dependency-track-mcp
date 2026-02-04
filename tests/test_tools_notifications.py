@@ -1,7 +1,8 @@
 """Tests for notification management tools."""
 
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from dependency_track_mcp.client import DependencyTrackClient
 from dependency_track_mcp.exceptions import DependencyTrackError
@@ -12,6 +13,7 @@ from tests.utils import find_tool
 def register_tools():
     """Fixture that registers all tools."""
     from dependency_track_mcp.server import mcp
+
     return mcp
 
 
@@ -25,18 +27,18 @@ class TestListNotificationPublishersTool:
             {"uuid": "pub-1", "name": "Email Publisher", "publisherClass": "EMAIL"},
             {"uuid": "pub-2", "name": "Slack Publisher", "publisherClass": "SLACK"},
         ]
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_publishers, {"X-Total-Count": "2"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_notification_publishers")
             assert tool is not None
             result = await tool.fn()
-            
+
             assert "publishers" in result
             assert result["publishers"] == mock_publishers
             assert result["total"] == 2
@@ -48,15 +50,13 @@ class TestListNotificationPublishersTool:
         """Test list_notification_publishers with pagination."""
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
-            mock_client.get_with_headers = AsyncMock(
-                return_value=([], {"X-Total-Count": "50"})
-            )
+            mock_client.get_with_headers = AsyncMock(return_value=([], {"X-Total-Count": "50"}))
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_notification_publishers")
             assert tool is not None
             result = await tool.fn(page=2, page_size=25)
-            
+
             assert result["page"] == 2
             assert result["page_size"] == 25
 
@@ -89,12 +89,12 @@ class TestCreateNotificationPublisherTool:
             "name": "New Publisher",
             "publisherClass": "WEBHOOK",
         }
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value=mock_publisher)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "create_notification_publisher")
             assert tool is not None
             result = await tool.fn(
@@ -102,7 +102,7 @@ class TestCreateNotificationPublisherTool:
                 publisher_class="WEBHOOK",
                 template='{"url": "https://example.com/webhook"}',
             )
-            
+
             assert "publisher" in result
             assert "message" in result
             assert "successfully" in result["message"].lower()
@@ -114,7 +114,7 @@ class TestCreateNotificationPublisherTool:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value={"uuid": "pub-1"})
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "create_notification_publisher")
             assert tool is not None
             await tool.fn(
@@ -124,7 +124,7 @@ class TestCreateNotificationPublisherTool:
                 template_mime_type="text/plain",
                 default_publisher=True,
             )
-            
+
             call_args = mock_client.put.call_args
             payload = call_args[1]["data"]
             assert payload["name"] == "Email Publisher"
@@ -163,11 +163,11 @@ class TestUpdateNotificationPublisherTool:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value={"uuid": "pub-1"})
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "update_notification_publisher")
             assert tool is not None
             result = await tool.fn(uuid="pub-1", name="Updated Name")
-            
+
             assert "publisher" in result
             assert "message" in result
 
@@ -178,11 +178,11 @@ class TestUpdateNotificationPublisherTool:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value={})
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "update_notification_publisher")
             assert tool is not None
             await tool.fn(uuid="pub-1", default_publisher=True)
-            
+
             call_args = mock_client.post.call_args
             payload = call_args[1]["data"]
             assert payload["uuid"] == "pub-1"
@@ -216,11 +216,11 @@ class TestDeleteNotificationPublisherTool:
             mock_client = AsyncMock()
             mock_client.delete = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "delete_notification_publisher")
             assert tool is not None
             result = await tool.fn(uuid="pub-1")
-            
+
             assert "message" in result
             assert "deleted" in result["message"].lower()
             mock_client.delete.assert_called_once()
@@ -252,11 +252,11 @@ class TestRestoreDefaultTemplatesTool:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "restore_default_templates")
             assert tool is not None
             result = await tool.fn()
-            
+
             assert "message" in result
             assert "restored" in result["message"].lower()
 
@@ -287,11 +287,11 @@ class TestTestSmtpNotificationTool:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "test_smtp_notification")
             assert tool is not None
             result = await tool.fn(destination="test@example.com")
-            
+
             assert "message" in result
             assert "test@example.com" in result["message"]
 
@@ -322,11 +322,11 @@ class TestTestNotificationPublisherTool:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "test_notification_publisher")
             assert tool is not None
             result = await tool.fn(publisher_uuid="pub-1")
-            
+
             assert "message" in result
             assert "dispatched" in result["message"].lower()
 
@@ -357,18 +357,18 @@ class TestListNotificationRulesTool:
             {"uuid": "rule-1", "name": "Critical Alerts"},
             {"uuid": "rule-2", "name": "Email Notifications"},
         ]
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.get_with_headers = AsyncMock(
                 return_value=(mock_rules, {"X-Total-Count": "2"})
             )
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_notification_rules")
             assert tool is not None
             result = await tool.fn()
-            
+
             assert "rules" in result
             assert result["rules"] == mock_rules
             assert result["total"] == 2
@@ -378,15 +378,13 @@ class TestListNotificationRulesTool:
         """Test list_notification_rules with pagination."""
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
-            mock_client.get_with_headers = AsyncMock(
-                return_value=([], {"X-Total-Count": "100"})
-            )
+            mock_client.get_with_headers = AsyncMock(return_value=([], {"X-Total-Count": "100"}))
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "list_notification_rules")
             assert tool is not None
             result = await tool.fn(page=3, page_size=50)
-            
+
             assert result["page"] == 3
             assert result["total"] == 100
 
@@ -414,12 +412,12 @@ class TestCreateNotificationRuleTool:
     async def test_create_notification_rule_success(self, register_tools):
         """Test creating a notification rule."""
         mock_rule = {"uuid": "rule-new", "name": "New Rule"}
-        
+
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value=mock_rule)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "create_notification_rule")
             assert tool is not None
             result = await tool.fn(
@@ -427,7 +425,7 @@ class TestCreateNotificationRuleTool:
                 publisher_uuid="pub-1",
                 scope="PORTFOLIO",
             )
-            
+
             assert "rule" in result
             assert "message" in result
             assert "successfully" in result["message"].lower()
@@ -439,7 +437,7 @@ class TestCreateNotificationRuleTool:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value={"uuid": "rule-1"})
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "create_notification_rule")
             assert tool is not None
             await tool.fn(
@@ -449,7 +447,7 @@ class TestCreateNotificationRuleTool:
                 notification_level="ERROR",
                 enabled=True,
             )
-            
+
             call_args = mock_client.put.call_args
             payload = call_args[1]["data"]
             assert payload["name"] == "Error Alerts"
@@ -487,7 +485,7 @@ class TestCreateScheduledNotificationRuleTool:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value={"uuid": "rule-scheduled"})
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "create_scheduled_notification_rule")
             assert tool is not None
             result = await tool.fn(
@@ -495,7 +493,7 @@ class TestCreateScheduledNotificationRuleTool:
                 publisher_uuid="pub-1",
                 cron_config="0 9 * * MON-FRI",
             )
-            
+
             assert "rule" in result
             assert "successfully" in result["message"].lower()
 
@@ -506,7 +504,7 @@ class TestCreateScheduledNotificationRuleTool:
             mock_client = AsyncMock()
             mock_client.put = AsyncMock(return_value={})
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "create_scheduled_notification_rule")
             assert tool is not None
             await tool.fn(
@@ -515,7 +513,7 @@ class TestCreateScheduledNotificationRuleTool:
                 cron_config="0 0 * * SUN",
                 publish_only_with_updates=False,
             )
-            
+
             call_args = mock_client.put.call_args
             payload = call_args[1]["data"]
             assert payload["cronConfig"] == "0 0 * * SUN"
@@ -552,11 +550,11 @@ class TestUpdateNotificationRuleTool:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value={"uuid": "rule-1"})
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "update_notification_rule")
             assert tool is not None
             result = await tool.fn(uuid="rule-1", enabled=False)
-            
+
             assert "rule" in result
             assert "message" in result
 
@@ -587,11 +585,11 @@ class TestDeleteNotificationRuleTool:
             mock_client = AsyncMock()
             mock_client.delete = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "delete_notification_rule")
             assert tool is not None
             result = await tool.fn(uuid="rule-1")
-            
+
             assert "message" in result
             assert "deleted" in result["message"].lower()
 
@@ -622,11 +620,11 @@ class TestAddProjectToNotificationRuleTool:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "add_project_to_notification_rule")
             assert tool is not None
             result = await tool.fn(rule_uuid="rule-1", project_uuid="proj-1")
-            
+
             assert "message" in result
             assert "successfully" in result["message"].lower()
 
@@ -657,11 +655,11 @@ class TestRemoveProjectFromNotificationRuleTool:
             mock_client = AsyncMock()
             mock_client.delete = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "remove_project_from_notification_rule")
             assert tool is not None
             result = await tool.fn(rule_uuid="rule-1", project_uuid="proj-1")
-            
+
             assert "message" in result
             assert "removed" in result["message"].lower()
 
@@ -692,11 +690,11 @@ class TestAddTeamToNotificationRuleTool:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "add_team_to_notification_rule")
             assert tool is not None
             result = await tool.fn(rule_uuid="rule-1", team_uuid="team-1")
-            
+
             assert "message" in result
             assert "successfully" in result["message"].lower()
 
@@ -727,11 +725,11 @@ class TestRemoveTeamFromNotificationRuleTool:
             mock_client = AsyncMock()
             mock_client.delete = AsyncMock(return_value=None)
             mock_get_instance.return_value = mock_client
-            
+
             tool = find_tool(register_tools, "remove_team_from_notification_rule")
             assert tool is not None
             result = await tool.fn(rule_uuid="rule-1", team_uuid="team-1")
-            
+
             assert "message" in result
             assert "removed" in result["message"].lower()
 

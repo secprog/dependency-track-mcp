@@ -2,15 +2,16 @@
 
 import os
 import tempfile
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 from dependency_track_mcp.config import (
+    _TLS_TEMP_FILES,
     ConfigurationError,
     Settings,
     cleanup_tls_temp_files,
     get_settings,
-    _TLS_TEMP_FILES,
 )
 
 
@@ -129,7 +130,7 @@ class TestSettingsValidationEdgeCases:
 
     def test_settings_validation_passes_with_valid_config(self):
         """Test that validation passes with valid web deployment configuration.
-        
+
         This ensures that the oauth_issuer check at line 369 (defensive check for falsy issuer)
         doesn't interfere with normal operation. In practice, oauth_issuer is always
         set during Settings initialization, so the line 369 check is defensive.
@@ -153,8 +154,8 @@ class TestSettingsConfigurationEdgeCases:
 
     def test_validator_edge_case_tls_cleanup_during_init(self):
         """Test that TLS cleanup is registered during Settings initialization."""
-        with patch("dependency_track_mcp.config._ensure_tls_cleanup_registered") as mock_cleanup:
-            settings = Settings(
+        with patch("dependency_track_mcp.config._ensure_tls_cleanup_registered"):
+            Settings(
                 url="https://example.com",
                 api_key="test-key",
                 oauth_issuer="https://auth.example.com",
@@ -166,7 +167,9 @@ class TestSettingsConfigurationEdgeCases:
 
     def test_settings_with_pem_escaped_newlines(self):
         """Test PEM content with escaped newlines (\\n) gets normalized."""
-        cert_content = "-----BEGIN CERTIFICATE-----\\nMIIDXTCCAkWgAwIBAgI\\n-----END CERTIFICATE-----"
+        cert_content = (
+            "-----BEGIN CERTIFICATE-----\\nMIIDXTCCAkWgAwIBAgI\\n-----END CERTIFICATE-----"
+        )
         key_content = "-----BEGIN PRIVATE KEY-----\\nMIIEvAIBADANBgkqh\\n-----END PRIVATE KEY-----"
 
         # This tests the _normalize_pem function which converts \\n to \n

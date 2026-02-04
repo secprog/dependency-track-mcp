@@ -6,7 +6,6 @@ import httpx
 import pytest
 
 from dependency_track_mcp.client import DependencyTrackClient, get_client
-from dependency_track_mcp.config import Settings
 from dependency_track_mcp.exceptions import (
     AuthenticationError,
     AuthorizationError,
@@ -215,18 +214,14 @@ class TestClientRetryLogic:
     @pytest.mark.asyncio
     async def test_request_with_retry_connection_error(self, mock_client):
         """Test retry on connection error."""
-        mock_client._client.request = AsyncMock(
-            side_effect=httpx.ConnectError("Connection failed")
-        )
+        mock_client._client.request = AsyncMock(side_effect=httpx.ConnectError("Connection failed"))
         with pytest.raises(ConnectionError):
             await mock_client._request_with_retry("GET", "/project")
 
     @pytest.mark.asyncio
     async def test_request_with_retry_timeout(self, mock_client):
         """Test retry on timeout."""
-        mock_client._client.request = AsyncMock(
-            side_effect=httpx.TimeoutException("Timeout")
-        )
+        mock_client._client.request = AsyncMock(side_effect=httpx.TimeoutException("Timeout"))
         with pytest.raises(ConnectionError):
             await mock_client._request_with_retry("GET", "/project")
 

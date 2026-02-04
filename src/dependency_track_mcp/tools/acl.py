@@ -15,14 +15,12 @@ def register_acl_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Get projects assigned to a team via ACL",
-        tags=[Scopes.ADMIN_ACL],
+        tags=[Scopes.WRITE_ACL],
     )
     async def get_team_acl_projects(
         team_uuid: Annotated[str, Field(description="Team UUID")],
         page: Annotated[int, Field(ge=1, description="Page number")] = 1,
-        page_size: Annotated[
-            int, Field(ge=1, le=100, description="Items per page")
-        ] = 100,
+        page_size: Annotated[int, Field(ge=1, le=100, description="Items per page")] = 100,
     ) -> dict:
         """
         Get the projects assigned to a team via ACL mappings.
@@ -33,9 +31,7 @@ def register_acl_tools(mcp: FastMCP) -> None:
         try:
             client = get_client()
             params = {"pageNumber": page, "pageSize": page_size}
-            data, headers = await client.get_with_headers(
-                f"/acl/team/{team_uuid}", params=params
-            )
+            data, headers = await client.get_with_headers(f"/acl/team/{team_uuid}", params=params)
             total_count = headers.get("X-Total-Count", len(data))
 
             return {
@@ -49,7 +45,7 @@ def register_acl_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Add an ACL mapping between a team and project",
-        tags=[Scopes.ADMIN_ACL],
+        tags=[Scopes.READ_ACL],
     )
     async def add_acl_mapping(
         team_uuid: Annotated[str, Field(description="Team UUID")],
@@ -75,7 +71,7 @@ def register_acl_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(
         description="Remove an ACL mapping between a team and project",
-        tags=[Scopes.ADMIN_ACL],
+        tags=[Scopes.WRITE_ACL],
     )
     async def remove_acl_mapping(
         team_uuid: Annotated[str, Field(description="Team UUID")],

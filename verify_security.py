@@ -9,25 +9,24 @@ This script verifies that the MCP server enforces:
 """
 
 import os
-import sys
 import subprocess
-from pathlib import Path
+import sys
 
 
 def run_test(description: str, env_vars: dict) -> tuple[bool, str]:
     """Run server startup test with given environment variables.
-    
+
     Args:
         description: Test description
         env_vars: Environment variables to set
-        
+
     Returns:
         Tuple of (success: bool, output: str)
     """
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TEST: " + description)
-    print("="*70)
-    
+    print("=" * 70)
+
     # Set up environment
     env = os.environ.copy()
     for key, value in env_vars.items():
@@ -37,18 +36,18 @@ def run_test(description: str, env_vars: dict) -> tuple[bool, str]:
         else:
             env[key] = str(value)
             print("  Set: " + key + "=" + str(value))
-    
+
     # Try to import and create settings
     try:
         # Clear any cached settings
         if "dependency_track_mcp.config" in sys.modules:
             del sys.modules["dependency_track_mcp.config"]
-        
+
         # Run in subprocess to isolate environment
-        code = """
+        code = f"""
 import sys
 import os
-os.environ.update({env})
+os.environ.update({repr({k: v for k, v in env_vars.items() if v is not None})})
 
 try:
     from dependency_track_mcp.config import Settings
@@ -60,8 +59,8 @@ try:
 except Exception as e:
     print("[FAIL] Configuration error: " + str(e))
     sys.exit(1)
-""".format(env=repr({k: v for k, v in env_vars.items() if v is not None}))
-        
+"""
+
         result = subprocess.run(
             [sys.executable, "-c", code],
             env=env,
@@ -69,17 +68,17 @@ except Exception as e:
             text=True,
             timeout=5,
         )
-        
+
         output = result.stdout + result.stderr
         success = result.returncode == 0
-        
+
         print("\nResult:")
         for line in output.strip().split("\n"):
             if line.strip():
                 print("  " + line)
-        
+
         return success, output
-        
+
     except subprocess.TimeoutExpired:
         return False, "Timeout"
     except Exception as e:
@@ -88,16 +87,16 @@ except Exception as e:
 
 def main():
     """Run all security enforcement tests."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("SECURITY ENFORCEMENT VERIFICATION")
-    print("="*70)
-    
+    print("=" * 70)
+
     base_env = {
         "DEPENDENCY_TRACK_URL": "https://dtrack.example.com",
         "DEPENDENCY_TRACK_API_KEY": "test-key",
         "MCP_OAUTH_ISSUER": "https://auth.example.com",
     }
-    
+
     tests = [
         (
             "1. Valid Configuration (All Required Fields)",
@@ -126,7 +125,11 @@ def main():
         ),
         (
             "6. Development Mode: HTTP URL with DEV_ALLOW_HTTP (Should Warn)",
-            {**base_env, "DEPENDENCY_TRACK_URL": "http://localhost:8080", "MCP_DEV_ALLOW_HTTP": "true"},
+            {
+                **base_env,
+                "DEPENDENCY_TRACK_URL": "http://localhost:8080",
+                "MCP_DEV_ALLOW_HTTP": "true",
+            },
             True,
         ),
         (
@@ -136,38 +139,43 @@ def main():
         ),
         (
             "8. Dev Mode with Both HTTP URLs (Should Warn Twice)",
-            {**base_env, "DEPENDENCY_TRACK_URL": "http://localhost:8080", "MCP_OAUTH_ISSUER": "http://localhost:9000", "MCP_DEV_ALLOW_HTTP": "true"},
+            {
+                **base_env,
+                "DEPENDENCY_TRACK_URL": "http://localhost:8080",
+                "MCP_OAUTH_ISSUER": "http://localhost:9000",
+                "MCP_DEV_ALLOW_HTTP": "true",
+            },
             True,
         ),
     ]
-    
+
     results = []
     for description, env_vars, expected_success in tests:
         success, output = run_test(description, env_vars)
         expected_str = "[SHOULD SUCCEED]" if expected_success else "[SHOULD FAIL]"
         actual_str = "[SUCCEEDED]" if success else "[FAILED]"
-        
+
         result_ok = success == expected_success
         status = "[PASS]" if result_ok else "[FAIL]"
-        
+
         results.append((description, result_ok, status))
         print("\nExpectation: " + expected_str)
         print("Actual:      " + actual_str)
         print("Status:      " + status)
-    
+
     # Summary
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("VERIFICATION SUMMARY")
-    print("="*70)
-    
+    print("=" * 70)
+
     passed = sum(1 for _, ok, _ in results if ok)
     total = len(results)
-    
+
     for description, ok, status in results:
         print(status + " - " + description)
-    
+
     print("\nTotal: " + str(passed) + "/" + str(total) + " tests passed")
-    
+
     if passed == total:
         print("\n[OK] All security enforcement tests PASSED")
         print("  - OAuth 2.1 is mandatory")
@@ -182,4 +190,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

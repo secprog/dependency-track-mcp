@@ -55,17 +55,43 @@ class Scopes:
     # CWE scope (read-only reference data)
     READ_CWE = "read:cwe"
 
-    # Administrative scopes
-    ADMIN_CONFIG = "admin:config"
-    ADMIN_TEAMS = "admin:teams"
-    ADMIN_USERS = "admin:users"
-    ADMIN_PERMISSIONS = "admin:permissions"
-    ADMIN_ACL = "admin:acl"
-    ADMIN_NOTIFICATIONS = "admin:notifications"
-    ADMIN_LDAP = "admin:ldap"
-    ADMIN_OIDC = "admin:oidc"
+    # Team management scopes (more granular than admin:teams)
+    READ_TEAMS = "read:teams"
+    WRITE_TEAMS = "write:teams"
+    MANAGE_API_KEYS = "manage:api-keys"  # Generate, regenerate, delete API keys
 
-    # System scopes
+    # User management scopes (more granular than admin:users)
+    READ_USERS = "read:users"
+    WRITE_USERS = "write:users"  # Create, update, delete users
+    MANAGE_USER_TEAMS = "manage:user-teams"  # Add/remove users from teams
+
+    # Permission management scopes (separate from general admin)
+    READ_PERMISSIONS = "read:permissions"
+    WRITE_PERMISSIONS = "write:permissions"  # Grant/revoke permissions
+
+    # ACL scopes (project-level access control)
+    READ_ACL = "read:acl"
+    WRITE_ACL = "write:acl"  # Add/remove ACL mappings
+
+    # Notification management scopes
+    READ_NOTIFICATIONS = "read:notifications"
+    WRITE_NOTIFICATION_PUBLISHERS = "write:notification-publishers"  # CRUD publishers
+    WRITE_NOTIFICATION_RULES = "write:notification-rules"  # CRUD rules
+    TEST_NOTIFICATIONS = "test:notifications"  # Send test notifications
+
+    # LDAP integration scopes
+    READ_LDAP = "read:ldap"  # List LDAP groups
+    WRITE_LDAP = "write:ldap"  # Manage LDAP group mappings
+
+    # OIDC integration scopes
+    READ_OIDC = "read:oidc"  # Check availability, list groups
+    WRITE_OIDC = "write:oidc"  # Manage OIDC groups and mappings
+
+    # Configuration management scopes
+    READ_CONFIG = "read:config"  # View config properties
+    WRITE_CONFIG = "write:config"  # Modify system configuration
+
+    # System scopes (read-only, low privilege)
     SYSTEM_VERSION = "system:version"
     SYSTEM_BADGES = "system:badges"
     SYSTEM_CALCULATOR = "system:calculator"
@@ -97,16 +123,35 @@ ALL_SCOPES = [
     Scopes.READ_REPOSITORIES,
     Scopes.WRITE_REPOSITORIES,
     Scopes.READ_CWE,
-    # Administrative
-    Scopes.ADMIN_CONFIG,
-    Scopes.ADMIN_TEAMS,
-    Scopes.ADMIN_USERS,
-    Scopes.ADMIN_PERMISSIONS,
-    Scopes.ADMIN_ACL,
-    Scopes.ADMIN_NOTIFICATIONS,
-    Scopes.ADMIN_LDAP,
-    Scopes.ADMIN_OIDC,
-    # System
+    # Team management
+    Scopes.READ_TEAMS,
+    Scopes.WRITE_TEAMS,
+    Scopes.MANAGE_API_KEYS,
+    # User management
+    Scopes.READ_USERS,
+    Scopes.WRITE_USERS,
+    Scopes.MANAGE_USER_TEAMS,
+    # Permission management
+    Scopes.READ_PERMISSIONS,
+    Scopes.WRITE_PERMISSIONS,
+    # ACL management
+    Scopes.READ_ACL,
+    Scopes.WRITE_ACL,
+    # Notification management
+    Scopes.READ_NOTIFICATIONS,
+    Scopes.WRITE_NOTIFICATION_PUBLISHERS,
+    Scopes.WRITE_NOTIFICATION_RULES,
+    Scopes.TEST_NOTIFICATIONS,
+    # LDAP integration
+    Scopes.READ_LDAP,
+    Scopes.WRITE_LDAP,
+    # OIDC integration
+    Scopes.READ_OIDC,
+    Scopes.WRITE_OIDC,
+    # Configuration management
+    Scopes.READ_CONFIG,
+    Scopes.WRITE_CONFIG,
+    # System (read-only)
     Scopes.SYSTEM_VERSION,
     Scopes.SYSTEM_BADGES,
     Scopes.SYSTEM_CALCULATOR,
