@@ -92,8 +92,7 @@ class Settings(BaseSettings):
             "oauth_resource_uri", "MCP_OAUTH_RESOURCE_URI", "DEPENDENCY_TRACK_OAUTH_RESOURCE_URI"
         ),
         description=(
-            "Resource URI for this MCP server "
-            "(used in /.well-known/oauth-protected-resource)"
+            "Resource URI for this MCP server (used in /.well-known/oauth-protected-resource)"
         ),
     )
 

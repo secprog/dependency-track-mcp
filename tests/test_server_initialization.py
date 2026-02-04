@@ -155,9 +155,7 @@ class TestMainFailures:
                 with patch("dependency_track_mcp.server.mcp.run") as mock_run:
                     mock_run.side_effect = Exception("Server error")
 
-                    with patch(
-                        "dependency_track_mcp.server.cleanup", new_callable=AsyncMock
-                    ):
+                    with patch("dependency_track_mcp.server.cleanup", new_callable=AsyncMock):
                         with pytest.raises(Exception, match="Server error"):
                             main()
 

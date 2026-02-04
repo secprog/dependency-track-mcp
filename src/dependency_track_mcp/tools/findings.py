@@ -110,8 +110,7 @@ def register_finding_tools(mcp: FastMCP) -> None:
             str | None,
             Field(
                 description=(
-                    "Response: CAN_NOT_FIX, WILL_NOT_FIX, UPDATE, "
-                    "ROLLBACK, WORKAROUND_AVAILABLE"
+                    "Response: CAN_NOT_FIX, WILL_NOT_FIX, UPDATE, ROLLBACK, WORKAROUND_AVAILABLE"
                 )
             ),
         ] = None,
