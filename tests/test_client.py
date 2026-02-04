@@ -129,6 +129,16 @@ class TestClientHTTPMethods:
         await mock_client.delete("/project/123")
         mock_client._client.request.assert_called_once()
 
+    @pytest.mark.asyncio
+    async def test_delete_request_with_json_body(self, mock_client, mock_response):
+        """Test DELETE request with JSON body."""
+        mock_client._client.request = AsyncMock(return_value=mock_response)
+        await mock_client.delete("/project", data={"uuid": "123"})
+        # Verify that json kwarg was passed to request
+        call_kwargs = mock_client._client.request.call_args[1]
+        assert "json" in call_kwargs
+        assert call_kwargs["json"] == {"uuid": "123"}
+
 
 class TestClientErrorHandling:
     """Tests for error handling."""

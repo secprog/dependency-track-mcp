@@ -469,6 +469,42 @@ class TestMainFunction:
                             assert call_kwargs["ssl_certfile"] == "cert.pem"
                             assert call_kwargs["ssl_keyfile"] == "key.pem"
 
+    def test_main_with_https_and_oauth_audience(self):
+        """Test main() logs oauth_audience when configured."""
+        with patch("dependency_track_mcp.main.get_settings") as mock_get_settings:
+            mock_settings = MagicMock(spec=Settings)
+            mock_settings.dev_allow_http = False
+            mock_settings.server_tls_cert = (
+                "-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----"
+            )
+            mock_settings.server_tls_key = (
+                "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----"
+            )
+            mock_settings.server_host = "0.0.0.0"
+            mock_settings.server_port = 8000
+            mock_settings.oauth_jwks_url = "https://auth.example.com/.well-known/jwks.json"
+            mock_settings.oauth_audience = "https://dependency-track.example.com"
+            mock_settings.server_tls_keyfile_password = None
+            mock_get_settings.return_value = mock_settings
+
+            with patch.object(mock_settings, "validate_configuration_for_web_deployment"):
+                with patch("dependency_track_mcp.main.materialize_tls_files") as mock_materialize:
+                    mock_materialize.return_value = ("cert.pem", "key.pem", None)
+
+                    with patch("uvicorn.run") as mock_uvicorn:
+                        with patch("dependency_track_mcp.main.cleanup_tls_temp_files"):
+                            with patch("dependency_track_mcp.main.logger") as mock_logger:
+                                main()
+
+                                # Verify oauth_audience logging was called
+                                info_calls = [
+                                    call.args[0] for call in mock_logger.info.call_args_list
+                                ]
+                                assert any(
+                                    "Required Audience: configured" in call
+                                    for call in info_calls
+                                )
+
     def test_main_with_http_dev_mode(self):
         """Test main() in development HTTP mode."""
         with patch("dependency_track_mcp.main.get_settings") as mock_get_settings:

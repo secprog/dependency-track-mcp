@@ -43,11 +43,13 @@ class TestGetVersionTool:
             mock_client.get.assert_called_once_with("/../version")
 
     @pytest.mark.asyncio
-    async def test_get_version_error(self, register_tools):
-        """Test get_version error handling."""
+    async def test_get_version_dependency_track_error(self, register_tools):
+        """Test get_version DependencyTrackError handling with details."""
         with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
             mock_client = AsyncMock()
-            mock_client.get = AsyncMock(side_effect=DependencyTrackError("Connection failed"))
+            error = DependencyTrackError("Connection failed")
+            error.details = {"status_code": 500, "response": "Internal server error"}
+            mock_client.get = AsyncMock(side_effect=error)
             mock_get_instance.return_value = mock_client
 
             tool = find_tool(register_tools, "get_version")
@@ -56,3 +58,21 @@ class TestGetVersionTool:
 
             assert "error" in result
             assert "Connection failed" in result["error"]
+            assert "details" in result
+            assert result["details"]["status_code"] == 500
+
+    @pytest.mark.asyncio
+    async def test_get_version_generic_exception(self, register_tools):
+        """Test get_version generic exception handling."""
+        with patch.object(DependencyTrackClient, "get_instance") as mock_get_instance:
+            mock_client = AsyncMock()
+            mock_client.get = AsyncMock(side_effect=ValueError("Unexpected error"))
+            mock_get_instance.return_value = mock_client
+
+            tool = find_tool(register_tools, "get_version")
+            assert tool is not None
+            result = await tool.fn()
+
+            assert "error" in result
+            assert "Unexpected error" in result["error"]
+            assert "details" not in result  # Generic exceptions don't have details

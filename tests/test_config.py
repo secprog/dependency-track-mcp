@@ -410,6 +410,25 @@ class TestSettings:
                 server_tls_key="/path/to/key.pem",
             )
 
+    def test_validate_configuration_for_web_deployment_empty_oauth_issuer_fails(self):
+        """Test that empty OAuth issuer fails web deployment validation."""
+        # Create settings with empty oauth_issuer
+        # Need dev_allow_http=True to bypass HTTPS check, then disable it for web validation
+        settings = Settings(
+            url="https://example.com",
+            api_key="test-key",
+            oauth_issuer="http://auth.example.com",  # HTTP to allow creation
+            server_host="0.0.0.0",
+            server_port=8000,
+            server_tls_cert="/path/to/cert.pem",
+            server_tls_key="/path/to/key.pem",
+            dev_allow_http=True,  # Allow HTTP during creation
+        )
+        # Set oauth_issuer to empty string to trigger the "not configured" error
+        settings.oauth_issuer = ""  # type: ignore
+        with pytest.raises(ConfigurationError, match="OAuth 2.1 issuer must be configured"):
+            settings.validate_configuration_for_web_deployment()
+
     def test_validate_configuration_for_web_deployment_success(self):
         """Test successful web deployment validation."""
         settings = Settings(
