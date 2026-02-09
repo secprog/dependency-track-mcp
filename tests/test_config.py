@@ -121,6 +121,7 @@ class TestSettings:
         monkeypatch.delenv("MCP_OAUTH_ISSUER", raising=False)
         # Clear Settings cache to ensure fresh instantiation
         from dependency_track_mcp.config import get_settings
+
         get_settings.cache_clear()
         with pytest.raises(ValidationError):
             Settings()  # type: ignore[call-arg]  # Missing url, api_key, and oauth_issuer
@@ -150,6 +151,7 @@ class TestSettings:
         # Ensure oauth_issuer is actually missing
         monkeypatch.delenv("MCP_OAUTH_ISSUER", raising=False)
         from dependency_track_mcp.config import get_settings
+
         get_settings.cache_clear()
         with pytest.raises(ValidationError):
             Settings(url="https://example.com", api_key="test-key")  # type: ignore[call-arg]
