@@ -8,7 +8,6 @@ import pytest
 
 from dependency_track_mcp.config import (
     _TLS_TEMP_FILES,
-    ConfigurationError,
     Settings,
     cleanup_tls_temp_files,
     get_settings,
@@ -118,9 +117,9 @@ class TestGetSettings:
         monkeypatch.setenv("DEPENDENCY_TRACK_URL", "https://example.com")
         monkeypatch.setenv("DEPENDENCY_TRACK_API_KEY", "test-key")
         monkeypatch.setenv("MCP_OAUTH_ISSUER", "https://auth.example.com")
-        
+
         get_settings.cache_clear()
-        
+
         # This should succeed
         settings = get_settings()
         assert settings.url == "https://example.com"

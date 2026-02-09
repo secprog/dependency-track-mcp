@@ -149,7 +149,7 @@ class TestSettings:
         """Test that Settings validation requires oauth_issuer."""
         # Test that oauth_issuer validation works when provided
         settings = Settings(
-            url="https://example.com", 
+            url="https://example.com",
             api_key="test-key",
             oauth_issuer="https://auth.example.com",
         )
