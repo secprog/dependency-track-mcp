@@ -501,8 +501,7 @@ class TestMainFunction:
                                     call.args[0] for call in mock_logger.info.call_args_list
                                 ]
                                 assert any(
-                                    "Required Audience: configured" in call
-                                    for call in info_calls
+                                    "Required Audience: configured" in call for call in info_calls
                                 )
 
     def test_main_with_http_dev_mode(self):
