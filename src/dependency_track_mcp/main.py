@@ -18,11 +18,10 @@ Key Features:
 """
 
 import logging
-import os
 import sys
 
 import httpx
-from fastapi import FastAPI, Response
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from jose import jwt
@@ -266,7 +265,6 @@ async def verify_jwt_token(token: str) -> dict | None:
         return None
 
 
-
 @app.get("/.well-known/oauth-authorization-server")
 async def oauth_authorization_server_metadata():
     """Serve OAuth Authorization Server Metadata.
@@ -323,7 +321,7 @@ async def dynamic_client_registration():
             "response_types": ["code"],
             "token_endpoint": f"{settings.oauth_issuer}/protocol/openid-connect/token",
             "authorization_endpoint": f"{settings.oauth_issuer}/protocol/openid-connect/auth",
-            "scope": settings.oauth_required_scopes
+            "scope": settings.oauth_required_scopes,
         },
         status_code=201,
     )
