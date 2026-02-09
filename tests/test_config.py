@@ -597,3 +597,87 @@ class TestTLSHelpers:
 
         scopes = settings.get_required_scopes()
         assert scopes == {"read:projects", "write:projects", "read:vulnerabilities"}
+
+class TestConfigHTTPWarnings:
+    """Tests for HTTP URL warnings and validation."""
+
+    def test_http_url_with_dev_mode_warning(self, setup_env):
+        """Test that HTTP URL with dev_allow_http=True issues a warning."""
+        import warnings
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            settings = Settings(
+                url="http://localhost:8080",
+                api_key="test-key",
+                oauth_issuer="https://auth.example.com",
+                dev_allow_http=True,
+            )
+            assert settings.url == "http://localhost:8080"
+            # Should have warning about dev mode
+            assert len(w) >= 1
+            assert "DEVELOPMENT MODE" in str(w[0].message)
+
+    def test_http_oauth_issuer_with_dev_mode_warning(self, setup_env):
+        """Test that HTTP OAuth issuer with dev_allow_http=True issues a warning."""
+        import warnings
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            settings = Settings(
+                url="https://example.com",
+                api_key="test-key",
+                oauth_issuer="http://localhost:9000",
+                dev_allow_http=True,
+            )
+            assert settings.oauth_issuer == "http://localhost:9000"
+            # Should have warning about dev mode
+            assert len(w) >= 1
+            assert "DEVELOPMENT MODE" in str(w[0].message)
+
+    def test_http_oauth_issuer_fails_production(self, setup_env):
+        """Test that HTTP OAuth issuer fails in production mode."""
+        with pytest.raises(ValueError, match="must use HTTPS"):
+            Settings(
+                url="https://example.com",
+                api_key="test-key",
+                oauth_issuer="http://localhost:9000",
+                dev_allow_http=False,
+            )
+
+    def test_http_url_fails_production(self, setup_env):
+        """Test that HTTP URL fails in production mode."""
+        with pytest.raises(ValueError, match="DEPENDENCY_TRACK_URL must use HTTPS"):
+            Settings(
+                url="http://example.com",
+                api_key="test-key",
+                oauth_issuer="https://auth.example.com",
+                dev_allow_http=False,
+            )
+
+    def test_get_settings_exception_handler(self, monkeypatch):
+        """Test get_settings exception handling for lines 474-475 coverage."""
+        from dependency_track_mcp.config import ConfigurationError
+        
+        # Set environment variables  
+        monkeypatch.setenv("DEPENDENCY_TRACK_URL", "https://example.com")
+        monkeypatch.setenv("DEPENDENCY_TRACK_API_KEY", "test-key")
+        monkeypatch.setenv("MCP_OAUTH_ISSUER", "https://auth.example.com")
+        
+        # Patch the Settings class to raise an exception  
+        from dependency_track_mcp.config import get_settings as original_get_settings
+        
+        # IMPORTANT: Clear the lru_cache before testing
+        original_get_settings.cache_clear()
+        
+        class FailingSettings:
+            def __init__(self, *args, **kwargs):
+                raise ValueError("Forced Settings failure")
+        
+        monkeypatch.setattr("dependency_track_mcp.config.Settings", FailingSettings)
+        
+        # Now calling get_settings should trigger lines 474-475
+        try:
+            original_get_settings()
+            assert False, "Should have raised ConfigurationError"
+        except ConfigurationError as e:
+            assert "Failed to load settings from environment variables" in str(e)
+            assert "Forced Settings failure" in str(e)

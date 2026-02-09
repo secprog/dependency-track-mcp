@@ -70,14 +70,14 @@ class JWTAuthMiddleware:
         self.app = app
 
     async def __call__(self, scope, receive, send):
-        # Only apply auth to /mcp path, but NOT to DCR endpoints
+        # Allow unauthenticated access to DCR endpoints first
+        if scope["type"] == "http" and scope["path"] in ["/.well-known/mcp/clients"]:
+            # DCR registration endpoint - no auth required
+            await self.app(scope, receive, send)
+            return
+        
+        # Only apply auth to /mcp path
         if scope["type"] == "http" and scope["path"].startswith("/mcp"):
-            # Allow unauthenticated access to DCR endpoints
-            if scope["path"] in ["/.well-known/mcp/clients"]:
-                # DCR registration endpoint - no auth required
-                await self.app(scope, receive, send)
-                return
-
             # Get authorization header
             headers = dict(scope.get("headers", []))
             auth_header = headers.get(b"authorization", b"").decode("utf-8")
