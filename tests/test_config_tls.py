@@ -145,13 +145,15 @@ class TestTLSHelpers:
         scopes = settings.get_required_scopes()
         assert scopes == {"read:projects", "write:projects", "read:vulnerabilities"}
 
-    def test_oauth_resource_metadata_url(self):
+    def test_oauth_resource_metadata_url(self, setup_env):
         """Test oauth_resource_metadata_url property."""
         settings = Settings(
             url="https://example.com",
             api_key="test-key",
             oauth_issuer="https://auth.example.com",
+            # Use the default oauth_resource_uri
         )
 
         metadata_url = settings.oauth_resource_metadata_url
+        # Default oauth_resource_uri is "https://mcp.example.com/mcp"
         assert metadata_url == "https://mcp.example.com/.well-known/oauth-protected-resource"

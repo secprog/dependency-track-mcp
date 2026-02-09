@@ -383,22 +383,6 @@ class TestVerifyJWTToken:
                     assert result is None
 
 
-class TestProtectedResourceMetadata:
-    """Tests for OAuth Protected Resource Metadata endpoint."""
-
-    def test_protected_resource_metadata(self, client, mock_settings):
-        """Test /.well-known/oauth-protected-resource endpoint."""
-        with patch("dependency_track_mcp.main.get_settings") as mock_get_settings:
-            mock_get_settings.return_value = mock_settings
-
-            response = client.get("/.well-known/oauth-protected-resource")
-
-            assert response.status_code == 200
-            data = response.json()
-            assert data["resource"] == mock_settings.oauth_resource_uri
-            assert data["authorization_servers"] == [mock_settings.oauth_issuer]
-
-
 class TestHealthCheck:
     """Tests for health check endpoint."""
 

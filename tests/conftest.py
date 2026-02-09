@@ -11,7 +11,7 @@ from dependency_track_mcp.client import DependencyTrackClient
 from dependency_track_mcp.config import Settings
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def setup_env():
     """Set up environment variables for testing."""
     os.environ["DEPENDENCY_TRACK_URL"] = "https://localhost:8080"  # Changed to HTTPS

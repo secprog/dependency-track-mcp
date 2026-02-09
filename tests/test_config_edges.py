@@ -112,9 +112,10 @@ class TestGetSettings:
         assert settings.api_key == "test-key"
         assert settings.oauth_issuer == "https://auth.example.com"
 
-    def test_get_settings_configuration_error_handling(self, monkeypatch):
+    def test_get_settings_configuration_error_handling(self, monkeypatch, setup_env):
         """Test ConfigurationError handling in get_settings."""
         # Set invalid values to trigger Settings validation error
+        # Make sure we use setup_env fixture but then clear it
         monkeypatch.delenv("DEPENDENCY_TRACK_URL", raising=False)
         monkeypatch.delenv("DEPENDENCY_TRACK_API_KEY", raising=False)
         monkeypatch.delenv("MCP_OAUTH_ISSUER", raising=False)
