@@ -75,7 +75,7 @@ class JWTAuthMiddleware:
             # DCR registration endpoint - no auth required
             await self.app(scope, receive, send)
             return
-        
+
         # Only apply auth to /mcp path
         if scope["type"] == "http" and scope["path"].startswith("/mcp"):
             # Get authorization header

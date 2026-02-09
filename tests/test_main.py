@@ -575,29 +575,30 @@ class TestMainFunction:
                         main()
                     mock_exit.assert_called_with(1)
 
+
 class TestDCRAndEndpoints:
     """Tests for DCR endpoint and other endpoints."""
 
     def test_dcr_endpoint_bypass_auth(self):
         """Test that DCR endpoint bypasses JWT auth - covers lines 78-79."""
         from starlette.applications import Starlette
-        from starlette.routing import Route
         from starlette.responses import JSONResponse
+        from starlette.routing import Route
 
         # Create a simple mock app
         async def dcr_endpoint(request):
             return JSONResponse({"client_id": "test"})
 
-        inner_app = Starlette(routes=[
-            Route("/.well-known/mcp/clients", dcr_endpoint, methods=["GET", "POST"])
-        ])
+        inner_app = Starlette(
+            routes=[Route("/.well-known/mcp/clients", dcr_endpoint, methods=["GET", "POST"])]
+        )
 
         # Create middleware
         middleware = JWTAuthMiddleware(inner_app)
 
         # Create test client
         client = TestClient(middleware)
-       
+
         with patch("dependency_track_mcp.main.get_settings") as mock_get_settings:
             settings = Settings(
                 url="https://example.com",
@@ -651,8 +652,8 @@ class TestDCRAndEndpoints:
     def test_normalize_mcp_path_middleware(self):
         """Test NormalizeMcpPathMiddleware for /mcp path."""
         from starlette.applications import Starlette
-        from starlette.routing import Route
         from starlette.responses import PlainTextResponse
+        from starlette.routing import Route
 
         from dependency_track_mcp.main import NormalizeMcpPathMiddleware
 
