@@ -151,9 +151,9 @@ class TestTLSHelpers:
             url="https://example.com",
             api_key="test-key",
             oauth_issuer="https://auth.example.com",
-            # Use the default oauth_resource_uri
+            oauth_resource_uri="https://mcp.example.com/mcp",  # Explicitly set the resource URI
         )
 
         metadata_url = settings.oauth_resource_metadata_url
-        # Default oauth_resource_uri is "https://mcp.example.com/mcp"
+        # With explicit oauth_resource_uri
         assert metadata_url == "https://mcp.example.com/.well-known/oauth-protected-resource"
