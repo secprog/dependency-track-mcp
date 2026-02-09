@@ -18,6 +18,7 @@ Key Features:
 """
 
 import logging
+import os
 import sys
 
 import httpx
@@ -37,12 +38,17 @@ from dependency_track_mcp.server import mcp as fastmcp_server
 
 logger = logging.getLogger(__name__)
 
+# Create FastMCP HTTP app early so FastAPI can use its lifespan
+mcp_http_app = fastmcp_server.http_app(path="/")
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Dependency Track MCP Server",
     description="MCP server with OAuth 2.1 authentication for OWASP Dependency Track",
     version="0.1.0",
+    lifespan=mcp_http_app.lifespan,
 )
+app.router.redirect_slashes = False
 
 # Add CORS middleware
 app.add_middleware(
@@ -65,19 +71,28 @@ class JWTAuthMiddleware:
         self.app = app
 
     async def __call__(self, scope, receive, send):
-        # Only apply auth to /mcp path
+        # Only apply auth to /mcp path, but NOT to DCR endpoints
         if scope["type"] == "http" and scope["path"].startswith("/mcp"):
+            # Allow unauthenticated access to DCR endpoints
+            if scope["path"] in ["/.well-known/mcp/clients"]:
+                # DCR registration endpoint - no auth required
+                await self.app(scope, receive, send)
+                return
+
             # Get authorization header
             headers = dict(scope.get("headers", []))
             auth_header = headers.get(b"authorization", b"").decode("utf-8")
 
             # Verify token
             if not auth_header.lower().startswith("bearer "):
-                # No valid Bearer token - return 401
+                # No valid Bearer token - return OAuth-style JSON error
                 settings = get_settings()
-                response = Response(
+                response = JSONResponse(
                     status_code=401,
-                    content="Unauthorized: Valid Bearer token required",
+                    content={
+                        "error": "invalid_token",
+                        "error_description": "Missing or invalid access token",
+                    },
                     headers={
                         "WWW-Authenticate": (
                             f'Bearer realm="mcp", '
@@ -94,11 +109,14 @@ class JWTAuthMiddleware:
             try:
                 claims = await verify_jwt_token(token)
                 if claims is None:
-                    # Invalid token - return 401
+                    # Invalid token - return OAuth-style JSON error
                     settings = get_settings()
-                    response = Response(
+                    response = JSONResponse(
                         status_code=401,
-                        content="Unauthorized: Invalid or expired token",
+                        content={
+                            "error": "invalid_token",
+                            "error_description": "Missing or invalid access token",
+                        },
                         headers={
                             "WWW-Authenticate": (
                                 f'Bearer realm="mcp", '
@@ -116,9 +134,12 @@ class JWTAuthMiddleware:
             except Exception as e:
                 logger.error(f"JWT validation error: {e}")
                 settings = get_settings()
-                response = Response(
+                response = JSONResponse(
                     status_code=401,
-                    content="Unauthorized: JWT validation failed",
+                    content={
+                        "error": "invalid_token",
+                        "error_description": "Missing or invalid access token",
+                    },
                     headers={
                         "WWW-Authenticate": (
                             f'Bearer realm="mcp", '
@@ -130,6 +151,18 @@ class JWTAuthMiddleware:
                 return
 
         # Continue to next middleware/app
+        await self.app(scope, receive, send)
+
+
+class NormalizeMcpPathMiddleware:
+    """Normalize /mcp to /mcp/ for mounted FastMCP routing."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http" and scope.get("path") == "/mcp":
+            scope = {**scope, "path": "/mcp/"}
         await self.app(scope, receive, send)
 
 
@@ -233,22 +266,66 @@ async def verify_jwt_token(token: str) -> dict | None:
         return None
 
 
-@app.get("/.well-known/oauth-protected-resource")
-async def protected_resource_metadata():
-    """Serve OAuth Protected Resource Metadata.
 
-    This endpoint advertises the OAuth configuration for this MCP server.
-    Clients use this to discover the authorization server.
+@app.get("/.well-known/oauth-authorization-server")
+async def oauth_authorization_server_metadata():
+    """Serve OAuth Authorization Server Metadata.
 
-    See: https://datatracker.ietf.org/doc/html/rfc8707
+    Returns minimal Atlassian-style metadata advertising only auth code + refresh + PKCE.
+    This overrides Keycloak's full discovery to restrict visible capabilities.
     """
     settings = get_settings()
+    issuer = settings.oauth_issuer.rstrip("/")
+    server_base = settings.oauth_resource_uri.removesuffix("/mcp")
+    server_base = server_base.rstrip("/")
 
     return JSONResponse(
         {
-            "resource": settings.oauth_resource_uri,
-            "authorization_servers": [settings.oauth_issuer],
+            "issuer": issuer,
+            "authorization_endpoint": f"{issuer}/protocol/openid-connect/auth",
+            "token_endpoint": f"{issuer}/protocol/openid-connect/token",
+            "registration_endpoint": f"{server_base}/.well-known/mcp/clients",
+            "response_types_supported": ["code"],
+            "response_modes_supported": ["query"],
+            "grant_types_supported": ["authorization_code", "refresh_token"],
+            "token_endpoint_auth_methods_supported": [
+                "client_secret_basic",
+                "client_secret_post",
+                "none",
+            ],
+            "revocation_endpoint": f"{issuer}/protocol/openid-connect/revoke",
+            "code_challenge_methods_supported": ["plain", "S256"],
+            "scopes_supported": ["openid", "profile", "email"],
         }
+    )
+
+
+@app.post("/.well-known/mcp/clients")
+async def dynamic_client_registration():
+    """Dynamic Client Registration endpoint (RFC 7591).
+
+    Allows MCP clients (like VS Code) to register themselves dynamically
+    without pre-configuration. Returns client credentials for OAuth flow.
+
+    Returns:
+        client_id for use with OAuth 2.0 flows (public client - no secret needed)
+    """
+    settings = get_settings()
+
+    # For simplicity, return the public client credentials
+    # The public "vscode-mcp" client must be pre-created in Keycloak
+    # with Standard Flow enabled and appropriate redirect URIs
+
+    return JSONResponse(
+        {
+            "client_id": "vscode-mcp",
+            "grant_types": ["authorization_code", "refresh_token"],
+            "response_types": ["code"],
+            "token_endpoint": f"{settings.oauth_issuer}/protocol/openid-connect/token",
+            "authorization_endpoint": f"{settings.oauth_issuer}/protocol/openid-connect/auth",
+            "scope": "openid profile email",
+        },
+        status_code=201,
     )
 
 
@@ -272,9 +349,9 @@ async def health_check():
 
 
 # Mount FastMCP's HTTP app at /mcp with JWT auth middleware
-# This allows FastMCP to handle the MCP protocol while we handle authentication
-mcp_http_app = fastmcp_server.http_app(path="/mcp")
+# Override FastMCP's default streamable HTTP path so /mcp maps correctly
 app.add_middleware(JWTAuthMiddleware)
+app.add_middleware(NormalizeMcpPathMiddleware)
 app.mount("/mcp", mcp_http_app)
 
 
