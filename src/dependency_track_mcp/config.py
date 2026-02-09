@@ -51,21 +51,21 @@ class Settings(BaseSettings):
     oauth_enabled: bool = Field(
         default=True,
         validation_alias=AliasChoices(
-            "oauth_enabled", "MCP_OAUTH_ENABLED", "DEPENDENCY_TRACK_OAUTH_ENABLED"
+            "oauth_enabled", "MCP_OAUTH_ENABLED"
         ),
         description="Enable OAuth 2.1 authorization (MANDATORY for production)",
     )
     oauth_issuer: str = Field(
         ...,
         validation_alias=AliasChoices(
-            "oauth_issuer", "MCP_OAUTH_ISSUER", "DEPENDENCY_TRACK_OAUTH_ISSUER"
+            "oauth_issuer", "MCP_OAUTH_ISSUER"
         ),
         description="OAuth 2.1 token issuer URL - MUST use HTTPS (e.g., https://auth.example.com)",
     )
     oauth_jwks_url: str | None = Field(
         default=None,
         validation_alias=AliasChoices(
-            "oauth_jwks_url", "MCP_OAUTH_JWKS_URL", "DEPENDENCY_TRACK_OAUTH_JWKS_URL"
+            "oauth_jwks_url", "MCP_OAUTH_JWKS_URL"
         ),
         description="OAuth 2.1 JWKS endpoint URL (auto-derived from issuer if not specified). "
         "For Keycloak: https://keycloak.example.com/realms/<realm>/protocol/openid-connect/certs",
@@ -73,7 +73,7 @@ class Settings(BaseSettings):
     oauth_audience: str | None = Field(
         default=None,
         validation_alias=AliasChoices(
-            "oauth_audience", "MCP_OAUTH_AUDIENCE", "DEPENDENCY_TRACK_OAUTH_AUDIENCE"
+            "oauth_audience", "MCP_OAUTH_AUDIENCE"
         ),
         description="OAuth 2.1 expected audience for tokens (aud claim). "
         "Configure this in Keycloak via an Audience mapper in a Client Scope.",
@@ -83,14 +83,13 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices(
             "oauth_required_scopes",
             "MCP_OAUTH_REQUIRED_SCOPES",
-            "DEPENDENCY_TRACK_OAUTH_REQUIRED_SCOPES",
         ),
         description="Space-separated list of required OAuth 2.1 scopes",
     )
     oauth_resource_uri: str = Field(
         default="https://mcp.example.com/mcp",
         validation_alias=AliasChoices(
-            "oauth_resource_uri", "MCP_OAUTH_RESOURCE_URI", "DEPENDENCY_TRACK_OAUTH_RESOURCE_URI"
+            "oauth_resource_uri", "MCP_OAUTH_RESOURCE_URI",
         ),
         description=(
             "Resource URI for this MCP server (used in /.well-known/oauth-protected-resource)"
@@ -101,7 +100,7 @@ class Settings(BaseSettings):
     dev_allow_http: bool = Field(
         default=False,
         validation_alias=AliasChoices(
-            "dev_allow_http", "MCP_DEV_ALLOW_HTTP", "DEPENDENCY_TRACK_DEV_ALLOW_HTTP"
+            "dev_allow_http", "MCP_DEV_ALLOW_HTTP"
         ),
         description="DEVELOPMENT ONLY: Allow HTTP URLs (use https for production)",
     )
@@ -141,14 +140,14 @@ class Settings(BaseSettings):
     server_transport: str = Field(
         default="http",
         validation_alias=AliasChoices(
-            "server_transport", "MCP_SERVER_TRANSPORT", "DEPENDENCY_TRACK_SERVER_TRANSPORT"
+            "server_transport", "MCP_SERVER_TRANSPORT"
         ),
         description="Transport mode: 'http' (HTTPS web server via TLS)",
     )
     server_host: str = Field(
         default="0.0.0.0",
         validation_alias=AliasChoices(
-            "server_host", "MCP_SERVER_HOST", "DEPENDENCY_TRACK_SERVER_HOST"
+            "server_host", "MCP_SERVER_HOST"
         ),
         description="HTTP server host address (when transport=http)",
     )
@@ -157,28 +156,28 @@ class Settings(BaseSettings):
         ge=1,
         le=65535,
         validation_alias=AliasChoices(
-            "server_port", "MCP_SERVER_PORT", "DEPENDENCY_TRACK_SERVER_PORT"
+            "server_port", "MCP_SERVER_PORT"
         ),
         description="HTTP server port (when transport=http)",
     )
     server_tls_cert: str | None = Field(
         default=None,
         validation_alias=AliasChoices(
-            "server_tls_cert", "MCP_SERVER_TLS_CERT", "DEPENDENCY_TRACK_SERVER_TLS_CERT"
+            "server_tls_cert", "MCP_SERVER_TLS_CERT"
         ),
         description="PEM-encoded TLS certificate for HTTPS (required for HTTP transport)",
     )
     server_tls_key: str | None = Field(
         default=None,
         validation_alias=AliasChoices(
-            "server_tls_key", "MCP_SERVER_TLS_KEY", "DEPENDENCY_TRACK_SERVER_TLS_KEY"
+            "server_tls_key", "MCP_SERVER_TLS_KEY"
         ),
         description="PEM-encoded TLS private key for HTTPS (required for HTTP transport)",
     )
     server_tls_ca_certs: str | None = Field(
         default=None,
         validation_alias=AliasChoices(
-            "server_tls_ca_certs", "MCP_SERVER_TLS_CA_CERTS", "DEPENDENCY_TRACK_SERVER_TLS_CA_CERTS"
+            "server_tls_ca_certs", "MCP_SERVER_TLS_CA_CERTS"
         ),
         description="Optional PEM-encoded CA bundle for HTTPS (client cert verification)",
     )

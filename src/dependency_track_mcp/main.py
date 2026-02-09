@@ -295,7 +295,7 @@ async def oauth_authorization_server_metadata():
             ],
             "revocation_endpoint": f"{issuer}/protocol/openid-connect/revoke",
             "code_challenge_methods_supported": ["plain", "S256"],
-            "scopes_supported": ["openid", "profile", "email"],
+            "scopes_supported": list(settings.get_required_scopes()),
         }
     )
 
@@ -323,7 +323,7 @@ async def dynamic_client_registration():
             "response_types": ["code"],
             "token_endpoint": f"{settings.oauth_issuer}/protocol/openid-connect/token",
             "authorization_endpoint": f"{settings.oauth_issuer}/protocol/openid-connect/auth",
-            "scope": "openid profile email",
+            "scope": settings.oauth_required_scopes
         },
         status_code=201,
     )
