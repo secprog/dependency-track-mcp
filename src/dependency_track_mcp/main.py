@@ -18,7 +18,6 @@ Key Features:
 """
 
 import logging
-import os
 import sys
 
 import httpx
@@ -37,15 +36,30 @@ from dependency_track_mcp.config import (
 from dependency_track_mcp.server import mcp as fastmcp_server
 
 
-def _bridge_auth_mode_from_env() -> bool:
-    """Read MCP_BRIDGE_AUTH_MODE at import time without touching Settings.
+def _is_bridge_auth_mode() -> bool:
+    """Return whether bridge auth mode is on, sourced from full Settings.
 
-    Settings instantiation requires DEPENDENCY_TRACK_URL / API_KEY to be set,
-    which is fine at process start but breaks test collection where these are
-    populated lazily via fixtures. Read the single env var we need directly so
-    module import never triggers Settings validation.
+    Reads through ``get_settings()`` (lru_cached) so the value reflects every
+    `pydantic-settings` source — process env, ``.env`` file, etc. — not just
+    the process environment. The previous import-time helper missed values
+    that were loaded from the ``.env`` file, which caused
+    ``JWTAuthMiddleware`` to be installed even when the deployment was
+    configured for bridge mode via the dotenv file (codex P2 review on
+    jusbrasil/dependency-track-mcp#1).
+
+    The strict ``is True`` check guards against MagicMock substitutions in
+    middleware unit tests, where mocking ``get_settings`` would otherwise
+    short-circuit auth via the truthy Mock attribute and break pre-existing
+    coverage of the JWT path.
     """
-    return os.getenv("MCP_BRIDGE_AUTH_MODE", "").strip().lower() in {"1", "true", "yes"}
+    try:
+        return get_settings().bridge_auth_mode is True
+    except Exception:
+        # If Settings fails to load (e.g. during test collection before
+        # fixtures populate env), conservatively treat as non-bridge so the
+        # secure default (OAuth required) wins.
+        return False
+
 
 logger = logging.getLogger(__name__)
 
@@ -61,16 +75,14 @@ app = FastAPI(
 )
 app.router.redirect_slashes = False
 
-# CORS configuration depends on deployment mode. In bridge_auth_mode the server
-# only ever receives requests from the in-cluster mcp-bridge pod, so a
-# wide-open CORS policy is both incorrect (no browser is the client) and
-# unnecessary; default to closed for that mode.
-_BRIDGE_AUTH_MODE = _bridge_auth_mode_from_env()
-_cors_origins: list[str] = [] if _BRIDGE_AUTH_MODE else ["*"]
-
+# CORS is wide open by default for backwards compatibility. Operators
+# fronting this server with mcp-bridge should rely on the bridge's
+# ingress NetworkPolicy + group ACL rather than CORS — browsers are not
+# the caller and `allow_origins=["*"]` + `allow_credentials=True` is
+# functionally ignored by browsers anyway.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_cors_origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -88,6 +100,19 @@ class JWTAuthMiddleware:
         self.app = app
 
     async def __call__(self, scope, receive, send):
+        # Bridge auth mode: authentication is delegated to the upstream MCP
+        # gateway (see Settings.bridge_auth_mode). This server still loads
+        # the middleware so request paths stay identical for tests, but it
+        # short-circuits before any JWT checks when the mode is on. We
+        # consult Settings on every request (not at import time) so that
+        # values supplied via the ``.env`` file are honoured — the previous
+        # import-time read missed those, leaving the middleware active
+        # against a bridge-mode deployment (codex P2 review on
+        # jusbrasil/dependency-track-mcp#1).
+        if scope["type"] == "http" and _is_bridge_auth_mode():
+            await self.app(scope, receive, send)
+            return
+
         # Allow unauthenticated access to DCR endpoints first
         if scope["type"] == "http" and scope["path"] in ["/.well-known/mcp/clients"]:
             # DCR registration endpoint - no auth required
@@ -367,12 +392,11 @@ async def health_check():
 # Mount FastMCP's HTTP app at /mcp with JWT auth middleware.
 # Override FastMCP's default streamable HTTP path so /mcp maps correctly.
 #
-# In bridge_auth_mode the JWT middleware is skipped: authentication is
-# delegated to the upstream mcp-bridge gateway, and this server trusts
-# every request that reaches it. NetworkPolicy / service mesh must
-# restrict ingress to the gateway pod when this mode is on.
-if not _BRIDGE_AUTH_MODE:
-    app.add_middleware(JWTAuthMiddleware)
+# The JWT middleware is always installed but short-circuits at request
+# time when Settings.bridge_auth_mode is on (see JWTAuthMiddleware.__call__).
+# That keeps the value sourced from the full pydantic-settings chain
+# (process env + .env file) rather than just the process environment.
+app.add_middleware(JWTAuthMiddleware)
 app.add_middleware(NormalizeMcpPathMiddleware)
 app.mount("/mcp", mcp_http_app)
 

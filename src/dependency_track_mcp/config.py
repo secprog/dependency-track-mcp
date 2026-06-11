@@ -359,10 +359,18 @@ class Settings(BaseSettings):
         safely deployed on the web.
 
         Note: HTTP is allowed for development if dev_allow_http=true, but this
-        should never be used in production deployments. In bridge_auth_mode the
-        OAuth-issuer / TLS / cert checks are skipped because the authenticating
-        MCP gateway in front terminates TLS and supplies authentication;
-        network isolation is enforced out-of-band (NetworkPolicy / service mesh).
+        should never be used in production deployments. In bridge_auth_mode
+        the *inbound-facing* checks (OAuth issuer, server-side TLS material)
+        are skipped because the authenticating MCP gateway in front terminates
+        client TLS and supplies authentication; network isolation is enforced
+        out-of-band (NetworkPolicy / service mesh).
+
+        The *outbound* checks (DEPENDENCY_TRACK_URL must be HTTPS,
+        DEPENDENCY_TRACK_VERIFY_SSL must be true) remain enforced because the
+        bridge does not protect this server's connection to the Dependency
+        Track API — that connection still carries the backend API key and
+        must verify the upstream certificate (codex P2 review on
+        jusbrasil/dependency-track-mcp#1).
 
         Raises:
             ConfigurationError: If configuration is unsafe
@@ -370,10 +378,7 @@ class Settings(BaseSettings):
         # Check OAuth is enabled (skipped in bridge_auth_mode)
         self.validate_oauth_enabled()
 
-        if self.bridge_auth_mode:
-            # Behind a gateway: skip TLS / OAuth checks that the gateway owns.
-            return
-
+        # ── Outbound checks (apply in both modes) ─────────────────────────
         # Check HTTPS for Dependency Track (unless dev_allow_http)
         if not self.url.startswith("https://"):
             if not self.dev_allow_http:
@@ -384,6 +389,21 @@ class Settings(BaseSettings):
                 )
             # else: dev_allow_http is true, HTTP is allowed for dev
 
+        # Check SSL verification for the outbound Dependency-Track connection.
+        # This is the path that carries the backend API key — the gateway
+        # never protects it, so verification must stay on regardless of mode.
+        if not self.verify_ssl:
+            raise ConfigurationError(
+                "SSL certificate verification must be enabled for web deployment. "
+                "Set DEPENDENCY_TRACK_VERIFY_SSL=true or remove the setting "
+                "to use the default (true)."
+            )
+
+        if self.bridge_auth_mode:
+            # Inbound auth + TLS are the gateway's responsibility from here on.
+            return
+
+        # ── Inbound checks (only when this server faces clients directly) ─
         # Check HTTPS for OAuth issuer (unless dev_allow_http)
         if not self.oauth_issuer.startswith("https://"):
             if not self.dev_allow_http:
@@ -399,14 +419,6 @@ class Settings(BaseSettings):
             raise ConfigurationError(
                 "TLS is required for HTTPS. Provide both MCP_SERVER_TLS_CERT "
                 "and MCP_SERVER_TLS_KEY to enable HTTPS."
-            )
-
-        # Check SSL verification
-        if not self.verify_ssl:
-            raise ConfigurationError(
-                "SSL certificate verification must be enabled for web deployment. "
-                "Set DEPENDENCY_TRACK_VERIFY_SSL=true or remove the setting "
-                "to use the default (true)."
             )
 
         # Check that OAuth issuer is configured

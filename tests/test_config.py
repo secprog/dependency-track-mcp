@@ -499,6 +499,46 @@ class TestSettings:
         with pytest.raises(ConfigurationError, match="OAuth 2.1 authorization is MANDATORY"):
             settings.validate_oauth_enabled()
 
+    def test_bridge_auth_mode_still_enforces_verify_ssl(self):
+        """Outbound DTrack TLS verification must stay on in bridge mode.
+
+        The gateway only terminates inbound client TLS — the connection from
+        this server to Dependency Track is unprotected by the gateway and
+        carries the backend API key, so verify_ssl=False must still fail
+        the production guard even when bridge_auth_mode=True.
+        """
+        settings = Settings(
+            url="https://dependencytrack.apps.jusbr.com",
+            api_key="test-key",
+            bridge_auth_mode=True,
+            oauth_issuer="",
+            server_tls_cert="",
+            server_tls_key="",
+            verify_ssl=False,
+        )
+        with pytest.raises(ConfigurationError, match="SSL certificate verification"):
+            settings.validate_configuration_for_web_deployment()
+
+    def test_bridge_auth_mode_still_enforces_dtrack_https(self):
+        """Outbound DTrack URL must still be HTTPS in bridge mode (no dev_allow_http).
+
+        Same rationale as verify_ssl: the gateway does not protect this
+        server's outbound connection to Dependency Track.
+        """
+        settings = Settings(
+            url="http://dtrack.svc.cluster.local",
+            api_key="test-key",
+            bridge_auth_mode=True,
+            oauth_issuer="",
+            server_tls_cert="",
+            server_tls_key="",
+            dev_allow_http=True,
+        )
+        # Disable dev_allow_http to trigger the production guard
+        settings.dev_allow_http = False
+        with pytest.raises(ConfigurationError, match="must use HTTPS"):
+            settings.validate_configuration_for_web_deployment()
+
 
 class TestTLSHelpers:
     """Test TLS helper functions."""

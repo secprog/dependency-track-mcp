@@ -66,6 +66,31 @@ class TestJWTAuthMiddleware:
     """Tests for JWT authentication middleware."""
 
     @pytest.mark.asyncio
+    async def test_middleware_passes_through_in_bridge_auth_mode(self):
+        """When Settings.bridge_auth_mode is True the middleware delegates
+        immediately, without inspecting the Authorization header."""
+        app_mock = AsyncMock()
+        middleware = JWTAuthMiddleware(app_mock)
+
+        scope = {
+            "type": "http",
+            "path": "/mcp/something",
+            "headers": [],  # No authorization header — would normally 401
+        }
+        receive = AsyncMock()
+        send = AsyncMock()
+
+        bridge_settings = MagicMock(bridge_auth_mode=True)
+        with patch(
+            "dependency_track_mcp.main.get_settings",
+            return_value=bridge_settings,
+        ):
+            await middleware(scope, receive, send)
+
+        app_mock.assert_called_once()
+        assert not send.called
+
+    @pytest.mark.asyncio
     async def test_middleware_with_valid_bearer_token(self):
         """Test middleware allows request with valid Bearer token."""
         app_mock = AsyncMock()
