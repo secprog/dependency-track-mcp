@@ -35,6 +35,32 @@ from dependency_track_mcp.config import (
 )
 from dependency_track_mcp.server import mcp as fastmcp_server
 
+
+def _is_bridge_auth_mode() -> bool:
+    """Return whether bridge auth mode is on, sourced from full Settings.
+
+    Reads through ``get_settings()`` (lru_cached) so the value reflects every
+    `pydantic-settings` source — process env, ``.env`` file, etc. — not just
+    the process environment. The previous import-time helper missed values
+    that were loaded from the ``.env`` file, which caused
+    ``JWTAuthMiddleware`` to be installed even when the deployment was
+    configured for bridge mode via the dotenv file (codex P2 review on
+    jusbrasil/dependency-track-mcp#1).
+
+    The strict ``is True`` check guards against MagicMock substitutions in
+    middleware unit tests, where mocking ``get_settings`` would otherwise
+    short-circuit auth via the truthy Mock attribute and break pre-existing
+    coverage of the JWT path.
+    """
+    try:
+        return get_settings().bridge_auth_mode is True
+    except Exception:
+        # If Settings fails to load (e.g. during test collection before
+        # fixtures populate env), conservatively treat as non-bridge so the
+        # secure default (OAuth required) wins.
+        return False
+
+
 logger = logging.getLogger(__name__)
 
 # Create FastMCP HTTP app early so FastAPI can use its lifespan
@@ -49,13 +75,45 @@ app = FastAPI(
 )
 app.router.redirect_slashes = False
 
-# Add CORS middleware
+# CORS is closed by default. Two paths:
+#   * bridge_auth_mode: the in-cluster mcp-bridge gateway is the only
+#     caller, so `allow_origins=[]` is correct. No browser ever talks to
+#     this server in this mode.
+#   * direct mode: operators must list browser origins explicitly via
+#     `MCP_CORS_ALLOWED_ORIGINS` (comma-separated). Default empty.
+#
+# `allow_credentials` is False — authentication here is `Authorization:
+# Bearer`, not session cookies. With credentials=True + `allow_origins=*`
+# Starlette's CORSMiddleware reflects the request `Origin` and emits
+# `Access-Control-Allow-Credentials: true`, which is the classic
+# any-origin-with-credentials anti-pattern (flagged on PR #1 by @alinefr).
+#
+# `allow_methods` and `allow_headers` are the minimum set the MCP HTTP
+# transport actually uses.
+def _cors_origins_for_startup() -> list[str]:
+    """Resolve CORS origins at module init via full Settings chain.
+
+    Reads through ``get_settings()`` (lru_cached) so the value reflects
+    every pydantic-settings source (process env + ``.env`` file).
+    Returns the safest default (``[]``) if Settings can't load (e.g.
+    test collection without env fixtures), which keeps both bridge mode
+    and direct mode closed by default.
+    """
+    try:
+        s = get_settings()
+    except Exception:
+        return []
+    if s.bridge_auth_mode:
+        return []
+    return [o.strip() for o in (s.cors_allowed_origins or "").split(",") if o.strip()]
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=_cors_origins_for_startup(),
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "DELETE"],
+    allow_headers=["authorization", "content-type", "mcp-session-id"],
 )
 
 # Global JWKS cache (refreshed on demand)
@@ -70,6 +128,19 @@ class JWTAuthMiddleware:
         self.app = app
 
     async def __call__(self, scope, receive, send):
+        # Bridge auth mode: authentication is delegated to the upstream MCP
+        # gateway (see Settings.bridge_auth_mode). This server still loads
+        # the middleware so request paths stay identical for tests, but it
+        # short-circuits before any JWT checks when the mode is on. We
+        # consult Settings on every request (not at import time) so that
+        # values supplied via the ``.env`` file are honoured — the previous
+        # import-time read missed those, leaving the middleware active
+        # against a bridge-mode deployment (codex P2 review on
+        # jusbrasil/dependency-track-mcp#1).
+        if scope["type"] == "http" and _is_bridge_auth_mode():
+            await self.app(scope, receive, send)
+            return
+
         # Allow unauthenticated access to DCR endpoints first
         if scope["type"] == "http" and scope["path"] in ["/.well-known/mcp/clients"]:
             # DCR registration endpoint - no auth required
@@ -346,8 +417,13 @@ async def health_check():
     )
 
 
-# Mount FastMCP's HTTP app at /mcp with JWT auth middleware
-# Override FastMCP's default streamable HTTP path so /mcp maps correctly
+# Mount FastMCP's HTTP app at /mcp with JWT auth middleware.
+# Override FastMCP's default streamable HTTP path so /mcp maps correctly.
+#
+# The JWT middleware is always installed but short-circuits at request
+# time when Settings.bridge_auth_mode is on (see JWTAuthMiddleware.__call__).
+# That keeps the value sourced from the full pydantic-settings chain
+# (process env + .env file) rather than just the process environment.
 app.add_middleware(JWTAuthMiddleware)
 app.add_middleware(NormalizeMcpPathMiddleware)
 app.mount("/mcp", mcp_http_app)
@@ -385,16 +461,29 @@ def main():
     use_https = settings.server_tls_cert and settings.server_tls_key
     protocol = "https" if use_https else "http"
 
+    bridge_auth_mode = getattr(settings, "bridge_auth_mode", False)
+
     logger.info("=" * 80)
-    logger.info("Starting Dependency Track MCP Server with OAuth")
+    if bridge_auth_mode:
+        logger.warning("Starting Dependency Track MCP Server in BRIDGE AUTH MODE")
+        logger.warning(
+            "Authentication is delegated to the upstream MCP gateway. "
+            "Ensure NetworkPolicy / service mesh restricts ingress to the "
+            "gateway pod — this server accepts all incoming requests."
+        )
+    else:
+        logger.info("Starting Dependency Track MCP Server with OAuth")
     logger.info("=" * 80)
     logger.info(f"Server: {protocol}://{settings.server_host}:{settings.server_port}")
-    logger.info("OAuth Issuer: configured (value not logged)")
-    logger.info(f"JWKS URL: {settings.oauth_jwks_url}")
-    if settings.oauth_audience:
-        logger.info("Required Audience: configured (value not logged)")
+    if bridge_auth_mode:
+        logger.info("OAuth: disabled (bridge auth mode)")
     else:
-        logger.info("Required Audience: (not enforced)")
+        logger.info("OAuth Issuer: configured (value not logged)")
+        logger.info(f"JWKS URL: {settings.oauth_jwks_url}")
+        if settings.oauth_audience:
+            logger.info("Required Audience: configured (value not logged)")
+        else:
+            logger.info("Required Audience: (not enforced)")
     logger.info("MCP Integration: Direct (no separate FastMCP HTTP server)")
     logger.info("=" * 80)
 
@@ -414,11 +503,13 @@ def main():
         finally:
             cleanup_tls_temp_files()
     else:
-        # HTTP mode (dev only)
-        if not settings.dev_allow_http:
+        # HTTP mode is permitted when running behind a TLS-terminating
+        # gateway (bridge_auth_mode) or in explicit dev mode.
+        if not settings.dev_allow_http and not bridge_auth_mode:
             logger.error(
                 "TLS certificates required for production. "
-                "Set MCP_SERVER_TLS_CERT and MCP_SERVER_TLS_KEY."
+                "Set MCP_SERVER_TLS_CERT and MCP_SERVER_TLS_KEY, or set "
+                "MCP_BRIDGE_AUTH_MODE=true when running behind a TLS-terminating gateway."
             )
             sys.exit(1)
         uvicorn.run(

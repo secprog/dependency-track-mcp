@@ -47,14 +47,31 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # OAuth 2.1 Authorization Settings (MANDATORY)
+    # Bridge auth mode: when true, this server runs behind an authenticating
+    # MCP gateway (e.g. jusbrasil/mcp-bridge) that performs OAuth + ACL at the
+    # edge. The dependency-track-mcp process then accepts all incoming requests
+    # without its own JWT middleware. Only safe when network policy restricts
+    # ingress to the gateway pod and an `allowed_tools` policy curates the
+    # exposed surface. Off by default — flipping this on is an explicit opt-in
+    # to single-layer defense.
+    bridge_auth_mode: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("bridge_auth_mode", "MCP_BRIDGE_AUTH_MODE"),
+        description=(
+            "When true, defer authentication to an upstream MCP gateway and "
+            "skip this server's JWT middleware. Requires network-level "
+            "isolation. Off by default."
+        ),
+    )
+
+    # OAuth 2.1 Authorization Settings (MANDATORY unless bridge_auth_mode=true)
     oauth_enabled: bool = Field(
         default=True,
         validation_alias=AliasChoices("oauth_enabled", "MCP_OAUTH_ENABLED"),
         description="Enable OAuth 2.1 authorization (MANDATORY for production)",
     )
     oauth_issuer: str = Field(
-        ...,
+        default="",
         validation_alias=AliasChoices("oauth_issuer", "MCP_OAUTH_ISSUER"),
         description="OAuth 2.1 token issuer URL - MUST use HTTPS (e.g., https://auth.example.com)",
     )
@@ -77,6 +94,19 @@ class Settings(BaseSettings):
             "MCP_OAUTH_REQUIRED_SCOPES",
         ),
         description="Space-separated list of required OAuth 2.1 scopes",
+    )
+    cors_allowed_origins: str = Field(
+        default="",
+        validation_alias=AliasChoices(
+            "cors_allowed_origins",
+            "MCP_CORS_ALLOWED_ORIGINS",
+        ),
+        description=(
+            "Comma-separated list of origins allowed via CORS in direct "
+            "(non-bridge) mode. Empty = no browser origin allowed. Ignored "
+            "when MCP_BRIDGE_AUTH_MODE=true (the gateway is the only caller "
+            "and CORS is irrelevant)."
+        ),
     )
     oauth_resource_uri: str = Field(
         default="https://mcp.example.com/mcp",
@@ -196,7 +226,13 @@ class Settings(BaseSettings):
         """Validate OAuth issuer URL format.
 
         Note: HTTPS requirement is checked in model_validator after dev_allow_http is loaded.
+        Empty is permitted here so bridge_auth_mode can run without an issuer.
+        validate_oauth_enabled / validate_configuration_for_web_deployment enforce
+        the per-mode requirements.
         """
+        if not v:
+            return v
+
         parsed = urlparse(v)
 
         # Must have a scheme and host
@@ -269,7 +305,11 @@ class Settings(BaseSettings):
                     stacklevel=2,
                 )
 
-        # Check OAuth issuer URL (HTTP allowed in dev mode)
+        # Check OAuth issuer URL (HTTP allowed in dev mode).
+        # In bridge_auth_mode the issuer is unused (auth runs at the gateway),
+        # so an empty / missing value is acceptable.
+        if self.bridge_auth_mode and not self.oauth_issuer:
+            return self
         parsed_issuer = urlparse(self.oauth_issuer)
         if parsed_issuer.scheme == "http":
             if not self.dev_allow_http:
@@ -309,10 +349,14 @@ class Settings(BaseSettings):
         """Validate that OAuth 2.1 is enabled.
 
         OAuth 2.1 is mandatory for MCP specification compliance and web deployment.
+        Bridge auth mode is the only escape hatch: when set, the gateway in front
+        of this server is responsible for authentication and this check is skipped.
 
         Raises:
             ConfigurationError: If OAuth is not properly configured
         """
+        if self.bridge_auth_mode:
+            return
         if not self.oauth_enabled:
             raise ConfigurationError(
                 "OAuth 2.1 authorization is MANDATORY and cannot be disabled. "
@@ -328,14 +372,26 @@ class Settings(BaseSettings):
         safely deployed on the web.
 
         Note: HTTP is allowed for development if dev_allow_http=true, but this
-        should never be used in production deployments.
+        should never be used in production deployments. In bridge_auth_mode
+        the *inbound-facing* checks (OAuth issuer, server-side TLS material)
+        are skipped because the authenticating MCP gateway in front terminates
+        client TLS and supplies authentication; network isolation is enforced
+        out-of-band (NetworkPolicy / service mesh).
+
+        The *outbound* checks (DEPENDENCY_TRACK_URL must be HTTPS,
+        DEPENDENCY_TRACK_VERIFY_SSL must be true) remain enforced because the
+        bridge does not protect this server's connection to the Dependency
+        Track API — that connection still carries the backend API key and
+        must verify the upstream certificate (codex P2 review on
+        jusbrasil/dependency-track-mcp#1).
 
         Raises:
             ConfigurationError: If configuration is unsafe
         """
-        # Check OAuth is enabled
+        # Check OAuth is enabled (skipped in bridge_auth_mode)
         self.validate_oauth_enabled()
 
+        # ── Outbound checks (apply in both modes) ─────────────────────────
         # Check HTTPS for Dependency Track (unless dev_allow_http)
         if not self.url.startswith("https://"):
             if not self.dev_allow_http:
@@ -346,6 +402,21 @@ class Settings(BaseSettings):
                 )
             # else: dev_allow_http is true, HTTP is allowed for dev
 
+        # Check SSL verification for the outbound Dependency-Track connection.
+        # This is the path that carries the backend API key — the gateway
+        # never protects it, so verification must stay on regardless of mode.
+        if not self.verify_ssl:
+            raise ConfigurationError(
+                "SSL certificate verification must be enabled for web deployment. "
+                "Set DEPENDENCY_TRACK_VERIFY_SSL=true or remove the setting "
+                "to use the default (true)."
+            )
+
+        if self.bridge_auth_mode:
+            # Inbound auth + TLS are the gateway's responsibility from here on.
+            return
+
+        # ── Inbound checks (only when this server faces clients directly) ─
         # Check HTTPS for OAuth issuer (unless dev_allow_http)
         if not self.oauth_issuer.startswith("https://"):
             if not self.dev_allow_http:
@@ -361,14 +432,6 @@ class Settings(BaseSettings):
             raise ConfigurationError(
                 "TLS is required for HTTPS. Provide both MCP_SERVER_TLS_CERT "
                 "and MCP_SERVER_TLS_KEY to enable HTTPS."
-            )
-
-        # Check SSL verification
-        if not self.verify_ssl:
-            raise ConfigurationError(
-                "SSL certificate verification must be enabled for web deployment. "
-                "Set DEPENDENCY_TRACK_VERIFY_SSL=true or remove the setting "
-                "to use the default (true)."
             )
 
         # Check that OAuth issuer is configured

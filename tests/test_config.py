@@ -452,6 +452,112 @@ class TestSettings:
         # Should not raise
         settings.validate_configuration_for_web_deployment()
 
+    def test_bridge_auth_mode_allows_oauth_disabled(self):
+        """bridge_auth_mode lets the server start with OAuth turned off."""
+        settings = Settings(
+            url="https://example.com",
+            api_key="test-key",
+            bridge_auth_mode=True,
+            oauth_enabled=False,
+        )
+        # Must not raise — gateway in front handles auth.
+        settings.validate_oauth_enabled()
+
+    def test_bridge_auth_mode_allows_empty_oauth_issuer(self):
+        """bridge_auth_mode does not require MCP_OAUTH_ISSUER to be set."""
+        settings = Settings(
+            url="https://example.com",
+            api_key="test-key",
+            bridge_auth_mode=True,
+            oauth_issuer="",
+        )
+        # Validator should accept empty issuer.
+        assert settings.oauth_issuer == ""
+
+    def test_bridge_auth_mode_skips_tls_and_oauth_checks_in_web_deployment(self):
+        """In bridge_auth_mode the gateway terminates TLS and owns client auth."""
+        settings = Settings(
+            url="https://dependencytrack.apps.jusbr.com",
+            api_key="test-key",
+            bridge_auth_mode=True,
+            oauth_issuer="",
+            server_tls_cert="",
+            server_tls_key="",
+        )
+        # Must not raise even without local TLS cert or OAuth issuer.
+        settings.validate_configuration_for_web_deployment()
+
+    def test_bridge_auth_mode_off_still_enforces_oauth(self):
+        """Default mode still rejects oauth_enabled=False."""
+        settings = Settings(
+            url="https://example.com",
+            api_key="test-key",
+            oauth_issuer="https://auth.example.com",
+            bridge_auth_mode=False,
+            oauth_enabled=False,
+        )
+        with pytest.raises(ConfigurationError, match="OAuth 2.1 authorization is MANDATORY"):
+            settings.validate_oauth_enabled()
+
+    def test_bridge_auth_mode_still_enforces_verify_ssl(self):
+        """Outbound DTrack TLS verification must stay on in bridge mode.
+
+        The gateway only terminates inbound client TLS — the connection from
+        this server to Dependency Track is unprotected by the gateway and
+        carries the backend API key, so verify_ssl=False must still fail
+        the production guard even when bridge_auth_mode=True.
+        """
+        settings = Settings(
+            url="https://dependencytrack.apps.jusbr.com",
+            api_key="test-key",
+            bridge_auth_mode=True,
+            oauth_issuer="",
+            server_tls_cert="",
+            server_tls_key="",
+            verify_ssl=False,
+        )
+        with pytest.raises(ConfigurationError, match="SSL certificate verification"):
+            settings.validate_configuration_for_web_deployment()
+
+    def test_cors_allowed_origins_default_is_empty(self):
+        """Direct-mode CORS defaults to no allowed browser origins."""
+        settings = Settings(
+            url="https://example.com",
+            api_key="test-key",
+            oauth_issuer="https://auth.example.com",
+        )
+        assert settings.cors_allowed_origins == ""
+
+    def test_cors_allowed_origins_accepts_csv(self):
+        """Operator-provided allowlist parses as a comma-separated string."""
+        settings = Settings(
+            url="https://example.com",
+            api_key="test-key",
+            oauth_issuer="https://auth.example.com",
+            cors_allowed_origins="https://a.example.com,https://b.example.com",
+        )
+        assert settings.cors_allowed_origins == "https://a.example.com,https://b.example.com"
+
+    def test_bridge_auth_mode_still_enforces_dtrack_https(self):
+        """Outbound DTrack URL must still be HTTPS in bridge mode (no dev_allow_http).
+
+        Same rationale as verify_ssl: the gateway does not protect this
+        server's outbound connection to Dependency Track.
+        """
+        settings = Settings(
+            url="http://dtrack.svc.cluster.local",
+            api_key="test-key",
+            bridge_auth_mode=True,
+            oauth_issuer="",
+            server_tls_cert="",
+            server_tls_key="",
+            dev_allow_http=True,
+        )
+        # Disable dev_allow_http to trigger the production guard
+        settings.dev_allow_http = False
+        with pytest.raises(ConfigurationError, match="must use HTTPS"):
+            settings.validate_configuration_for_web_deployment()
+
 
 class TestTLSHelpers:
     """Test TLS helper functions."""
