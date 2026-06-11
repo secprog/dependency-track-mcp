@@ -18,6 +18,7 @@ Key Features:
 """
 
 import logging
+import os
 import sys
 
 import httpx
@@ -35,6 +36,17 @@ from dependency_track_mcp.config import (
 )
 from dependency_track_mcp.server import mcp as fastmcp_server
 
+
+def _bridge_auth_mode_from_env() -> bool:
+    """Read MCP_BRIDGE_AUTH_MODE at import time without touching Settings.
+
+    Settings instantiation requires DEPENDENCY_TRACK_URL / API_KEY to be set,
+    which is fine at process start but breaks test collection where these are
+    populated lazily via fixtures. Read the single env var we need directly so
+    module import never triggers Settings validation.
+    """
+    return os.getenv("MCP_BRIDGE_AUTH_MODE", "").strip().lower() in {"1", "true", "yes"}
+
 logger = logging.getLogger(__name__)
 
 # Create FastMCP HTTP app early so FastAPI can use its lifespan
@@ -49,10 +61,16 @@ app = FastAPI(
 )
 app.router.redirect_slashes = False
 
-# Add CORS middleware
+# CORS configuration depends on deployment mode. In bridge_auth_mode the server
+# only ever receives requests from the in-cluster mcp-bridge pod, so a
+# wide-open CORS policy is both incorrect (no browser is the client) and
+# unnecessary; default to closed for that mode.
+_BRIDGE_AUTH_MODE = _bridge_auth_mode_from_env()
+_cors_origins: list[str] = [] if _BRIDGE_AUTH_MODE else ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -346,9 +364,15 @@ async def health_check():
     )
 
 
-# Mount FastMCP's HTTP app at /mcp with JWT auth middleware
-# Override FastMCP's default streamable HTTP path so /mcp maps correctly
-app.add_middleware(JWTAuthMiddleware)
+# Mount FastMCP's HTTP app at /mcp with JWT auth middleware.
+# Override FastMCP's default streamable HTTP path so /mcp maps correctly.
+#
+# In bridge_auth_mode the JWT middleware is skipped: authentication is
+# delegated to the upstream mcp-bridge gateway, and this server trusts
+# every request that reaches it. NetworkPolicy / service mesh must
+# restrict ingress to the gateway pod when this mode is on.
+if not _BRIDGE_AUTH_MODE:
+    app.add_middleware(JWTAuthMiddleware)
 app.add_middleware(NormalizeMcpPathMiddleware)
 app.mount("/mcp", mcp_http_app)
 
@@ -385,16 +409,29 @@ def main():
     use_https = settings.server_tls_cert and settings.server_tls_key
     protocol = "https" if use_https else "http"
 
+    bridge_auth_mode = getattr(settings, "bridge_auth_mode", False)
+
     logger.info("=" * 80)
-    logger.info("Starting Dependency Track MCP Server with OAuth")
+    if bridge_auth_mode:
+        logger.warning("Starting Dependency Track MCP Server in BRIDGE AUTH MODE")
+        logger.warning(
+            "Authentication is delegated to the upstream MCP gateway. "
+            "Ensure NetworkPolicy / service mesh restricts ingress to the "
+            "gateway pod — this server accepts all incoming requests."
+        )
+    else:
+        logger.info("Starting Dependency Track MCP Server with OAuth")
     logger.info("=" * 80)
     logger.info(f"Server: {protocol}://{settings.server_host}:{settings.server_port}")
-    logger.info("OAuth Issuer: configured (value not logged)")
-    logger.info(f"JWKS URL: {settings.oauth_jwks_url}")
-    if settings.oauth_audience:
-        logger.info("Required Audience: configured (value not logged)")
+    if bridge_auth_mode:
+        logger.info("OAuth: disabled (bridge auth mode)")
     else:
-        logger.info("Required Audience: (not enforced)")
+        logger.info("OAuth Issuer: configured (value not logged)")
+        logger.info(f"JWKS URL: {settings.oauth_jwks_url}")
+        if settings.oauth_audience:
+            logger.info("Required Audience: configured (value not logged)")
+        else:
+            logger.info("Required Audience: (not enforced)")
     logger.info("MCP Integration: Direct (no separate FastMCP HTTP server)")
     logger.info("=" * 80)
 
@@ -414,11 +451,13 @@ def main():
         finally:
             cleanup_tls_temp_files()
     else:
-        # HTTP mode (dev only)
-        if not settings.dev_allow_http:
+        # HTTP mode is permitted when running behind a TLS-terminating
+        # gateway (bridge_auth_mode) or in explicit dev mode.
+        if not settings.dev_allow_http and not bridge_auth_mode:
             logger.error(
                 "TLS certificates required for production. "
-                "Set MCP_SERVER_TLS_CERT and MCP_SERVER_TLS_KEY."
+                "Set MCP_SERVER_TLS_CERT and MCP_SERVER_TLS_KEY, or set "
+                "MCP_BRIDGE_AUTH_MODE=true when running behind a TLS-terminating gateway."
             )
             sys.exit(1)
         uvicorn.run(

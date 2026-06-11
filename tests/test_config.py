@@ -452,6 +452,53 @@ class TestSettings:
         # Should not raise
         settings.validate_configuration_for_web_deployment()
 
+    def test_bridge_auth_mode_allows_oauth_disabled(self):
+        """bridge_auth_mode lets the server start with OAuth turned off."""
+        settings = Settings(
+            url="https://example.com",
+            api_key="test-key",
+            bridge_auth_mode=True,
+            oauth_enabled=False,
+        )
+        # Must not raise — gateway in front handles auth.
+        settings.validate_oauth_enabled()
+
+    def test_bridge_auth_mode_allows_empty_oauth_issuer(self):
+        """bridge_auth_mode does not require MCP_OAUTH_ISSUER to be set."""
+        settings = Settings(
+            url="https://example.com",
+            api_key="test-key",
+            bridge_auth_mode=True,
+            oauth_issuer="",
+        )
+        # Validator should accept empty issuer.
+        assert settings.oauth_issuer == ""
+
+    def test_bridge_auth_mode_skips_tls_and_oauth_checks_in_web_deployment(self):
+        """In bridge_auth_mode the gateway terminates TLS and owns client auth."""
+        settings = Settings(
+            url="https://dependencytrack.apps.jusbr.com",
+            api_key="test-key",
+            bridge_auth_mode=True,
+            oauth_issuer="",
+            server_tls_cert="",
+            server_tls_key="",
+        )
+        # Must not raise even without local TLS cert or OAuth issuer.
+        settings.validate_configuration_for_web_deployment()
+
+    def test_bridge_auth_mode_off_still_enforces_oauth(self):
+        """Default mode still rejects oauth_enabled=False."""
+        settings = Settings(
+            url="https://example.com",
+            api_key="test-key",
+            oauth_issuer="https://auth.example.com",
+            bridge_auth_mode=False,
+            oauth_enabled=False,
+        )
+        with pytest.raises(ConfigurationError, match="OAuth 2.1 authorization is MANDATORY"):
+            settings.validate_oauth_enabled()
+
 
 class TestTLSHelpers:
     """Test TLS helper functions."""
