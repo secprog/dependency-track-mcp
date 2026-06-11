@@ -519,6 +519,25 @@ class TestSettings:
         with pytest.raises(ConfigurationError, match="SSL certificate verification"):
             settings.validate_configuration_for_web_deployment()
 
+    def test_cors_allowed_origins_default_is_empty(self):
+        """Direct-mode CORS defaults to no allowed browser origins."""
+        settings = Settings(
+            url="https://example.com",
+            api_key="test-key",
+            oauth_issuer="https://auth.example.com",
+        )
+        assert settings.cors_allowed_origins == ""
+
+    def test_cors_allowed_origins_accepts_csv(self):
+        """Operator-provided allowlist parses as a comma-separated string."""
+        settings = Settings(
+            url="https://example.com",
+            api_key="test-key",
+            oauth_issuer="https://auth.example.com",
+            cors_allowed_origins="https://a.example.com,https://b.example.com",
+        )
+        assert settings.cors_allowed_origins == "https://a.example.com,https://b.example.com"
+
     def test_bridge_auth_mode_still_enforces_dtrack_https(self):
         """Outbound DTrack URL must still be HTTPS in bridge mode (no dev_allow_http).
 

@@ -75,17 +75,45 @@ app = FastAPI(
 )
 app.router.redirect_slashes = False
 
-# CORS is wide open by default for backwards compatibility. Operators
-# fronting this server with mcp-bridge should rely on the bridge's
-# ingress NetworkPolicy + group ACL rather than CORS — browsers are not
-# the caller and `allow_origins=["*"]` + `allow_credentials=True` is
-# functionally ignored by browsers anyway.
+# CORS is closed by default. Two paths:
+#   * bridge_auth_mode: the in-cluster mcp-bridge gateway is the only
+#     caller, so `allow_origins=[]` is correct. No browser ever talks to
+#     this server in this mode.
+#   * direct mode: operators must list browser origins explicitly via
+#     `MCP_CORS_ALLOWED_ORIGINS` (comma-separated). Default empty.
+#
+# `allow_credentials` is False — authentication here is `Authorization:
+# Bearer`, not session cookies. With credentials=True + `allow_origins=*`
+# Starlette's CORSMiddleware reflects the request `Origin` and emits
+# `Access-Control-Allow-Credentials: true`, which is the classic
+# any-origin-with-credentials anti-pattern (flagged on PR #1 by @alinefr).
+#
+# `allow_methods` and `allow_headers` are the minimum set the MCP HTTP
+# transport actually uses.
+def _cors_origins_for_startup() -> list[str]:
+    """Resolve CORS origins at module init via full Settings chain.
+
+    Reads through ``get_settings()`` (lru_cached) so the value reflects
+    every pydantic-settings source (process env + ``.env`` file).
+    Returns the safest default (``[]``) if Settings can't load (e.g.
+    test collection without env fixtures), which keeps both bridge mode
+    and direct mode closed by default.
+    """
+    try:
+        s = get_settings()
+    except Exception:
+        return []
+    if s.bridge_auth_mode:
+        return []
+    return [o.strip() for o in (s.cors_allowed_origins or "").split(",") if o.strip()]
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=_cors_origins_for_startup(),
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "DELETE"],
+    allow_headers=["authorization", "content-type", "mcp-session-id"],
 )
 
 # Global JWKS cache (refreshed on demand)

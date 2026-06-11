@@ -95,6 +95,19 @@ class Settings(BaseSettings):
         ),
         description="Space-separated list of required OAuth 2.1 scopes",
     )
+    cors_allowed_origins: str = Field(
+        default="",
+        validation_alias=AliasChoices(
+            "cors_allowed_origins",
+            "MCP_CORS_ALLOWED_ORIGINS",
+        ),
+        description=(
+            "Comma-separated list of origins allowed via CORS in direct "
+            "(non-bridge) mode. Empty = no browser origin allowed. Ignored "
+            "when MCP_BRIDGE_AUTH_MODE=true (the gateway is the only caller "
+            "and CORS is irrelevant)."
+        ),
+    )
     oauth_resource_uri: str = Field(
         default="https://mcp.example.com/mcp",
         validation_alias=AliasChoices(
