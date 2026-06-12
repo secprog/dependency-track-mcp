@@ -210,6 +210,32 @@ class TestClientErrorHandling:
         with pytest.raises(ValidationError):
             mock_client._handle_error_response(response)
 
+    def test_handle_error_list_json_body(self, mock_client):
+        """Error body decoded as a JSON list is coerced to a dict."""
+        response = MagicMock(spec=httpx.Response)
+        response.status_code = 400
+        response.json.return_value = ["field 'x' is required", "field 'y' is required"]
+        with pytest.raises(ValidationError) as exc_info:
+            mock_client._handle_error_response(response)
+        assert "field 'x' is required" in str(exc_info.value)
+
+    def test_handle_error_string_json_body(self, mock_client):
+        """Error body decoded as a JSON string is coerced to a dict."""
+        response = MagicMock(spec=httpx.Response)
+        response.status_code = 404
+        response.json.return_value = "project not found"
+        with pytest.raises(NotFoundError) as exc_info:
+            mock_client._handle_error_response(response)
+        assert "project not found" in str(exc_info.value)
+
+    def test_handle_error_int_json_body(self, mock_client):
+        """Error body decoded as a JSON scalar is coerced to a dict."""
+        response = MagicMock(spec=httpx.Response)
+        response.status_code = 500
+        response.json.return_value = 42
+        with pytest.raises(ServerError):
+            mock_client._handle_error_response(response)
+
 
 class TestClientRetryLogic:
     """Tests for retry logic."""
