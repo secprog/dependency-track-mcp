@@ -90,7 +90,13 @@ class DependencyTrackClient:
             detail = response.json()
         except Exception:
             detail = {"message": response.text}
-
+        
+        # Dependency-Track endpoints occasionally return non-dict JSON bodies
+        # on error (e.g. a list of validation messages, a bare string). Coerce
+        # to a dict so .get() below never raises AttributeError.
+        if not isinstance(detail, dict):
+            detail = {"message": str(detail)}
+        
         message = detail.get("message", f"HTTP {status} error")
 
         if status == 400:
